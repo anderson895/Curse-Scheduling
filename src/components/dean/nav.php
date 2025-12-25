@@ -1,119 +1,109 @@
-<body class="bg-[#1A1A1A]">
+<body class="bg-gray-100">
   
 <!-- Layout Wrapper -->
 <div class="min-h-screen flex flex-col lg:flex-row">
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="bg-[#0D0D0D] shadow-lg w-64 lg:w-1/5 xl:w-1/6 p-6 space-y-6 lg:static fixed inset-y-0 left-0 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+  <aside id="sidebar" class="bg-red-900 shadow-lg w-64 lg:w-1/5 xl:w-1/6 p-6 space-y-6 lg:static fixed inset-y-0 left-0 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
 
     <!-- Sidebar Header -->
-    <div class="flex flex-wrap justify-center items-center space-x-4 p-4 bg-[#1A1A1A] rounded-lg shadow-inner hover:shadow-xl transition-shadow duration-300 max-w-full">
-      <img src="../static/logo.jpg" alt="Mega Tech" class="w-20 h-20 rounded-full border-2 border-gray-700 shadow-sm transform transition-transform duration-300 hover:scale-105">
-      <h1 class="text-base sm:text-lg md:text-xl font-bold text-[#FFD700] tracking-tight text-center">
-        Administrator
+    <div class="flex flex-wrap justify-center items-center space-x-4 p-4 bg-red-800 rounded-lg shadow-inner hover:shadow-xl transition-shadow duration-300 max-w-full">
+      <img src="../static/logo.jpg" alt="Logo" class="w-20 h-20 rounded-full border-2 border-white shadow-sm transform transition-transform duration-300 hover:scale-105">
+      <h1 class="text-base sm:text-lg md:text-xl font-bold text-white tracking-tight text-center">
+        Dean
       </h1>
     </div>
 
     <!-- Navigation -->
-    <nav class="space-y-4 text-left text-[#CCCCCC] overflow-y-auto h-[calc(100vh-120px)]">
-      <a href="dashboard" class="nav-link flex items-center space-x-3 hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">
+    <nav class="space-y-4 text-left text-white overflow-y-auto h-[calc(100vh-120px)]">
+      
+      <a href="dashboard" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
         <span class="material-icons">dashboard</span>
         <span>Dashboard</span>
       </a>
 
-      <!-- Deals Dropdown -->
-      <button id="toggleDeals" class="w-full flex cursor-pointer items-center justify-between text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">
+      <button id="toggleAccounts" class="w-full flex items-center justify-between px-3 py-2 hover:bg-red-800 rounded-md transition">
         <div class="flex items-center space-x-3">
-          <span class="material-icons">sell</span>
-          <span>Deals</span>
+          <span class="material-icons">manage_accounts</span>
+          <span>Accounts</span>
         </div>
-        <span id="deals_dropdownIcon" class="material-icons transition-transform duration-300">expand_more</span>
+        <span id="accounts_dropdownIcon" class="material-icons">expand_more</span>
       </button>
-      <div id="dealsDropdown" class="ml-8 space-y-2 hidden">
-        <a href="group_deals" class="nav-link block text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">Group Deals</a>
-        <a href="promo_deals" class="nav-link block text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">Promo Deals</a>
+
+      <div id="accountsDropdown" class="ml-8 space-y-2 hidden">
+        <a href="create_account" class="flex items-center space-x-2 px-4 py-2 hover:bg-red-800 rounded-md transition">
+          <span class="material-icons text-sm">person_add</span>
+          <span>Create</span>
+        </a>
+        <a href="faculty" class="flex items-center space-x-2 px-4 py-2 hover:bg-red-800 rounded-md transition">
+          <span class="material-icons text-sm">school</span>
+          <span>Faculty</span>
+        </a>
+        <a href="gec" class="flex items-center space-x-2 px-4 py-2 hover:bg-red-800 rounded-md transition">
+          <span class="material-icons text-sm">groups</span>
+          <span>GEC</span>
+        </a>
+        <a href="all" class="flex items-center space-x-2 px-4 py-2 hover:bg-red-800 rounded-md transition">
+          <span class="material-icons text-sm">list</span>
+          <span>All</span>
+        </a>
       </div>
 
-      <!-- Reservation Dropdown -->
-      <button id="toggleReservation" class="w-full cursor-pointer flex items-center justify-between text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">
-        <div class="flex items-center space-x-3">
-          <span class="material-icons">event</span>
-          <span>Reservation</span>
-        </div>
-        <span id="reserve_dropdownIcon" class="material-icons transition-transform duration-300">expand_more</span>
-      </button>
-      <div id="reserveDropdown" class="ml-8 space-y-2 hidden">
-        <a href="reserve_request" class="nav-link block text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">Reservation Request</a>
-        <a href="all_reserved" class="nav-link block text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">All</a>
-      </div>
-
-      <a href="menu" class="nav-link flex items-center space-x-3 text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">
-        <span class="material-icons">local_dining</span>
-        <span>Menu</span>
+      <a href="gec_sched" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+        <span class="material-icons">event_note</span>
+        <span>GEC Schedule</span>
       </a>
 
-      <a href="manage_users" class="nav-link flex items-center space-x-3 text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">
-        <span class="material-icons">group</span>
-        <span>Users</span>
+      <a href="report" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+        <span class="material-icons">calendar_month</span>
+        <span>General Engineering Schedule</span>
       </a>
 
-      <a href="backup" class="nav-link flex items-center space-x-3 text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">
-        <span class="material-icons">backup</span>
-        <span>Backup</span>
+      <a href="settings" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+        <span class="material-icons">analytics</span>
+        <span>Schedule Report</span>
       </a>
 
-      <a href="report" class="nav-link flex items-center space-x-3 text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">
-        <span class="material-icons">assignment</span>
-        <span>Report</span>
+      <a href="settings" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+        <span class="material-icons">menu_book</span>
+        <span>Curriculum</span>
       </a>
 
-      <a href="settings" class="nav-link flex items-center space-x-3 text-[#CCCCCC] hover:text-[#FFD700] hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">
-        <span class="material-icons">settings</span>
-        <span>Settings</span>
+      <a href="logout" class="flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+        <span class="material-icons">logout</span>
+        <span>Logout</span>
       </a>
 
-      <a href="logout">
-        <button type="submit" class="flex items-center cursor-pointer space-x-3 text-[#CCCCCC] hover:text-red-500 hover:bg-white/10 px-4 py-2 rounded-md transition-all duration-300">
-          <span class="material-icons">logout</span>
-          <span>Logout</span>
-        </button>
-      </a>
     </nav>
   </aside>
 
   <!-- Overlay for Mobile Sidebar -->
-  <div id="overlay" class="fixed inset-0 bg-black opacity-50 hidden lg:hidden z-40"></div>
+  <div id="overlay" class="fixed inset-0 bg-red-900/50 hidden lg:hidden z-40"></div>
 
   <!-- Main Content -->
-  <main class="flex-1 bg-[#1A1A1A] p-8 lg:p-12 overflow-auto h-screen">
+  <main class="flex-1 bg-gray-100 p-8 lg:p-12 overflow-auto h-screen">
     <!-- Mobile menu button -->
-    <button id="menuButton" class="lg:hidden text-[#FFD700] bg-white/10 hover:bg-white/20 p-2 rounded-md transition duration-300 mb-4">
+    <button id="menuButton" class="lg:hidden text-white bg-red-800/20 hover:bg-red-800/30 p-2 rounded-md transition duration-300 mb-4">
       <span class="material-icons">menu</span> 
     </button>
 
-    
-  <div class="min-h-screen"> <!-- min-h-screen  to fix the sidebar while scrolling-->
-    
+  <div class="min-h-screen">
+
 
 
    
 <!-- JavaScript -->
 <script>
   // Dropdown toggle logic
-  $("#toggleDeals").click(function () {
-    $("#dealsDropdown").slideToggle(300);
-    const icon = $("#deals_dropdownIcon");
+  $("#toggleAccounts").click(function () {
+    $("#accountsDropdown").slideToggle(300);
+    const icon = $("#accounts_dropdownIcon");
     icon.text(icon.text() === "expand_more" ? "expand_less" : "expand_more");
   });
 
 
 
-   $("#toggleReservation").click(function () {
-    $("#reserveDropdown").slideToggle(300);
-    const icon = $("#reserve_dropdownIcon");
-    icon.text(icon.text() === "expand_more" ? "expand_less" : "expand_more");
-  });
-
+   
 
   
 
@@ -143,9 +133,9 @@
 
       
 
-      if (link.closest('#dealsDropdown')) {
-        document.getElementById('dealsDropdown').style.display = 'block';
-        document.getElementById('deals_dropdownIcon').textContent = 'expand_less';
+      if (link.closest('#accountsDropdown')) {
+        document.getElementById('accountsDropdown').style.display = 'block';
+        document.getElementById('accounts_dropdownIcon').textContent = 'expand_less';
       }
 
       if (link.closest('#reserveDropdown')) {
