@@ -16,7 +16,7 @@
 <body class="bg-gray-100 text-red-900">
 
 <!-- Navbar -->
-<nav class="bg-red-900 shadow-lg fixed w-full z-50">
+<nav class=" fixed w-full z-50">
   <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
 
     <!-- Mobile Hamburger Menu Button -->

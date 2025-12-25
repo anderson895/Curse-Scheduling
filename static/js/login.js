@@ -17,38 +17,39 @@ $(document).ready(function () {
 
       success: function (response) {
 
-        if (response.status === "success") {
+       if (response.status === "success") {
 
-            const user_type = response.user_type.trim().toLowerCase();
+        const user_type = response.user_type.trim().toLowerCase();
 
-            const routes = {
+        const routes = {
             faculty: "faculty/dashboard",
-            programchair: "programchair/dashboard",
+            "program chair": "programchair/dashboard", // added space
             dean: "dean/dashboard",
             gec: "gec/home"
-            };
+        };
 
-            Swal.fire({
+        Swal.fire({
             title: 'Login Successful',
             text: 'Redirecting...',
             icon: 'success',
             timer: 1500,
             showConfirmButton: false
-            }).then(() => {
+        }).then(() => {
             if (routes[user_type]) {
                 window.location.href = routes[user_type];
             } else {
                 Swal.fire('Error', 'Unknown user role', 'error');
             }
-            });
+        });
 
-        } else {
-            Swal.fire({
+    } else {
+        Swal.fire({
             title: 'Login Failed',
             text: response.message || 'Invalid credentials',
             icon: 'error'
-            });
-        }
+        });
+    }
+
         },
 
       error: function () {

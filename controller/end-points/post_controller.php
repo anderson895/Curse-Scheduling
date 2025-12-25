@@ -38,7 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $password = $_POST['password'];
             $type = $_POST['type'];
-            $result = $db->CreateAccount($username, $email, $first_name, $middle_name, $last_name, $password, $type);
+            $user_status = $_POST['user_status'];
+
+            $result = $db->CreateAccount($username, $email, $first_name, $middle_name, $last_name, $password, $type, $user_status);
 
             if ($result['success']) {
                 echo json_encode([

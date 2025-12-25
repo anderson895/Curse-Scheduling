@@ -101,7 +101,7 @@ $(document).ready(function () {
                             <button class="btnToggle cursor-pointer bg-red-600 text-white px-3 py-1 rounded"
                                 data-id="${acc.user_id}"
                                 data-status="${acc.user_status}">
-                                ${acc.user_status == 1 ? 'Disable' : 'Enable'}
+                                ${acc.user_status == 1 ? 'Disable' : 'Approve'}
                             </button>
                         </td>
                     </tr>

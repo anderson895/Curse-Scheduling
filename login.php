@@ -52,6 +52,11 @@ include "src/components/header.php";
       </button>
     </form>
 
+    <!-- Footer / Links -->
+    <div class="text-center text-sm text-red-900">
+      Don't have an account?
+      <a href="register" class="text-red-800 font-bold hover:underline">Register</a>
+    </div>
 
   </div>
 </div>

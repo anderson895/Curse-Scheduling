@@ -102,8 +102,9 @@ class global_class extends db_connect
     }
 
 
-    
-    public function CreateAccount($username, $email, $first_name, $middle_name, $last_name, $password, $type) {
+
+
+    public function CreateAccount($username, $email, $first_name, $middle_name, $last_name, $password, $type, $user_status) {
         if ($this->isEmailExist($email)) {
             return [
                 'success' => false,
@@ -115,10 +116,10 @@ class global_class extends db_connect
 
         // Insert the new user
         $query = "INSERT INTO `users`(`user_username`, `user_email`, `user_fname`, `user_mname`, `user_lname`, `user_password`, `user_type`,`user_status`) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("sssssss", $username, $email, $first_name, $middle_name, $last_name, $hashedPassword, $type);
+        $stmt->bind_param("sssssssi", $username, $email, $first_name, $middle_name, $last_name, $hashedPassword, $type, $user_status);
         if ($stmt->execute()) {
             return [
                 'success' => true,

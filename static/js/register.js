@@ -30,11 +30,11 @@ $(document).ready(function () {
         // Serialize form data using FormData
         const formData = new FormData(this);
         formData.append('requestType', 'CreateAccount');
-        formData.append('user_status', '1');
+        formData.append('user_status', '0');
 
         $.ajax({
             type: "POST",
-            url: "../controller/end-points/post_controller.php",
+            url: "controller/end-points/post_controller.php",
             data: formData,
             processData: false, // Important for FormData
             contentType: false, // Important for FormData
@@ -49,7 +49,7 @@ $(document).ready(function () {
                         title: 'Registration Successful',
                         confirmButtonColor: '#3085d6'
                     }).then(() => {
-                        window.location.href = "all"; 
+                        window.location.href = "login"; 
                     });
                 } else {
                     Swal.fire({
