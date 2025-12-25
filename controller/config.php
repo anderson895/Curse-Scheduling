@@ -2,7 +2,7 @@
 define("db_host", "localhost");
 define("db_user", "root");
 define("db_pass", "");
-define("db_name", "grillbook");
+define("db_name", "cursescheduling");
 
 
 class db_connect
