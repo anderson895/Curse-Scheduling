@@ -17,8 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'status' => 200,
             'data' => $result
             ]);
+        }else if ($_GET['requestType'] == 'get_all_accounts') {
+
+            $user_type = $_GET['user_type'] ?? 'all';
             
-            
+            $result = $db->get_all_accounts($user_type);
+            echo json_encode([
+            'status' => 200,
+            'data' => $result
+            ]);
+        } else {
+            echo "404";
         }
 
 

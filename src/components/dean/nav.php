@@ -122,29 +122,27 @@
     overlay.classList.add('hidden');
   });
 
-  // Active URL highlighting
-  const links = document.querySelectorAll('.nav-link');
-  const currentPath = window.location.pathname;
+  // Active URL highlighting including dropdown links
+const allLinks = document.querySelectorAll('.nav-link, #accountsDropdown a'); // include dropdown links
+const currentPath = window.location.pathname.split("/").pop(); // get current file/page name
 
-  links.forEach(link => {
-    const linkHref = link.getAttribute('href');
-    if (currentPath === linkHref || currentPath.endsWith(linkHref)) {
-      link.classList.add('text-[#FFD700]', 'bg-white/10');
+allLinks.forEach(link => {
+  const linkHref = link.getAttribute('href');
 
-      
+  // Check if current page matches link href
+  if (currentPath === linkHref) {
+    // Highlight the active link
+    link.classList.add('text-[#FFD700]', 'bg-white/10');
 
-      if (link.closest('#accountsDropdown')) {
-        document.getElementById('accountsDropdown').style.display = 'block';
-        document.getElementById('accounts_dropdownIcon').textContent = 'expand_less';
-      }
-
-      if (link.closest('#reserveDropdown')) {
-        document.getElementById('reserveDropdown').style.display = 'block';
-        document.getElementById('reserve_dropdownIcon').textContent = 'expand_less';
-      }
-
-      console.log(linkHref);
-   
+    // If it’s inside the Accounts dropdown, open it
+    if (link.closest('#accountsDropdown')) {
+      const dropdown = document.getElementById('accountsDropdown');
+      dropdown.style.display = 'block';
+      document.getElementById('accounts_dropdownIcon').textContent = 'expand_less';
     }
-  });
+
+    // You can add other dropdowns similarly
+  }
+});
+
 </script>
