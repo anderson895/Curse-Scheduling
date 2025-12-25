@@ -22,7 +22,7 @@
         <span>Dashboard</span>
       </a>
 
-      <button id="toggleAccounts" class="w-full flex items-center justify-between px-3 py-2 hover:bg-red-800 rounded-md transition">
+      <button id="toggleAccounts" class="w-full cursor-pointer flex items-center justify-between px-3 py-2 hover:bg-red-800 rounded-md transition">
         <div class="flex items-center space-x-3">
           <span class="material-icons">manage_accounts</span>
           <span>Accounts</span>
