@@ -28,69 +28,7 @@ include "../src/components/dean/nav.php";
       </div>
     </div>
 
-    <div class="bg-red-800 shadow rounded-xl p-4 flex items-center space-x-4">
-      <span class="material-icons text-white text-4xl">event</span>
-      <div>
-        <p class="text-gray-300">Reservations</p>
-        <h2 class="text-3xl font-bold text-white" id="totalReservations">0</h2>
-      </div>
-    </div>
-
-    <div class="bg-red-800 shadow rounded-xl p-4 flex items-center space-x-4">
-      <span class="material-icons text-white text-4xl">hourglass_empty</span>
-      <div>
-        <p class="text-gray-300">Pending</p>
-        <h2 class="text-3xl font-bold text-yellow-400" id="pendingReservations">0</h2>
-      </div>
-    </div>
-
-    <div class="bg-red-800 shadow rounded-xl p-4 flex items-center space-x-4">
-      <span class="material-icons text-white text-4xl">check_circle</span>
-      <div>
-        <p class="text-gray-300">Confirmed</p>
-        <h2 class="text-3xl font-bold text-green-400" id="confirmedReservations">0</h2>
-      </div>
-    </div>
-
-    <div class="bg-red-800 shadow rounded-xl p-4 flex items-center space-x-4">
-      <span class="material-icons text-white text-4xl">flag</span>
-      <div>
-        <p class="text-gray-300">Completed</p>
-        <h2 class="text-3xl font-bold text-blue-400" id="completedReservations">0</h2>
-      </div>
-    </div>
-
-    <div class="bg-red-800 shadow rounded-xl p-4 flex items-center space-x-4">
-      <span class="material-icons text-white text-4xl">restaurant_menu</span>
-      <div>
-        <p class="text-gray-300">Active Menu</p>
-        <h2 class="text-3xl font-bold text-white" id="activeMenuItems">0</h2>
-      </div>
-    </div>
-
-    <div class="bg-red-800 shadow rounded-xl p-4 flex items-center space-x-4">
-      <span class="material-icons text-white text-4xl">local_offer</span>
-      <div>
-        <p class="text-gray-300">Promos</p>
-        <h2 class="text-3xl font-bold text-white" id="totalPromos">0</h2>
-      </div>
-    </div>
-
-    <div class="bg-red-800 shadow rounded-xl p-4 flex items-center space-x-4">
-      <span class="material-icons text-white text-4xl">groups</span>
-      <div>
-        <p class="text-gray-300">Group Deals</p>
-        <h2 class="text-3xl font-bold text-white" id="totalGroupDeals">0</h2>
-      </div>
-    </div>
-
-    <div class="bg-red-800 shadow rounded-xl p-4 flex items-center space-x-4">
-      <span class="material-icons text-white text-4xl">₱</span>
-      <div>
-        <p class="text-gray-300">Total Sales</p>
-        <h2 class="text-3xl font-bold text-green-400" id="totalSales">₱0.00</h2>
-      </div>
-    </div>
+    
 
   </div>
 </div>
