@@ -21,7 +21,7 @@ include "../src/components/dean/nav.php";
       <h3 class="text-lg font-semibold text-red-900">Subject List</h3>
 
       <button id="addBtn"
-        class="flex items-center gap-2 bg-red-900 hover:bg-red-800 text-white px-4 py-2 rounded-md shadow">
+        class="flex cursor-pointer items-center gap-2 bg-red-900 hover:bg-red-800 text-white px-4 py-2 rounded-md shadow">
         <span class="material-icons text-sm">add</span>
         Add Subject
       </button>

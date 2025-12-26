@@ -213,6 +213,25 @@ class global_class extends db_connect
         }
     }
 
+    public function delete_subject($subject_id) {
+        $query = "DELETE FROM `subjects` WHERE `subject_id` = ?";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $subject_id);
+
+        if ($stmt->execute()) {
+            return [
+                'success' => true,
+                'message' => 'Subject deleted successfully.'
+            ];
+        } else {
+            return [
+                'success' => false,
+                'message' => 'Failed to delete subject. Please try again.'
+            ];
+        }
+    }
+
     public function toggle_account_status($user_id)
     {
         $user_id = (int) $user_id;

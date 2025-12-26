@@ -113,6 +113,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
             }
 
+        } else if ($_POST['requestType'] == 'delete_subject') {
+            $subject_id = $_POST['subject_id'];
+
+            $result = $db->delete_subject($subject_id);
+
+            if ($result['success']) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => $result['message']
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => $result['message']
+                ]);
+            }
+
         } else if ($_POST['requestType'] == 'add_subject') {
             $subject_code = $_POST['subject_code'];
             $subject_name = $_POST['subject_name'];

@@ -101,8 +101,8 @@ $(document).ready(function() {
                 <td class="p-3">${subject.subject_name}</td>
                 <td class="p-3">${subject.subject_unit}</td>
                 <td class="p-3 text-center">
-                  <button class="editBtn px-3 py-1 bg-yellow-400 text-white rounded-md text-sm" data-id="${subject.subject_id}">Edit</button>
-                  <button class="deleteBtn px-3 py-1 bg-red-600 text-white rounded-md text-sm" data-id="${subject.subject_id}">Delete</button>
+                  <button class="editBtn px-3 py-1 bg-gray-700 cursor-pointer text-white rounded-md text-sm" data-id="${subject.subject_id}">Edit</button>
+                  <button class="deleteBtn px-3 py-1 bg-red-700 cursor-pointer text-white rounded-md text-sm" data-id="${subject.subject_id}">Delete</button>
                 </td>
               </tr>
             `);
@@ -141,35 +141,7 @@ $(document).ready(function() {
     $('#addSubjectForm')[0].reset();
   });
 
-  // ===============================
-  // Add Subject Form Submit
-  // ===============================
-  $('#addSubjectForm').on('submit', function(e) {
-    e.preventDefault();
 
-    $.ajax({
-      url: '../controller/end-points/post_controller.php', // Change to your add endpoint
-      type: "POST",
-      data: $(this).serialize(),
-      dataType: "json",
-      success: function(response) {
-        if(response.status === 200) {
-          fetchSubjects(); // Refresh table
-          $('#addSubjectModal').removeClass('flex').addClass('hidden');
-          $('#addSubjectForm')[0].reset();
-        } else {
-          alert(response.message || "Failed to add subject");
-        }
-      },
-      error: function(err) {
-        console.error(err);
-        alert("An error occurred while adding subject");
-      }
-    });
-  });
-
-  // ===============================
-  // Optional: Edit/Delete handlers
   // ===============================
   // ===============================
 // Open Edit Modal and Populate Fields
@@ -259,12 +231,58 @@ $('#editSubjectForm').on('submit', function(e) {
   // Delete Subject Handler
   // ===============================
 
-  $(document).on('click', '.deleteBtn', function() {
-    const id = $(this).data('id');
-    // TODO: implement delete functionality
-    if(confirm("Are you sure you want to delete this subject?")) {
-      alert("Delete subject ID: " + id);
+  // ===============================
+// Delete Subject
+// ===============================
+$(document).on('click', '.deleteBtn', function() {
+  const id = $(this).data('id');
+
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "This will permanently delete the subject.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#7f1d1d', // Tailwind red-900
+    cancelButtonColor: '#6b7280', // Tailwind gray-500
+    confirmButtonText: 'Yes, delete it!',
+    cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      $.ajax({
+        url: '../controller/end-points/post_controller.php',
+        type: 'POST',
+        data: { requestType: 'delete_subject', subject_id: id },
+        dataType: 'json',
+        success: function(response) {
+          if(response.status === 'success') {
+            Swal.fire({
+              icon: 'success',
+              title: 'Deleted!',
+              text: response.message || 'Subject deleted successfully',
+              confirmButtonColor: '#7f1d1d'
+            });
+            fetchSubjects(); // Refresh table
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: response.message || 'Failed to delete subject',
+              confirmButtonColor: '#7f1d1d'
+            });
+          }
+        },
+        error: function() {
+          Swal.fire({
+            icon: 'error',
+            title: 'Server Error',
+            text: 'Something went wrong. Please try again.',
+            confirmButtonColor: '#7f1d1d'
+          });
+        }
+      });
     }
   });
+});
+
 
 });
