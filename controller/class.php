@@ -154,7 +154,64 @@ class global_class extends db_connect
         }
     }
 
+    public function add_subject($subject_code, $subject_name, $units) {
+        $query = "INSERT INTO `subjects`(`subject_code`, `subject_name`, `subject_unit`) 
+                  VALUES (?, ?, ?)";
 
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ssi", $subject_code, $subject_name, $units);
+
+        if ($stmt->execute()) {
+            return [
+                'success' => true,
+                'message' => 'Subject added successfully.'
+            ];
+        } else {
+            return [
+                'success' => false,
+                'message' => 'Failed to add subject. Please try again.'
+            ];
+        }
+    }
+
+
+    public function get_all_subjects() {
+        $query = "SELECT * FROM `subjects`";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function get_subject_by_id($subject_id) {
+        $query = "SELECT * FROM `subjects` WHERE `subject_id` = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $subject_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    public function update_subject($subject_id, $subject_code, $subject_name, $units) {
+        $query = "UPDATE `subjects` 
+                  SET `subject_code` = ?, `subject_name` = ?, `subject_unit` = ? 
+                  WHERE `subject_id` = ?";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ssii", $subject_code, $subject_name, $units, $subject_id);
+
+        if ($stmt->execute()) {
+            return [
+                'success' => true,
+                'message' => 'Subject updated successfully.'
+            ];
+        } else {
+            return [
+                'success' => false,
+                'message' => 'Failed to update subject. Please try again.'
+            ];
+        }
+    }
 
     public function toggle_account_status($user_id)
     {

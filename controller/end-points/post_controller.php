@@ -78,10 +78,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         } else if ($_POST['requestType'] == 'toggle_account_status') {
 
-            
             $user_id = $_POST['user_id'];
             $status = $_POST['status'];
             $result = $db->toggle_account_status($user_id, $status);
+
+            if ($result['success']) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => $result['message']
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => $result['message']
+                ]);
+            }
+        }else if($_POST['requestType'] == 'update_subject'){
+            $subject_id = $_POST['subject_id'];
+            $subject_code = $_POST['subject_code'];
+            $subject_name = $_POST['subject_name'];
+            $units = $_POST['units'];
+
+            $result = $db->update_subject($subject_id, $subject_code, $subject_name, $units);
+
+            if ($result['success']) {
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => $result['message']
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => $result['message']
+                ]);
+            }
+
+        } else if ($_POST['requestType'] == 'add_subject') {
+            $subject_code = $_POST['subject_code'];
+            $subject_name = $_POST['subject_name'];
+            $units = $_POST['units'];
+
+            $result = $db->add_subject($subject_code, $subject_name, $units);
 
             if ($result['success']) {
                 echo json_encode([

@@ -64,9 +64,14 @@
         <span>Schedule Report</span>
       </a>
 
-      <a href="settings" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+      <a href="curriculum" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
         <span class="material-icons">menu_book</span>
         <span>Curriculum</span>
+      </a>
+
+      <a href="subject" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+        <span class="material-icons">subject</span>
+        <span>Subject</span>
       </a>
 
       <a href="logout" class="flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">

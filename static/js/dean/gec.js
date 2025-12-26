@@ -98,11 +98,12 @@ $(document).ready(function () {
                                 Edit
                             </button>
 
-                            <button class="btnToggle cursor-pointer bg-red-600 text-white px-3 py-1 rounded"
+                            <button class="btnToggle cursor-pointer ${acc.user_status == 1 ? 'bg-red-600' : 'bg-green-600'} text-white px-3 py-1 rounded"
                                 data-id="${acc.user_id}"
                                 data-status="${acc.user_status}">
                                 ${acc.user_status == 1 ? 'Disable' : 'Approve'}
                             </button>
+
                         </td>
                     </tr>
                     `;

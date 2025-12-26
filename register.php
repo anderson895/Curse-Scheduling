@@ -106,4 +106,6 @@ include "src/components/header.php";
 <?php
 include "src/components/footer.php";
 ?>
+
+
 <script src="static/js/register.js"></script>
