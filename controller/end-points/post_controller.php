@@ -60,25 +60,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
 
         // ---------- SUBJECT ----------
-        } else if($_POST['requestType'] == 'update_subject'){
-            $subject_id = $_POST['subject_id'];
+        } else if($_POST['requestType'] == 'update_subject') {
+
+            echo "<pre>";
+            print_r($_POST);
+            echo "</pre>";
+
+            $subject_id   = $_POST['subject_id'];
             $subject_code = $_POST['subject_code'];
             $subject_name = $_POST['subject_name'];
-            $units = $_POST['units'];
-            $result = $db->update_subject($subject_id, $subject_code, $subject_name, $units);
-            echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
+            $units        = $_POST['units'];
+            $subject_type = $_POST['subject_type']; // ✅ Add type
+
+            $result = $db->update_subject($subject_id, $subject_code, $subject_name, $units, $subject_type);
+            echo json_encode($result['success'] 
+                ? ['status'=>'success','message'=>$result['message']] 
+                : ['status'=>'error','message'=>$result['message']]
+            );
 
         } else if ($_POST['requestType'] == 'delete_subject') {
             $subject_id = $_POST['subject_id'];
             $result = $db->delete_subject($subject_id);
-            echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
+            echo json_encode($result['success'] 
+                ? ['status'=>'success','message'=>$result['message']] 
+                : ['status'=>'error','message'=>$result['message']]
+            );
 
         } else if ($_POST['requestType'] == 'add_subject') {
             $subject_code = $_POST['subject_code'];
             $subject_name = $_POST['subject_name'];
-            $units = $_POST['units'];
-            $result = $db->add_subject($subject_code, $subject_name, $units);
-            echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
+            $units        = $_POST['units'];
+            $subject_type = $_POST['subject_type']; // ✅ Add type
+
+            $result = $db->add_subject($subject_code, $subject_name, $units, $subject_type);
+            echo json_encode($result['success'] 
+                ? ['status'=>'success','message'=>$result['message']] 
+                : ['status'=>'error','message'=>$result['message']]
+            );
 
         // ---------- CURRICULUM ----------
         } else if ($_POST['requestType'] == 'add_curriculum') {

@@ -28,9 +28,11 @@ include "../src/components/dean/nav.php";
             <th class="p-3 text-left">Code</th>
             <th class="p-3 text-left">Name</th>
             <th class="p-3 text-left">Units</th>
+            <th class="p-3 text-left">Type</th> <!-- New column -->
             <th class="p-3 text-center">Actions</th>
           </tr>
-        </thead>
+      </thead>
+
         <tbody id="subjectTableBody" class="divide-y">
           <tr>
             <td colspan="4" class="text-center p-6 text-gray-500">
@@ -54,6 +56,9 @@ include "../src/components/dean/nav.php";
     <h2 class="text-xl font-bold text-red-900 mb-4">Add Subject</h2>
 
     <form id="addSubjectForm" class="space-y-4">
+
+
+
       <!-- Subject Code -->
       <div>
         <label class="block text-sm font-semibold mb-1">Subject Code</label>
@@ -74,6 +79,18 @@ include "../src/components/dean/nav.php";
         <input type="number" name="units" required
           class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
       </div>
+
+      <!-- Subject Type -->
+      <div>
+        <label class="block text-sm font-semibold mb-1">Type</label>
+        <select name="subject_type" required
+                class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+          <option value="" disabled selected>Select Type</option>
+          <option value="Major">Major</option>
+          <option value="Minor">Minor</option>
+        </select>
+      </div>
+
 
       <!-- Buttons -->
       <div class="flex justify-end gap-2 pt-4">
@@ -127,6 +144,18 @@ include "../src/components/dean/nav.php";
         <input type="number" name="units" id="edit_subject_unit" required
           class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
       </div>
+
+      <!-- Subject Type -->
+      <div>
+        <label class="block text-sm font-semibold mb-1">Type</label>
+        <select name="subject_type" id="edit_subject_type" required
+                class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+          <option value="" disabled>Select Type</option>
+          <option value="Major">Major</option>
+          <option value="Minor">Minor</option>
+        </select>
+      </div>
+
 
       <div class="flex justify-end gap-2 pt-4">
         <button type="button" id="closeEditSubjectModal"

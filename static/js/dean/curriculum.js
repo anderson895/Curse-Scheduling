@@ -4,27 +4,26 @@ $(document).ready(function () {
   // Load Subjects
   // ---------------------------
   function loadSubjects() {
-  $.ajax({
-    url: '../controller/end-points/get_controller.php',
-    method: 'GET',
-    data: { requestType: 'get_all_subjects' },
-    dataType: 'json',
-    success: function (res) {
-      let options = '';
-      res.data.forEach(s => {
-        options += `<option value="${s.subject_id}">${s.subject_code} - ${s.subject_name} (${s.subject_unit})</option>`;
-      });
-      $('#subjectSelect, #editSubjectSelect').html(options);
+    $.ajax({
+      url: '../controller/end-points/get_controller.php',
+      method: 'GET',
+      data: { requestType: 'get_all_subjects' },
+      dataType: 'json',
+      success: function (res) {
+        let options = '';
+        res.data.forEach(s => {
+          options += `<option value="${s.subject_id}">${s.subject_code} - ${s.subject_name} (${s.subject_unit})</option>`;
+        });
+        $('#subjectSelect, #editSubjectSelect').html(options);
 
-      // Initialize Select2 after options are loaded
-      $('#subjectSelect, #editSubjectSelect').select2({
-        placeholder: "Select Subject(s)",
-        width: '100%'
-      });
-    }
-  });
-}
-
+        // Initialize Select2 once
+        $('#subjectSelect, #editSubjectSelect').select2({
+          placeholder: "Select Subject(s)",
+          width: '100%'
+        });
+      }
+    });
+  }
   loadSubjects();
 
   // ---------------------------
@@ -46,8 +45,8 @@ $(document).ready(function () {
               <td class="p-2">${sub.subject_name}</td>
               <td class="p-2">${sub.subject_unit}</td>
               <td class="p-2 flex gap-2">
-                <button class="editBtn px-2 py-1 bg-yellow-400 rounded" data-id="${sub.id}">Edit</button>
-                <button class="deleteBtn px-2 py-1 bg-red-600 text-white rounded" data-id="${sub.id}">Delete</button>
+                <button class="editBtn text-white cursor-pointer px-2 py-1 bg-gray-700 rounded" data-id="${sub.id}">Edit</button>
+                <button class="deleteBtn px-2 py-1 cursor-pointer bg-red-700 text-white rounded" data-id="${sub.id}">Delete</button>
               </td>
             </tr>`;
         });
@@ -58,12 +57,26 @@ $(document).ready(function () {
   fetchCurriculum();
 
   // ---------------------------
-  // Open/Close Modals
+  // Open Add Modal
   // ---------------------------
-  $('#addBtn').click(() => $('#addCurriculumModal').show());
-  $('#closeAddCurriculumModal').click(() => $('#addCurriculumModal').hide().find('form')[0].reset());
+  $('#addBtn').click(() => {
+    // Clear previous selections and input
+    $('#addCurriculumForm')[0].reset();
+    $('#subjectSelect').val(null).trigger('change'); // clear Select2
+    $('#addCurriculumModal').show();
+  });
 
-  $('#closeEditCurriculumModal').click(() => $('#editCurriculumModal').hide().find('form')[0].reset());
+  $('#closeAddCurriculumModal').click(() => {
+    $('#addCurriculumModal').hide();
+    $('#addCurriculumForm')[0].reset();
+    $('#subjectSelect').val(null).trigger('change'); // clear Select2
+  });
+
+  $('#closeEditCurriculumModal').click(() => {
+    $('#editCurriculumModal').hide();
+    $('#editCurriculumForm')[0].reset();
+    $('#editSubjectSelect').val(null).trigger('change'); // clear Select2
+  });
 
   // ---------------------------
   // Add Curriculum
@@ -83,7 +96,9 @@ $(document).ready(function () {
       data: { year_semester: year_semester, subject_ids: subjects, requestType: 'add_curriculum' },
       success: function () {
         fetchCurriculum();
-        $('#addCurriculumModal').hide().find('form')[0].reset();
+        $('#addCurriculumModal').hide();
+        $('#addCurriculumForm')[0].reset();
+        $('#subjectSelect').val(null).trigger('change'); // clear Select2
       }
     });
   });
@@ -102,7 +117,7 @@ $(document).ready(function () {
         let form = $('#editCurriculumForm');
         form.find('input[name="id"]').val(res.data.id);
         form.find('input[name="year_semester"]').val(res.data.year_semester);
-        form.find('#editSubjectSelect').val([res.data.subject_id]); // array for multiple select
+        form.find('#editSubjectSelect').val([res.data.subject_id]).trigger('change'); // set Select2 value
         $('#editCurriculumModal').show();
       }
     });
