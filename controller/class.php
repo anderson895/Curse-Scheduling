@@ -232,6 +232,78 @@ class global_class extends db_connect
         }
     }
 
+    public function get_curriculum() {
+        // Join curriculum with subjects to get subject details
+        $sql = "SELECT c.id, c.year_semester, 
+                    s.subject_id, s.subject_code, s.subject_name, s.subject_unit
+                FROM curriculum c
+                JOIN subjects s ON c.subject_id = s.subject_id
+                ORDER BY c.year_semester, s.subject_code";
+        
+        $result = $this->conn->query($sql);
+        $data = [];
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }   
+
+    public function get_curriculum_by_id($curriculum_id) {
+        $id = intval($curriculum_id);
+
+        // Join curriculum with subjects to get subject details
+        $sql = "SELECT c.id, c.year_semester, 
+                    s.subject_id, s.subject_code, s.subject_name, s.subject_unit
+                FROM curriculum c
+                JOIN subjects s ON c.subject_id = s.subject_id
+                WHERE c.id = $id";
+        
+        $result = $this->conn->query($sql);
+        if ($result) {
+            return $result->fetch_assoc();
+        }
+        return null;
+    }
+    
+
+    public function add_curriculum($year_semester, $subject_id) {
+        $year_semester = $this->conn->real_escape_string($year_semester);
+        $subject_id = intval($subject_id);
+
+        $sql = "INSERT INTO curriculum (year_semester, subject_id) VALUES ('$year_semester', $subject_id)";
+        if ($this->conn->query($sql)) {
+            return ['success'=>true, 'message'=>'Curriculum added successfully'];
+        } else {
+            return ['success'=>false, 'message'=>$this->conn->error];
+        }
+    }
+
+    public function update_curriculum($id, $year_semester, $subject_id) {
+        $id = intval($id);
+        $year_semester = $this->conn->real_escape_string($year_semester);
+        $subject_id = intval($subject_id);
+
+        $sql = "UPDATE curriculum SET year_semester='$year_semester', subject_id=$subject_id WHERE id=$id";
+        if ($this->conn->query($sql)) {
+            return ['success'=>true, 'message'=>'Curriculum updated successfully'];
+        } else {
+            return ['success'=>false, 'message'=>$this->conn->error];
+        }
+    }
+
+    public function delete_curriculum($id) {
+        $id = intval($id);
+        $sql = "DELETE FROM curriculum WHERE id=$id";
+        if ($this->conn->query($sql)) {
+            return ['success'=>true, 'message'=>'Curriculum deleted successfully'];
+        } else {
+            return ['success'=>false, 'message'=>$this->conn->error];
+        }
+    }
+
+
     public function toggle_account_status($user_id)
     {
         $user_id = (int) $user_id;

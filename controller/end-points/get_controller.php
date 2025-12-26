@@ -41,7 +41,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'status' => 200,
             'data' => $result
             ]);
-        } else {
+        }else if ($_GET['requestType'] == 'get_curriculum') {
+            $result = $db->get_curriculum();
+            echo json_encode([
+                'status' => 200,
+                'data' => $result
+            ]);
+        } else if ($_GET['requestType'] == 'get_curriculum_by_id') {
+            $curriculum_id = $_GET['id'];
+            $result = $db->get_curriculum_by_id($curriculum_id);
+            echo json_encode([
+                'status' => 200,
+                'data' => $result
+            ]);
+        }else {
             echo "404";
         }
 

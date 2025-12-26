@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 26, 2025 at 03:30 PM
+-- Generation Time: Dec 26, 2025 at 04:26 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -28,10 +28,19 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `curriculum` (
-  `curriculum_id` int(11) NOT NULL,
-  `curriculum_name` varchar(60) NOT NULL,
-  `curriculum_sched` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`curriculum_sched`))
+  `id` int(11) NOT NULL,
+  `year_semester` varchar(50) NOT NULL,
+  `subject_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `curriculum`
+--
+
+INSERT INTO `curriculum` (`id`, `year_semester`, `subject_id`) VALUES
+(11, '1', 1),
+(12, '1', 3),
+(13, '1', 5);
 
 -- --------------------------------------------------------
 
@@ -52,7 +61,9 @@ CREATE TABLE `subjects` (
 
 INSERT INTO `subjects` (`subject_id`, `subject_code`, `subject_name`, `subject_unit`) VALUES
 (1, '0001', 'Subject 1', '2'),
-(2, '0002', 'subject 2', '2');
+(3, '0002', 'subject 2', '2'),
+(4, '0003', 'subject 3', '3'),
+(5, '0004', 'subject 4', '2');
 
 -- --------------------------------------------------------
 
@@ -90,7 +101,8 @@ INSERT INTO `users` (`user_id`, `user_username`, `user_email`, `user_password`, 
 -- Indexes for table `curriculum`
 --
 ALTER TABLE `curriculum`
-  ADD PRIMARY KEY (`curriculum_id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `subject_id` (`subject_id`);
 
 --
 -- Indexes for table `subjects`
@@ -112,19 +124,29 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `curriculum`
 --
 ALTER TABLE `curriculum`
-  MODIFY `curriculum_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `subjects`
 --
 ALTER TABLE `subjects`
-  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
   MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `curriculum`
+--
+ALTER TABLE `curriculum`
+  ADD CONSTRAINT `curriculum_ibfk_1` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`subject_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
