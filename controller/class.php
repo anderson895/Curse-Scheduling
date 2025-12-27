@@ -13,6 +13,12 @@ class global_class extends db_connect
         $this->connect();
     }
 
+
+
+
+    
+    
+
     
 
 
@@ -413,6 +419,143 @@ public function delete_schedule($sch_id) {
             'message' => 'Failed to update account status.'
         ];
     }
+
+
+
+
+
+// ---------------- CREATE SCHEDULE ----------------
+public function create_schedule($sch_user_id, $sch_schedule_json) {
+    $sch_user_id = intval($sch_user_id);
+
+    // Decode the incoming JSON
+    $scheduleData = json_decode($sch_schedule_json, true);
+
+    if (!isset($scheduleData['schedule']) || empty($scheduleData['schedule'])) {
+        return ['success' => false, 'message' => 'No subjects to schedule.'];
+    }
+
+    // Generate random time slots based on entry hours
+    $scheduleData['schedule'] = $this->assign_random_slots($scheduleData['schedule']);
+
+    // Encode back to JSON
+    $sch_schedule_json = json_encode($scheduleData);
+
+    $stmt = $this->conn->prepare("INSERT INTO schedule (sch_user_id, sch_schedule) VALUES (?, ?)");
+    if (!$stmt) {
+        return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
+    }
+
+    $stmt->bind_param("is", $sch_user_id, $sch_schedule_json);
+
+    if ($stmt->execute()) {
+        $stmt->close();
+        return ['success' => true, 'message' => 'Schedule created successfully.'];
+    } else {
+        $stmt->close();
+        return ['success' => false, 'message' => 'Failed to create schedule: ' . $stmt->error];
+    }
+}
+
+// ---------------- UPDATE SCHEDULE ----------------
+public function update_schedule($sch_id, $sch_user_id, $sch_schedule_json) {
+    $sch_id = intval($sch_id);
+    $sch_user_id = intval($sch_user_id);
+
+    $scheduleData = json_decode($sch_schedule_json, true);
+    if (!isset($scheduleData['schedule']) || empty($scheduleData['schedule'])) {
+        return ['success' => false, 'message' => 'No subjects to schedule.'];
+    }
+
+    // Generate random time slots based on entry hours
+    $scheduleData['schedule'] = $this->assign_random_slots($scheduleData['schedule']);
+
+    $sch_schedule_json = json_encode($scheduleData);
+
+    $stmt = $this->conn->prepare("UPDATE schedule SET sch_user_id = ?, sch_schedule = ? WHERE sch_id = ?");
+    if (!$stmt) {
+        return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
+    }
+
+    $stmt->bind_param("isi", $sch_user_id, $sch_schedule_json, $sch_id);
+
+    if ($stmt->execute()) {
+        $stmt->close();
+        return ['success' => true, 'message' => 'Schedule updated successfully.'];
+    } else {
+        $stmt->close();
+        return ['success' => false, 'message' => 'Failed to update schedule: ' . $stmt->error];
+    }
+}
+
+// ---------------- ASSIGN RANDOM SLOTS ----------------
+public function assign_random_slots($schedule) {
+    // Available 30-min slots from 7:00 AM to 9:00 PM
+    $available_slots = [];
+    for ($h = 7; $h < 21; $h++) {
+        $available_slots[] = sprintf("%02d:00", $h);
+        $available_slots[] = sprintf("%02d:30", $h);
+    }
+
+    $newSchedule = [];
+    foreach ($schedule as $day => $subjects) {
+        $newSchedule[$day] = [];
+        $day_slots = $available_slots;
+
+        foreach ($subjects as $id => $entry) {
+            $subject = $entry['subject'] ?? $entry;
+            $hours = isset($entry['hours']) ? floatval($entry['hours']) : 0.5;
+            $duration_slots = $hours * 2; // each 0.5 hour = 1 slot
+
+            // Find possible start indices
+            $possible_starts = [];
+            for ($i = 0; $i <= count($day_slots) - $duration_slots; $i++) {
+                $possible_starts[] = $i;
+            }
+
+            if (empty($possible_starts)) break;
+
+            $start_index = $possible_starts[array_rand($possible_starts)];
+            $start_time = $day_slots[$start_index];
+            $end_time_index = $start_index + $duration_slots - 1;
+            $end_time = $this->increment_slot($day_slots[$end_time_index], 30);
+
+            // Assign schedule entry with subject, hours, and time
+            $newSchedule[$day][] = [
+                'subject' => $subject,
+                'hours'   => $hours,
+                'time'    => [
+                    'from' => $start_time,
+                    'to'   => $end_time
+                ]
+            ];
+
+            // Remove used slots
+            array_splice($day_slots, $start_index, $duration_slots);
+        }
+    }
+
+    return $newSchedule;
+}
+
+// ---------------- HELPER: increment a time string ----------------
+private function increment_slot($time, $minutes) {
+    $t = DateTime::createFromFormat('H:i', $time);
+    $t->modify("+{$minutes} minutes");
+    return $t->format('H:i');
+}
+
+
+
+
+
+
+
+
+
+
+
+    
 
 
 }

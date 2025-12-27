@@ -128,77 +128,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $db->delete_curriculum($id);
             echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
 
-       // ---------- SCHEDULE ----------
-        } else if ($_POST['requestType'] == 'create_schedule') {
+        }else  // ---------------- SCHEDULE ----------------
+        if (isset($_POST['requestType']) && in_array($_POST['requestType'], ['create_schedule', 'update_schedule'])) {
+            $sch_id = $_POST['sch_id'] ?? null;
+            $sch_user_id = intval($_POST['sch_user_id'] ?? 0);
+            $sch_schedule = $_POST['sch_schedule'] ?? '{}'; // JSON string from frontend
 
-            $sch_user_id = $_POST['sch_user_id'];
-            $sch_schedule = $_POST['sch_schedule']; // JSON string
-
-            if (!json_decode($sch_schedule)) {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Invalid schedule JSON'
-                ]);
-                exit;
+            // Decode JSON
+            $scheduleData = json_decode($sch_schedule, true);
+            if (!isset($scheduleData['schedule']) || !is_array($scheduleData['schedule'])) {
+                $scheduleData['schedule'] = [];
             }
 
-            if (method_exists($db, 'add_schedule')) {
-                $result = $db->add_schedule($sch_user_id, $sch_schedule);
-                echo json_encode($result['success'] 
-                    ? ['status'=>'success','message'=>$result['message']] 
-                    : ['status'=>'error','message'=>$result['message']]
-                );
+            // Normalize entries: ensure each entry has 'subject' and 'hours'
+            foreach ($scheduleData['schedule'] as $day => $entries) {
+                foreach ($entries as $key => $value) {
+                    if (is_array($value)) {
+                        $subject = $value['subject'] ?? '';
+                        $hours   = isset($value['hours']) ? floatval($value['hours']) : 0.5; // default 0.5 hr
+                        $scheduleData['schedule'][$day][$key] = [
+                            'subject' => $subject,
+                            'hours'   => $hours
+                        ];
+                    } else {
+                        // If value is just a string, assume 0.5 hr
+                        $scheduleData['schedule'][$day][$key] = [
+                            'subject' => $value,
+                            'hours'   => 0.5
+                        ];
+                    }
+                }
+            }
+
+            // Assign random time slots based on entry hours
+            if (!empty($scheduleData['schedule'])) {
+                $scheduleData['schedule'] = $db->assign_random_slots($scheduleData['schedule']);
+            }
+
+            // Re-encode JSON
+            $sch_schedule_clean = json_encode($scheduleData);
+
+            // Call appropriate DB method
+            if ($_POST['requestType'] === 'create_schedule') {
+                $result = $db->create_schedule($sch_user_id, $sch_schedule_clean);
             } else {
-                $query = "INSERT INTO schedule (sch_user_id, sch_schedule) VALUES (?, ?)";
-                $stmt = $db->conn->prepare($query);
-                $stmt->bind_param("is", $sch_user_id, $sch_schedule);
-
-                echo $stmt->execute() 
-                    ? json_encode(['status'=>'success','message'=>'Schedule created successfully'])
-                    : json_encode(['status'=>'error','message'=>'Failed to create schedule']);
+                $sch_id = intval($sch_id);
+                $result = $db->update_schedule($sch_id, $sch_user_id, $sch_schedule_clean);
             }
 
-        } else if ($_POST['requestType'] == 'update_schedule') {
-
-            $sch_id = $_POST['sch_id'];
-            $sch_user_id = $_POST['sch_user_id'];
-            $sch_schedule = $_POST['sch_schedule']; // JSON string
-
-            if (!json_decode($sch_schedule)) {
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Invalid schedule JSON'
-                ]);
-                exit;
-            }
-
-            // Use your global_class method if exists
-            if (method_exists($db, 'update_schedule')) {
-                $result = $db->update_schedule($sch_id, $sch_user_id, $sch_schedule);
-                echo json_encode($result['success'] 
-                    ? ['status'=>'success','message'=>$result['message']] 
-                    : ['status'=>'error','message'=>$result['message']]
-                );
-            } else {
-                // Fallback direct update query
-                $query = "UPDATE schedule SET sch_user_id = ?, sch_schedule = ? WHERE sch_id = ?";
-                $stmt = $db->conn->prepare($query);
-                $stmt->bind_param("isi", $sch_user_id, $sch_schedule, $sch_id);
-
-                echo $stmt->execute() 
-                    ? json_encode(['status'=>'success','message'=>'Schedule updated successfully'])
-                    : json_encode(['status'=>'error','message'=>'Failed to update schedule']);
-            }
-
-        } else if ($_POST['requestType'] == 'delete_schedule') {
+            // Return JSON response
+            echo json_encode($result['success'] 
+                ? ['status' => 'success', 'message' => $result['message']] 
+                : ['status' => 'error',   'message' => $result['message']]
+            );
+        } else if ($_POST['requestType'] === 'delete_schedule') {
             $sch_id = $_POST['sch_id'];
             $result = $db->delete_schedule($sch_id);
             echo json_encode($result['success'] 
-                ? ['status'=>'success','message'=>$result['message']] 
-                : ['status'=>'error','message'=>$result['message']]
+                ? ['status' => 'success', 'message' => $result['message']] 
+                : ['status' => 'error', 'message' => $result['message']]
             );
-
-        } else {
+        }else {
             http_response_code(404);
             echo json_encode(['status'=>404,'message'=>'Request Type Not Found']);
         }

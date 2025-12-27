@@ -5,8 +5,7 @@ $(document).ready(function () {
   // ==============================
   $('#openScheduleModal').click(() => {
     $('#scheduleModal').removeClass('hidden');
-    // When creating a new schedule, require entries
-    $('.startTime, .endTime, .subjectSelect').prop('required', true);
+    $('.subjectSelect').prop('required', true); // Only subject is required
   });
 
   $('#closeScheduleModal').click(() => {
@@ -65,18 +64,18 @@ $(document).ready(function () {
 
   $('#addEntry').click(() => {
     let day = $('.daySelect').val();
-    let start = $('.startTime').val();
-    let end = $('.endTime').val();
     let subject = $('.subjectSelect').val();
-    if (!day || !start || !end || !subject) return alert('Please fill all fields');
+    let hours = parseFloat($('.hoursSelect').val());
+
+    if (!day || !subject) return alert('Please select a day and subject');
 
     scheduleEntries[day] = scheduleEntries[day] || {};
     let entryId = ++entryCounter;
-    scheduleEntries[day][entryId] = { start, end, subject };
+    scheduleEntries[day][entryId] = { subject, hours };
 
     $('#entriesList').append(`
       <li class="border border-gray-200 p-2 rounded mb-1 flex justify-between items-center bg-gray-50" data-day="${day}" data-id="${entryId}">
-        <span>${day}: ${start}-${end} => ${subject}</span>
+        <span>${day} => ${subject} (${hours % 1 === 0 ? hours + ' hour' : (hours*60) + ' mins'})</span>
         <button type="button" class="removeEntry text-red-600 font-bold px-1 rounded">×</button>
       </li>
     `);
@@ -155,24 +154,34 @@ $(document).ready(function () {
           $('#entriesList').empty();
           entryCounter = 0;
           let dbSchedule = sch.sch_schedule.schedule || {};
-          for(let day in dbSchedule){
-            for(let time in dbSchedule[day]){
-              let subject = dbSchedule[day][time];
-              let [start, end] = time.split('-');
-              let id = ++entryCounter;
+
+          function formatTime(time24) {
+            let [hours, minutes] = time24.split(':').map(Number);
+            let ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            return `${hours}:${minutes.toString().padStart(2,'0')} ${ampm}`;
+          }
+
+          for (let day in dbSchedule) {
+            dbSchedule[day].forEach(entry => {
+              let entryId = ++entryCounter;
               scheduleEntries[day] = scheduleEntries[day] || {};
-              scheduleEntries[day][id] = { start, end, subject };
+              scheduleEntries[day][entryId] = { subject: entry.subject, hours: entry.hours || 1 };
+
+              let start = entry.time.from;
+              let end = entry.time.to;
+              let formattedTime = `${formatTime(start)} - ${formatTime(end)}`;
+
               $('#entriesList').append(`
-                <li class="border border-gray-200 p-2 rounded mb-1 flex justify-between items-center bg-gray-50" data-day="${day}" data-id="${id}">
-                  <span>${day}: ${start}-${end} => ${subject}</span>
+                <li class="border border-gray-200 p-2 rounded mb-1 flex justify-between items-center bg-gray-50" data-day="${day}" data-id="${entryId}">
+                  <span>${day} ${formattedTime} => ${entry.subject} (${entry.hours} ${entry.hours % 1 === 0 ? 'hour' : 'mins'})</span>
                   <button type="button" class="removeEntry text-red-600 font-bold px-1 rounded">×</button>
                 </li>
               `);
-            }
+            });
           }
 
-          // Remove required for editing
-          $('.startTime, .endTime, .subjectSelect').prop('required', false);
+          $('.subjectSelect').prop('required', false);
         }
       }
     });
@@ -201,56 +210,56 @@ $(document).ready(function () {
   // CREATE / UPDATE SCHEDULE
   // ==============================
   $('#scheduleForm').submit(function(e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  if(!editId) {
-    let hasEntries = Object.keys(scheduleEntries).some(day =>
-      Object.keys(scheduleEntries[day] || {}).length > 0
-    );
-    if(!hasEntries) return alert('Please add at least one schedule entry.');
-  }
-
-  // Convert scheduleEntries to DB-friendly format
-  let scheduleForDB = {};
-  for (let day in scheduleEntries) {
-    scheduleForDB[day] = {};
-    for (let id in scheduleEntries[day]) {
-      let entry = scheduleEntries[day][id];
-      let key = entry.start + '-' + entry.end;
-      scheduleForDB[day][key] = entry.subject; // store only subject code
+    if(!editId) {
+      let hasEntries = Object.keys(scheduleEntries).some(day =>
+        Object.keys(scheduleEntries[day] || {}).length > 0
+      );
+      if(!hasEntries) return alert('Please add at least one schedule entry.');
     }
-  }
 
-  let payload = {
-    requestType: editId ? 'update_schedule' : 'create_schedule',
-    sch_id: editId,
-    sch_user_id: $('select[name="sch_user_id"]').val(),
-    sch_schedule: JSON.stringify({
-      program: $('input[name="program"]').val(),
-      semester: $('input[name="semester"]').val(),
-      instructor: $('input[name="instructor"]').val(),
-      schedule: scheduleForDB
-    })
-  };
-
-  $.ajax({
-    url: '../controller/end-points/post_controller.php',
-    method: 'POST',
-    data: payload,
-    dataType: 'json',
-    success: function(res) {
-      alert(res.message);
-      $('#scheduleModal').addClass('hidden');
-      $('#scheduleForm')[0].reset();
-      $('#entriesList').empty();
-      scheduleEntries = {};
-      editId = null;
-      entryCounter = 0;
-      loadSchedules();
+    // Convert scheduleEntries to DB-friendly format
+    let scheduleForDB = {};
+    for (let day in scheduleEntries) {
+        scheduleForDB[day] = {};
+        for (let id in scheduleEntries[day]) {
+            let entry = scheduleEntries[day][id];
+            scheduleForDB[day][id] = { subject: entry.subject, hours: entry.hours };
+        }
     }
+
+    let payload = {
+      requestType: editId ? 'update_schedule' : 'create_schedule',
+      sch_id: editId,
+      sch_user_id: $('select[name="sch_user_id"]').val(),
+      sch_schedule: JSON.stringify({
+        program: $('input[name="program"]').val(),
+        semester: $('input[name="semester"]').val(),
+        instructor: $('input[name="instructor"]').val(),
+        schedule: scheduleForDB
+      })
+    };
+
+    $.ajax({
+      url: '../controller/end-points/post_controller.php',
+      method: 'POST',
+      data: payload,
+      dataType: 'json',
+      success: function(res) {
+        $('#scheduleModal').addClass('hidden');
+        $('#scheduleForm')[0].reset();
+        $('#entriesList').empty();
+        scheduleEntries = {};
+        editId = null;
+        entryCounter = 0;
+
+         alert(res.message);
+         
+        loadSchedules();
+      }
+    });
   });
-});
-
 
   // ==============================
   // INITIAL LOAD

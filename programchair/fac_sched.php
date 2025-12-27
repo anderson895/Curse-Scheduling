@@ -51,13 +51,32 @@ include "../src/components/programchair/nav.php";
               <option value="Thursday">Thursday</option>
               <option value="Friday">Friday</option>
             </select>
-            <input type="time" class="startTime border p-2 rounded w-full sm:w-auto" required>
-            <input type="time" class="endTime border p-2 rounded w-full sm:w-auto" required>
-            <select class="subjectSelect border p-2 rounded w-full sm:w-auto"></select>
-            <button type="button" id="addEntry" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded mt-2 sm:mt-0">Add</button>
+
+            <select class="subjectSelect border p-2 rounded w-full sm:w-auto">
+              <option value="Math">Math</option>
+              <option value="English">English</option>
+              <option value="Science">Science</option>
+            </select>
+
+            <!-- Input para sa hours -->
+            <select class="hoursSelect border p-2 rounded w-full sm:w-auto">
+              <option value="0.5">0.5 hour (30 mins)</option>
+              <option value="1">1 hour</option>
+              <option value="1.5">1.5 hours</option>
+              <option value="2">2 hours</option>
+              <option value="2.5">2.5 hours</option>
+              <option value="3">3 hours</option>
+            </select>
+
+
+            <button type="button" id="addEntry" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded mt-2 sm:mt-0">
+              Add
+            </button>
           </div>
+
           <ul id="entriesList" class="list-disc pl-5 max-h-32 overflow-y-auto"></ul>
         </div>
+
 
         <!-- Modal Actions -->
         <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3">
