@@ -65,12 +65,9 @@
         <span>Schedule</span>
       </a>
 
-      <a href="report" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
-        <span class="material-icons">calendar_month</span>
-        <span>General Engineering Schedule</span>
-      </a>
+      
 
-      <a href="settings" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+      <a href="report" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
         <span class="material-icons">analytics</span>
         <span>Schedule Report</span>
       </a>

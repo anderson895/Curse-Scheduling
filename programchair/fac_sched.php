@@ -33,7 +33,7 @@ include "../src/components/programchair/nav.php";
 
         <!-- Select Faculty -->
         <select name="sch_user_id" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-          <option value="">Select Faculty</option>
+          <option value="">Select Instructor</option>
         </select>
 
         <!-- Program, Semester, Instructor -->

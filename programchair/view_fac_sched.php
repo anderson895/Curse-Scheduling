@@ -12,16 +12,16 @@ include "../src/components/programchair/nav.php";
 </div>
 
 <div class="p-6 bg-gray-100 min-h-screen view_sched_container">
-<!-- Schedule Header -->
+
 <div class="bg-white rounded-lg shadow-md overflow-hidden">
 
   <!-- Program Info -->
   <div class="text-center border-b">
-    <h1 class="text-lg font-bold uppercase py-2">
+    <h1 class="text-lg font-bold uppercase py-2 sch_schedule_title">
       Bachelor of Science in Mechanical Engineering
     </h1>
-    <p class="text-sm font-semibold">Second Semester – SY 2025–2026</p>
-    <div class="bg-yellow-300 font-bold py-1 mt-2">
+    <p class="text-sm font-semibold sch_schedule_sy">Second Semester – SY 2025–2026</p>
+    <div class="bg-yellow-300 font-bold py-1 mt-2 sch_schedule_author">
       Engr. Christopher Lennon Dela Cruz
     </div>
   </div>
@@ -46,11 +46,11 @@ include "../src/components/programchair/nav.php";
   </div>
 </div>
 
-    
 </div>
 
 <?php
 include "../src/components/programchair/footer.php";
 ?>
+
 
 <script src="../static/js/programchair/view_fac_sched.js"></script>

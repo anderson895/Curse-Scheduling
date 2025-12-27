@@ -28,8 +28,8 @@ $(document).ready(function () {
       dataType: 'json',
       success: function (res) {
         if(res.status === 200) {
-          let options = '<option value="">Select Faculty</option>';
-          res.data.forEach(f => options += `<option value="${f.user_id}">${f.user_fname} ${f.user_lname}</option>`);
+          let options = '<option value="">Select Instructor</option>';
+          res.data.forEach(f => options += `<option class='capitalize' value="${f.user_id}">${f.user_fname} ${f.user_lname} (${f.user_type})</option>`);
           $('select[name="sch_user_id"]').html(options);
         }
       }

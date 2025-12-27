@@ -45,6 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $schedules = $db->get_schedules(); // already includes faculty_name and decoded sch_schedule
             echo json_encode(['status' => 200, 'data' => $schedules]);
 
+        } else if ($_GET['requestType'] == 'fetchAllSchedule') {
+
+            $schId = isset($_GET['sch_id']) ? intval($_GET['sch_id']) : null;
+            $schedules = $db->fetchAllSchedule($schId);
+            echo json_encode(['status' => 200, 'data' => $schedules]);
         } else {
             http_response_code(404);
             echo json_encode(['status' => 404, 'message' => 'Request Type Not Found']);

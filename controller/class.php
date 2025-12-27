@@ -14,6 +14,49 @@ class global_class extends db_connect
     }
 
 
+public function fetchAllSchedule($schId = null)
+{
+    // Step 1: Fetch schedule with faculty
+    $sql = "SELECT s.sch_id, s.sch_schedule, u.user_fname, u.user_lname
+            FROM schedule s
+            LEFT JOIN users u ON u.user_id = s.sch_user_id";
+    if ($schId !== null) {
+        $sql .= " WHERE s.sch_id = " . intval($schId);
+    }
+    $sql .= " ORDER BY s.sch_id DESC";
+
+    $result = $this->conn->query($sql);
+    $data = [];
+
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $row['faculty_name'] = $row['user_fname'] . ' ' . $row['user_lname'];
+            $schedule = json_decode($row['sch_schedule'], true);
+
+            // Step 2: Loop through schedule and fetch subject details
+            foreach ($schedule['schedule'] as $day => &$daySlots) {
+                foreach ($daySlots as &$slot) {
+                    $subjectCode = $slot['subject'];
+                    $subResult = $this->conn->query("SELECT * FROM subjects WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
+                    if ($subResult && $subRow = $subResult->fetch_assoc()) {
+                        $slot['subject_details'] = $subRow; // add full subject details
+                    } else {
+                        $slot['subject_details'] = null; // subject not found
+                    }
+                }
+            }
+
+            $row['sch_schedule'] = $schedule;
+            unset($row['user_fname'], $row['user_lname']);
+            $data[] = $row;
+        }
+    }
+
+    return $data;
+}
+
+
+
 
 
     
