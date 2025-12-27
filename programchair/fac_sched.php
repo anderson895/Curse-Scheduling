@@ -4,7 +4,7 @@ include "../src/components/programchair/nav.php";
 ?>
 
 <div class="flex flex-col sm:flex-row justify-between items-center bg-red-900 p-4 mb-6 rounded-md shadow-lg">
-  <h2 class="text-xl font-bold text-white uppercase tracking-wide mb-2 sm:mb-0">Faculty Schedule</h2>
+  <h2 class="text-xl font-bold text-white uppercase tracking-wide mb-2 sm:mb-0">Schedule</h2>
   <div class="w-10 h-10 bg-red-800 rounded-full flex items-center justify-center text-white font-bold shadow-md">
     <?php echo strtoupper(substr($On_Session[0]['user_username'], 0, 1)); ?>
   </div>
@@ -14,7 +14,7 @@ include "../src/components/programchair/nav.php";
 
   <!-- Header & Create Button -->
   <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
-    <h3 class="text-lg font-bold">Schedules</h3>
+    
     <button id="openScheduleModal" class="bg-red-900 hover:bg-red-800 text-white px-4 py-2 rounded shadow">
       + Create Schedule
     </button>
@@ -44,6 +44,11 @@ include "../src/components/programchair/nav.php";
         <div id="scheduleBuilder" class="border p-3 rounded space-y-2 overflow-x-auto">
           <h4 class="font-bold mb-2">Add Schedule Entry</h4>
           <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center mb-2">
+
+            <button type="button" id="addEntry" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded mt-2 sm:mt-0">
+              ADD
+            </button>
+
             <select class="daySelect border p-2 rounded w-full sm:w-auto">
               <option value="Monday">Monday</option>
               <option value="Tuesday">Tuesday</option>
@@ -69,9 +74,7 @@ include "../src/components/programchair/nav.php";
             </select>
 
 
-            <button type="button" id="addEntry" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded mt-2 sm:mt-0">
-              Add
-            </button>
+            
           </div>
 
           <ul id="entriesList" class="list-disc pl-5 max-h-32 overflow-y-auto"></ul>
