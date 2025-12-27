@@ -25,7 +25,7 @@ $(document).ready(function () {
             faculty: "faculty/dashboard",
             "program chair": "programchair/dashboard", // added space
             dean: "dean/dashboard",
-            gec: "gec/home"
+            gec: "gec/dashboard"
         };
 
         Swal.fire({

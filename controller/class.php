@@ -33,15 +33,14 @@ public function fetchAllSchedule($schId = null)
             $row['faculty_name'] = $row['user_fname'] . ' ' . $row['user_lname'];
             $schedule = json_decode($row['sch_schedule'], true);
 
-            // Step 2: Loop through schedule and fetch subject details
             foreach ($schedule['schedule'] as $day => &$daySlots) {
                 foreach ($daySlots as &$slot) {
                     $subjectCode = $slot['subject'];
                     $subResult = $this->conn->query("SELECT * FROM subjects WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
                     if ($subResult && $subRow = $subResult->fetch_assoc()) {
-                        $slot['subject_details'] = $subRow; // add full subject details
+                        $slot['subject_details'] = $subRow; 
                     } else {
-                        $slot['subject_details'] = null; // subject not found
+                        $slot['subject_details'] = null; 
                     }
                 }
             }
@@ -156,10 +155,39 @@ public function fetchAllSchedule($schId = null)
 
 
 
- public function get_schedules() {
+    public function get_schedules() {
+        $query = "
+            SELECT s.sch_id, s.sch_user_id, s.sch_schedule,
+                u.user_fname, u.user_lname,u.user_type
+            FROM schedule s
+            JOIN users u ON s.sch_user_id = u.user_id
+            WHERE u.user_type IN ('faculty', 'gec')
+            ORDER BY s.sch_user_id ASC
+        ";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $schedules = [];
+        while ($row = $result->fetch_assoc()) {
+            // Add full faculty name
+            $row['faculty_name'] = $row['user_fname'] . ' ' . $row['user_lname'];
+            $row['user_type'] = $row['user_type'];
+            // Decode JSON schedule for frontend
+            $row['sch_schedule'] = json_decode($row['sch_schedule'], true);
+            $schedules[] = $row;
+        }
+
+        return $schedules;
+    }
+
+
+
+    public function get_schedules_with_subjects() {
     $query = "
         SELECT s.sch_id, s.sch_user_id, s.sch_schedule,
-               u.user_fname, u.user_lname,u.user_type
+               u.user_fname, u.user_lname, u.user_type
         FROM schedule s
         JOIN users u ON s.sch_user_id = u.user_id
         WHERE u.user_type IN ('faculty', 'gec')
@@ -172,16 +200,33 @@ public function fetchAllSchedule($schId = null)
 
     $schedules = [];
     while ($row = $result->fetch_assoc()) {
-        // Add full faculty name
         $row['faculty_name'] = $row['user_fname'] . ' ' . $row['user_lname'];
         $row['user_type'] = $row['user_type'];
-        // Decode JSON schedule for frontend
-        $row['sch_schedule'] = json_decode($row['sch_schedule'], true);
+
+        // Decode schedule JSON
+        $schedule = json_decode($row['sch_schedule'], true);
+
+        // Attach subject details to each slot
+        foreach ($schedule['schedule'] as $day => &$daySlots) {
+            foreach ($daySlots as &$slot) {
+                $subjectCode = $slot['subject'];
+                $subResult = $this->conn->query("SELECT * FROM subjects WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
+                if ($subResult && $subRow = $subResult->fetch_assoc()) {
+                    $slot['subject_details'] = $subRow;
+                } else {
+                    $slot['subject_details'] = null;
+                }
+            }
+        }
+
+        $row['sch_schedule'] = $schedule;
+        unset($row['user_fname'], $row['user_lname']);
         $schedules[] = $row;
     }
 
     return $schedules;
 }
+
 
 
 
@@ -467,10 +512,23 @@ public function delete_schedule($sch_id) {
 
 
 
-
 // ---------------- CREATE SCHEDULE ----------------
 public function create_schedule($sch_user_id, $sch_schedule_json) {
     $sch_user_id = intval($sch_user_id);
+
+    // Check if user already has a schedule
+    $check_stmt = $this->conn->prepare("SELECT sch_id FROM schedule WHERE sch_user_id = ?");
+    if (!$check_stmt) {
+        return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
+    }
+    $check_stmt->bind_param("i", $sch_user_id);
+    $check_stmt->execute();
+    $check_stmt->store_result();
+    if ($check_stmt->num_rows > 0) {
+        $check_stmt->close();
+        return ['success' => false, 'message' => 'Schedule already exists for this user.'];
+    }
+    $check_stmt->close();
 
     // Decode the incoming JSON
     $scheduleData = json_decode($sch_schedule_json, true);
@@ -500,6 +558,28 @@ public function create_schedule($sch_user_id, $sch_schedule_json) {
         return ['success' => false, 'message' => 'Failed to create schedule: ' . $stmt->error];
     }
 }
+
+
+// ---------------- CHECK IF SCHEDULE EXISTS ----------------
+public function schedule_exists($sch_user_id) {
+    $sch_user_id = intval($sch_user_id);
+
+    $stmt = $this->conn->prepare("SELECT sch_id FROM schedule WHERE sch_user_id = ?");
+    if (!$stmt) {
+        return false; // treat error as "not exists"
+    }
+
+    $stmt->bind_param("i", $sch_user_id);
+    $stmt->execute();
+    $stmt->store_result();
+
+    $exists = $stmt->num_rows > 0;
+    $stmt->close();
+
+    return $exists;
+}
+
+
 
 // ---------------- UPDATE SCHEDULE ----------------
 public function update_schedule($sch_id, $sch_user_id, $sch_schedule_json) {

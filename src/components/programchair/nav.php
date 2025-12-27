@@ -54,11 +54,6 @@
 
     
 
-      <a href="gec_sched" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
-        <span class="material-icons">event_note</span>
-        <span>GEC Schedule</span>
-      </a>
-
       <a href="fac_sched" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
         <span class="material-icons">table_view</span>
 

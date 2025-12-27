@@ -128,8 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $db->delete_curriculum($id);
             echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
 
-        }else  // ---------------- SCHEDULE ----------------
-        if (isset($_POST['requestType']) && in_array($_POST['requestType'], ['create_schedule', 'update_schedule'])) {
+        } else if (isset($_POST['requestType']) && in_array($_POST['requestType'], ['create_schedule', 'update_schedule'])) {
             $sch_id = $_POST['sch_id'] ?? null;
             $sch_user_id = intval($_POST['sch_user_id'] ?? 0);
             $sch_schedule = $_POST['sch_schedule'] ?? '{}'; // JSON string from frontend
@@ -145,13 +144,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($entries as $key => $value) {
                     if (is_array($value)) {
                         $subject = $value['subject'] ?? '';
-                        $hours   = isset($value['hours']) ? floatval($value['hours']) : 0.5; // default 0.5 hr
+                        $hours   = isset($value['hours']) ? floatval($value['hours']) : 0.5;
                         $scheduleData['schedule'][$day][$key] = [
                             'subject' => $subject,
                             'hours'   => $hours
                         ];
                     } else {
-                        // If value is just a string, assume 0.5 hr
                         $scheduleData['schedule'][$day][$key] = [
                             'subject' => $value,
                             'hours'   => 0.5
@@ -168,8 +166,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Re-encode JSON
             $sch_schedule_clean = json_encode($scheduleData);
 
-            // Call appropriate DB method
+            // Validation: prevent duplicate schedules for the same user
             if ($_POST['requestType'] === 'create_schedule') {
+                if ($db->schedule_exists($sch_user_id)) {
+                    echo json_encode(['status' => 'error', 'message' => 'Schedule already exists for this user.']);
+                    exit;
+                }
                 $result = $db->create_schedule($sch_user_id, $sch_schedule_clean);
             } else {
                 $sch_id = intval($sch_id);

@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             echo json_encode(['status' => 200, 'data' => $faculty]);
 
         } else if ($_GET['requestType'] == 'get_schedules') {
-            $schedules = $db->get_schedules(); // already includes faculty_name and decoded sch_schedule
+            $schedules = $db->get_schedules_with_subjects(); // already includes faculty_name and decoded sch_schedule
             echo json_encode(['status' => 200, 'data' => $schedules]);
 
         } else if ($_GET['requestType'] == 'fetchAllSchedule') {
