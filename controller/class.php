@@ -116,7 +116,7 @@ class global_class extends db_connect
  public function get_schedules() {
     $query = "
         SELECT s.sch_id, s.sch_user_id, s.sch_schedule,
-               u.user_fname, u.user_lname
+               u.user_fname, u.user_lname,u.user_type
         FROM schedule s
         JOIN users u ON s.sch_user_id = u.user_id
         WHERE u.user_type IN ('faculty', 'gec')
@@ -131,6 +131,7 @@ class global_class extends db_connect
     while ($row = $result->fetch_assoc()) {
         // Add full faculty name
         $row['faculty_name'] = $row['user_fname'] . ' ' . $row['user_lname'];
+        $row['user_type'] = $row['user_type'];
         // Decode JSON schedule for frontend
         $row['sch_schedule'] = json_decode($row['sch_schedule'], true);
         $schedules[] = $row;

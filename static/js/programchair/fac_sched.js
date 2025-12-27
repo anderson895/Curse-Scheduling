@@ -103,25 +103,25 @@ function loadSchedules() {
         let html = `<table class="min-w-full border border-gray-300 bg-white shadow-md rounded-lg">
                       <thead class="bg-red-900 text-white">
                         <tr>
-                          <th class="p-2 text-left">Faculty</th>
                           <th class="p-2 text-left">Program</th>
                           <th class="p-2 text-left">Semester</th>
                           <th class="p-2 text-left">Instructor</th>
+                          <th class="p-2 text-left">Type</th>
                           <th class="p-2 text-left">Actions</th>
                         </tr>
                       </thead>
                       <tbody>`;
         res.data.forEach(sch => {
           html += `<tr class="border-b hover:bg-gray-50">
-                    <td class="p-2">${sch.faculty_name}</td>
                     <td class="p-2">${sch.sch_schedule.program || ''}</td>
                     <td class="p-2">${sch.sch_schedule.semester || ''}</td>
-                    <td class="p-2">${sch.sch_schedule.instructor || ''}</td>
+                    <td class="p-2">${sch.faculty_name || ''}</td>
+                    <td class="p-2 capitalize">${sch.user_type || ''}</td>
                     <td class="p-2 flex gap-2">
                       <a href="view_fac_sched.php?sch_id=${sch.sch_id}" 
                          class="viewSchedule bg-gray-500 hover:bg-gray-400 text-white px-3 py-1 rounded">View</a>
-                      <button class="editSchedule bg-yellow-500 hover:bg-yellow-400 text-white px-3 py-1 rounded" data-id="${sch.sch_id}">Edit</button>
-                      <button class="deleteSchedule bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded" data-id="${sch.sch_id}">Delete</button>
+                      <button class="editSchedule cursor-pointer bg-yellow-500 hover:bg-yellow-400 text-white px-3 py-1 rounded" data-id="${sch.sch_id}">Edit</button>
+                      <button class="deleteSchedule cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded" data-id="${sch.sch_id}">Delete</button>
                     </td>
                   </tr>`;
         });
@@ -239,7 +239,6 @@ function loadSchedules() {
       sch_schedule: JSON.stringify({
         program: $('input[name="program"]').val(),
         semester: $('input[name="semester"]').val(),
-        instructor: $('input[name="instructor"]').val(),
         schedule: scheduleForDB
       })
     };
