@@ -80,9 +80,7 @@ include "src/components/header.php";
                 class="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
           <option value="">Select user type</option>
           <option value="faculty">Faculty</option>
-          <option value="program chair">Program Chair</option>
           <option value="gec">GEC</option>
-          <option value="dean">Dean</option>
         </select>
       </div>
 
