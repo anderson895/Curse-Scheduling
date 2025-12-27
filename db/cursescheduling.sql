@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 27, 2025 at 09:56 AM
+-- Generation Time: Dec 27, 2025 at 04:21 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -40,7 +40,7 @@ CREATE TABLE `curriculum` (
 INSERT INTO `curriculum` (`id`, `year_semester`, `subject_id`) VALUES
 (22, '1', 1),
 (23, '1', 3),
-(24, '2', 4),
+(24, '2', 1),
 (25, '2', 5);
 
 -- --------------------------------------------------------
@@ -60,7 +60,8 @@ CREATE TABLE `schedule` (
 --
 
 INSERT INTO `schedule` (`sch_id`, `sch_user_id`, `sch_schedule`) VALUES
-(3, 2, '{\"program\":\"dawd\",\"semester\":\"sefsef\",\"instructor\":\"rgrdg\",\"schedule\":{\"Monday\":{\"16:15-16:15\":\"0001\"}}}');
+(15, 2, '{\"program\":\"BSIT\",\"semester\":\"SY-2025\",\"schedule\":{\"Monday\":[{\"subject\":\"0001\",\"hours\":1,\"time\":{\"from\":\"18:30\",\"to\":\"19:30\"}}]}}'),
+(16, 5, '{\"program\":\"dawd\",\"semester\":\"sefsef\",\"schedule\":{\"Monday\":[{\"subject\":\"0001\",\"hours\":2,\"time\":{\"from\":\"13:30\",\"to\":\"15:30\"}},{\"subject\":\"0001\",\"hours\":0.5,\"time\":{\"from\":\"16:30\",\"to\":\"17:00\"}},{\"subject\":\"0001\",\"hours\":0.5,\"time\":{\"from\":\"15:30\",\"to\":\"16:00\"}},{\"subject\":\"0001\",\"hours\":0.5,\"time\":{\"from\":\"18:30\",\"to\":\"19:00\"}},{\"subject\":\"0001\",\"hours\":0.5,\"time\":{\"from\":\"09:00\",\"to\":\"09:30\"}}]}}');
 
 -- --------------------------------------------------------
 
@@ -112,10 +113,10 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`user_id`, `user_username`, `user_email`, `user_password`, `user_type`, `user_fname`, `user_mname`, `user_lname`, `user_status`) VALUES
 (1, 'dean', 'dean@gmail.com', '$2a$12$fLOq7GrJKIAdsVycQYBA4Oh0KZelvFJ/Qj9NPBgA7jrHU633lW0Fm', 'dean', 'dean', '', 'dean', 1),
-(2, 'juans', 'juan@gmail.com', '$2y$10$0MvyJd3XGWnNcmV63Qo.fezf8EDwhhVlMn0SSeS8L33EGsHb5qvv.', 'faculty', 'juanzz', '', 'dela cruz', 1),
+(2, 'juans', 'juan@gmail.com', '$2a$12$Hdw2vDAREGbgE0KIMB8a8OOCLV80oU0ukM9pnnzgkdEGGB3HsC4NC', 'faculty', 'juanzz', '', 'dela cruz', 1),
 (3, 'programchair', 'programchair@gmail.com', '$2y$10$y3ZrKlwGOky8Gzuq8Ls3Q.izCFCw2zwx6LN5UiCYTLONlX1pOGwcm', 'program chair', 'programchair', '', 'padilla', 1),
 (4, 'test123', 'test1@gmail.com', '$2y$10$B2hrChQFiaIWOnR//NKaV.1zJgQEWTTTXENOy5HQZaDAd9nXt3rNC', 'faculty', 'faculty', '', 'padilla', 0),
-(5, 'gec', 'gec@gmail.com', '$2y$10$sGzxS0LpYOAXhAG3ARONsuydKb2lzq55A84R8nSAODuDpbf90kyoO', 'gec', 'gec', 'gec', 'gec', 0);
+(5, 'gec', 'gec@gmail.com', '$2y$10$sGzxS0LpYOAXhAG3ARONsuydKb2lzq55A84R8nSAODuDpbf90kyoO', 'gec', 'gec', 'gec', 'gec', 1);
 
 --
 -- Indexes for dumped tables
@@ -160,7 +161,7 @@ ALTER TABLE `curriculum`
 -- AUTO_INCREMENT for table `schedule`
 --
 ALTER TABLE `schedule`
-  MODIFY `sch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `sch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `subjects`
