@@ -139,19 +139,34 @@ public function fetchAllSchedule($schId = null)
 
 
     public function get_faculty_and_gec() {
-    $query = "SELECT * FROM `users` WHERE `user_type` IN (?, ?)";
-    $stmt = $this->conn->prepare($query);
-    
-    $faculty = 'faculty';
-    $gec = 'gec';
-    
-    $stmt->bind_param("ss", $faculty, $gec);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    return $result->fetch_all(MYSQLI_ASSOC);
-}
+        $query = "SELECT * FROM `users` WHERE `user_type` IN (?, ?)";
+        $stmt = $this->conn->prepare($query);
+        
+        $faculty = 'faculty';
+        $gec = 'gec';
+        
+        $stmt->bind_param("ss", $faculty, $gec);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 
+
+
+    public function get_schedule_gec_details($user_id) {
+        $query = "SELECT * FROM `users` WHERE `user_type` IN (?, ?) AND `user_id` = ?";
+        $stmt = $this->conn->prepare($query);
+        
+        $faculty = 'faculty';
+        $gec = 'gec';
+        
+        $stmt->bind_param("ssi", $faculty, $gec, $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 
 
 
@@ -227,6 +242,59 @@ public function fetchAllSchedule($schId = null)
     return $schedules;
 }
 
+
+
+
+
+
+
+
+
+public function get_schedules_gec_details($user_id) {
+    $query = "
+        SELECT s.sch_id, s.sch_user_id, s.sch_schedule,
+               u.user_fname, u.user_lname, u.user_type
+        FROM schedule s
+        JOIN users u ON s.sch_user_id = u.user_id
+        WHERE u.user_type IN ('faculty', 'gec') AND s.sch_user_id = ?
+        ORDER BY s.sch_user_id ASC
+    ";
+
+    $stmt = $this->conn->prepare($query);
+    $stmt->bind_param("i", $user_id);           
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $schedules = [];
+    while ($row = $result->fetch_assoc()) {
+        $row['faculty_name'] = $row['user_fname'] . ' ' . $row['user_lname'];
+        $row['user_type'] = $row['user_type'];
+
+        // Decode schedule JSON
+        $schedule = json_decode($row['sch_schedule'], true);
+
+        // Attach subject details to each slot
+        foreach ($schedule['schedule'] as $day => &$daySlots) {
+            foreach ($daySlots as &$slot) {
+                $subjectCode = $slot['subject'];
+                $subResult = $this->conn->query("SELECT * FROM subjects WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
+                if ($subResult && $subRow = $subResult->fetch_assoc()) {
+                    $slot['subject_details'] = $subRow;
+                } else {
+                    $slot['subject_details'] = null;
+                }
+            }
+        }
+
+        $row['sch_schedule'] = $schedule;
+        unset($row['user_fname'], $row['user_lname']);
+        $schedules[] = $row;
+    }
+
+    return $schedules;
+}
+
+// $schedule = $db->get_user_schedule($id);
 
 
 

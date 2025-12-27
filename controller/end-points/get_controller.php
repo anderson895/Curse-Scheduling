@@ -41,11 +41,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $faculty = $db->get_faculty_and_gec();
             echo json_encode(['status' => 200, 'data' => $faculty]);
 
+        } else if ($_GET['requestType'] == 'get_schedule_gec_details') {
+
+            
+            
+            $faculty = $db->get_schedule_gec_details($_SESSION['user_id']);
+            echo json_encode(['status' => 200, 'data' => $faculty]);
+
         } else if ($_GET['requestType'] == 'get_schedules') {
             $schedules = $db->get_schedules_with_subjects(); // already includes faculty_name and decoded sch_schedule
             echo json_encode(['status' => 200, 'data' => $schedules]);
 
-        } else if ($_GET['requestType'] == 'fetchAllSchedule') {
+        } else if ($_GET['requestType'] == 'get_schedules_gec_details') {
+            $schedules = $db->get_schedules_gec_details($_SESSION['user_id']); // already includes faculty_name and decoded sch_schedule
+            echo json_encode(['status' => 200, 'data' => $schedules]);
+
+        }else if ($_GET['requestType'] == 'fetchAllSchedule') {
+
+        
 
             $schId = isset($_GET['sch_id']) ? intval($_GET['sch_id']) : null;
             $schedules = $db->fetchAllSchedule($schId);

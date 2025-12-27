@@ -30,27 +30,23 @@ class auth_class extends db_connect
 
 
     public function get_user_schedule($user_id) {
-    $user_id = intval($user_id);
+        $user_id = intval($user_id);
+        $query = "SELECT sch_id, sch_schedule 
+                FROM schedule 
+                WHERE sch_user_id = $user_id 
+                ORDER BY sch_id DESC";
 
-    // Query the schedule table for this user
-    $query = "SELECT sch_id, sch_schedule 
-              FROM schedule 
-              WHERE sch_user_id = $user_id 
-              ORDER BY sch_id DESC";
+        $result = $this->conn->query($query);
 
-    $result = $this->conn->query($query);
-
-    $schedules = [];
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            // Decode the JSON schedule
-            $row['sch_schedule'] = json_decode($row['sch_schedule'], true);
-            $schedules[] = $row;
+        $schedules = [];
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $row['sch_schedule'] = json_decode($row['sch_schedule'], true);
+                $schedules[] = $row;
+            }
         }
+        return $schedules; 
     }
-
-    return $schedules; // Returns an array of schedules
-}
 
 
 
