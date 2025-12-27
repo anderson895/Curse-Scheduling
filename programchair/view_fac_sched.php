@@ -12,6 +12,39 @@ include "../src/components/programchair/nav.php";
 </div>
 
 <div class="p-6 bg-gray-100 min-h-screen view_sched_container">
+<!-- Schedule Header -->
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+
+  <!-- Program Info -->
+  <div class="text-center border-b">
+    <h1 class="text-lg font-bold uppercase py-2">
+      Bachelor of Science in Mechanical Engineering
+    </h1>
+    <p class="text-sm font-semibold">Second Semester – SY 2025–2026</p>
+    <div class="bg-yellow-300 font-bold py-1 mt-2">
+      Engr. Christopher Lennon Dela Cruz
+    </div>
+  </div>
+
+  <!-- Schedule Table -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full border-collapse text-sm">
+      <thead>
+        <tr class="bg-blue-900 text-white">
+          <th class="border p-2 w-28">TIME</th>
+          <th class="border p-2">Monday</th>
+          <th class="border p-2">Tuesday</th>
+          <th class="border p-2">Wednesday</th>
+          <th class="border p-2">Thursday</th>
+          <th class="border p-2">Friday</th>
+          <th class="border p-2">Saturday</th>
+        </tr>
+      </thead>
+
+      <tbody id="scheduleBody"></tbody>
+    </table>
+  </div>
+</div>
 
     
 </div>
