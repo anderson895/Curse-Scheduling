@@ -13,6 +13,8 @@ class global_class extends db_connect
         $this->connect();
     }
 
+    
+
 
 
       public function Login($username, $password)
@@ -86,6 +88,78 @@ class global_class extends db_connect
             return $result->fetch_all(MYSQLI_ASSOC); // <-- missing return
         }
     }
+
+
+    public function get_faculty_and_gec() {
+    $query = "SELECT * FROM `users` WHERE `user_type` IN (?, ?)";
+    $stmt = $this->conn->prepare($query);
+    
+    $faculty = 'faculty';
+    $gec = 'gec';
+    
+    $stmt->bind_param("ss", $faculty, $gec);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+
+
+
+ public function get_schedules() {
+    $query = "
+        SELECT s.sch_id, s.sch_user_id, s.sch_schedule,
+               u.user_fname, u.user_lname
+        FROM schedule s
+        JOIN users u ON s.sch_user_id = u.user_id
+        WHERE u.user_type IN ('faculty', 'gec')
+        ORDER BY s.sch_user_id ASC
+    ";
+
+    $stmt = $this->conn->prepare($query);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $schedules = [];
+    while ($row = $result->fetch_assoc()) {
+        // Add full faculty name
+        $row['faculty_name'] = $row['user_fname'] . ' ' . $row['user_lname'];
+        // Decode JSON schedule for frontend
+        $row['sch_schedule'] = json_decode($row['sch_schedule'], true);
+        $schedules[] = $row;
+    }
+
+    return $schedules;
+}
+
+
+
+
+
+// -------------------------
+// DELETE SCHEDULE
+// -------------------------
+public function delete_schedule($sch_id) {
+    $sch_id = intval($sch_id); // ensure it's an integer
+
+    $query = "DELETE FROM schedule WHERE sch_id = ?";
+    $stmt = $this->conn->prepare($query);
+    if (!$stmt) {
+        return ['success' => false, 'message' => 'Database prepare failed: ' . $this->conn->error];
+    }
+
+    $stmt->bind_param("i", $sch_id);
+
+    if ($stmt->execute()) {
+        $stmt->close();
+        return ['success' => true, 'message' => 'Schedule deleted successfully.'];
+    } else {
+        $stmt->close();
+        return ['success' => false, 'message' => 'Failed to delete schedule: ' . $this->conn->error];
+    }
+}
+
 
 
 

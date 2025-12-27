@@ -128,6 +128,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $db->delete_curriculum($id);
             echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
 
+       // ---------- SCHEDULE ----------
+        } else if ($_POST['requestType'] == 'create_schedule') {
+
+            $sch_user_id = $_POST['sch_user_id'];
+            $sch_schedule = $_POST['sch_schedule']; // JSON string
+
+            if (!json_decode($sch_schedule)) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Invalid schedule JSON'
+                ]);
+                exit;
+            }
+
+            if (method_exists($db, 'add_schedule')) {
+                $result = $db->add_schedule($sch_user_id, $sch_schedule);
+                echo json_encode($result['success'] 
+                    ? ['status'=>'success','message'=>$result['message']] 
+                    : ['status'=>'error','message'=>$result['message']]
+                );
+            } else {
+                $query = "INSERT INTO schedule (sch_user_id, sch_schedule) VALUES (?, ?)";
+                $stmt = $db->conn->prepare($query);
+                $stmt->bind_param("is", $sch_user_id, $sch_schedule);
+
+                echo $stmt->execute() 
+                    ? json_encode(['status'=>'success','message'=>'Schedule created successfully'])
+                    : json_encode(['status'=>'error','message'=>'Failed to create schedule']);
+            }
+
+        } else if ($_POST['requestType'] == 'update_schedule') {
+
+            $sch_id = $_POST['sch_id'];
+            $sch_user_id = $_POST['sch_user_id'];
+            $sch_schedule = $_POST['sch_schedule']; // JSON string
+
+            if (!json_decode($sch_schedule)) {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Invalid schedule JSON'
+                ]);
+                exit;
+            }
+
+            // Use your global_class method if exists
+            if (method_exists($db, 'update_schedule')) {
+                $result = $db->update_schedule($sch_id, $sch_user_id, $sch_schedule);
+                echo json_encode($result['success'] 
+                    ? ['status'=>'success','message'=>$result['message']] 
+                    : ['status'=>'error','message'=>$result['message']]
+                );
+            } else {
+                // Fallback direct update query
+                $query = "UPDATE schedule SET sch_user_id = ?, sch_schedule = ? WHERE sch_id = ?";
+                $stmt = $db->conn->prepare($query);
+                $stmt->bind_param("isi", $sch_user_id, $sch_schedule, $sch_id);
+
+                echo $stmt->execute() 
+                    ? json_encode(['status'=>'success','message'=>'Schedule updated successfully'])
+                    : json_encode(['status'=>'error','message'=>'Failed to update schedule']);
+            }
+
+        } else if ($_POST['requestType'] == 'delete_schedule') {
+            $sch_id = $_POST['sch_id'];
+            $result = $db->delete_schedule($sch_id);
+            echo json_encode($result['success'] 
+                ? ['status'=>'success','message'=>$result['message']] 
+                : ['status'=>'error','message'=>$result['message']]
+            );
+
         } else {
             http_response_code(404);
             echo json_encode(['status'=>404,'message'=>'Request Type Not Found']);
