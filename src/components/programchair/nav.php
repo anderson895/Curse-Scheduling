@@ -66,7 +66,6 @@
         <span class="material-icons">analytics</span>
         <span>Schedule Report</span>
       </a>
-
       
 
      

@@ -49,21 +49,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             echo json_encode(['status' => 200, 'data' => $faculty]);
 
         } else if ($_GET['requestType'] == 'get_schedules') {
-            $schedules = $db->get_schedules_with_subjects(); // already includes faculty_name and decoded sch_schedule
+            $schedules = $db->get_schedules_with_subjects();
             echo json_encode(['status' => 200, 'data' => $schedules]);
 
         } else if ($_GET['requestType'] == 'get_schedules_gec_details') {
-            $schedules = $db->get_schedules_gec_details($_SESSION['user_id']); // already includes faculty_name and decoded sch_schedule
+            $schedules = $db->get_schedules_gec_details($_SESSION['user_id']); 
             echo json_encode(['status' => 200, 'data' => $schedules]);
 
         }else if ($_GET['requestType'] == 'fetchAllSchedule') {
-
-        
-
             $schId = isset($_GET['sch_id']) ? intval($_GET['sch_id']) : null;
             $schedules = $db->fetchAllSchedule($schId);
             echo json_encode(['status' => 200, 'data' => $schedules]);
-        } else {
+        }else if ($_GET['requestType'] == 'fetchCurriculum') {
+             $curriculum = $db->fetchCurriculumReport(); 
+            echo json_encode($curriculum);
+            exit;
+        }else if ($_GET['requestType'] == 'fetchSchedule') {
+            $schedule = $db->fetchScheduleReport(); 
+            echo json_encode($schedule);
+            exit;
+
+        }else if ($_GET['requestType'] == 'fetchSubjects') {
+            $subjects = $db->fetchSubjectsReport();
+            echo json_encode($subjects);
+            exit;
+
+        }else if ($_GET['requestType'] == 'fetchUsers') {
+            $users = $db->fetchUsersReport(); 
+            echo json_encode($users);
+            exit;
+
+        }  else {
             http_response_code(404);
             echo json_encode(['status' => 404, 'message' => 'Request Type Not Found']);
         }

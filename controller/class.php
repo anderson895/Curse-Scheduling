@@ -14,6 +14,34 @@ class global_class extends db_connect
     }
 
 
+     // -----------------------------
+    // FETCH ALL REPORTS
+    // -----------------------------
+    public function fetchCurriculumReport() {
+        $query = "SELECT * FROM curriculum ORDER BY program, year_level, semester, subject_code";
+        return $this->conn->query($query)->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function fetchScheduleReport() {
+        $query = "SELECT s.sch_schedule, u.user_fname, u.user_mname, u.user_lname 
+                  FROM schedule s 
+                  INNER JOIN users u ON s.sch_user_id = u.user_id
+                  ORDER BY u.user_lname";
+        return $this->conn->query($query)->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function fetchSubjectsReport() {
+        $query = "SELECT * FROM curriculum ORDER BY program, subject_code";
+        return $this->conn->query($query)->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function fetchUsersReport() {
+        $query = "SELECT * FROM users ORDER BY user_lname";
+        return $this->conn->query($query)->fetch_all(MYSQLI_ASSOC);
+    }
+
+
+
 public function fetchAllSchedule($schId = null)
 {
     // Step 1: Fetch schedule with faculty

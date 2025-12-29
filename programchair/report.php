@@ -1,6 +1,6 @@
 <?php
-include "../src/components/dean/header.php";
-include "../src/components/dean/nav.php";
+include "../src/components/programchair/header.php";
+include "../src/components/programchair/nav.php";
 ?>
 
 <div class="flex flex-col sm:flex-row justify-between items-center bg-red-900 p-4 mb-6 rounded-md shadow-lg">
@@ -34,8 +34,6 @@ include "../src/components/dean/nav.php";
 </div>
 
 <?php
-include "../src/components/dean/footer.php";
+include "../src/components/programchair/footer.php";
 ?>
-
-
 <script src="../static/js/dean/report.js"></script>
