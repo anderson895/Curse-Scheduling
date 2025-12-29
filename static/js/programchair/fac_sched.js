@@ -18,9 +18,9 @@ $(document).ready(function () {
   });
 
   // ==============================
-  // LOAD FACULTY
+  // LOAD Instructors
   // ==============================
-  function loadFaculty() {
+  function loadInstructors() {
     $.ajax({
       url: '../controller/end-points/get_controller.php',
       method: 'GET',
@@ -318,7 +318,7 @@ $(document).on('keyup', '#scheduleSearch', function () {
   // ==============================
   // INITIAL LOAD
   // ==============================
-  loadFaculty();
+  loadInstructors();
   loadSubjects();
   loadSchedules();
 

@@ -206,7 +206,7 @@ public function fetchAllSchedule($schId = null)
         FROM schedule s
         JOIN users u ON s.sch_user_id = u.user_id
         WHERE u.user_type IN ('faculty', 'gec')
-        ORDER BY s.sch_user_id ASC
+        ORDER BY s.sch_user_id DESC
     ";
 
     $stmt = $this->conn->prepare($query);
