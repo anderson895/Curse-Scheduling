@@ -29,18 +29,34 @@ $(document).ready(function () {
         };
 
         Swal.fire({
-            title: 'Login Successful',
-            text: 'Redirecting...',
-            icon: 'success',
-            timer: 1500,
-            showConfirmButton: false
-        }).then(() => {
-            if (routes[user_type]) {
-                window.location.href = routes[user_type];
-            } else {
-                Swal.fire('Error', 'Unknown user role', 'error');
-            }
-        });
+        title: 'Login Successful',
+        text: 'Redirecting...',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false,
+        background: '#7f1d1d', // maroon (red-900)
+        color: '#fff',
+        iconColor: '#fecaca', // light red
+        customClass: {
+            popup: 'rounded-xl shadow-xl',
+            title: 'text-white font-bold',
+            htmlContainer: 'text-red-100'
+        }
+    }).then(() => {
+        if (routes[user_type]) {
+            window.location.href = routes[user_type];
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: 'Unknown user role',
+                icon: 'error',
+                background: '#7f1d1d',
+                color: '#fff',
+                iconColor: '#fecaca'
+            });
+        }
+    });
+
 
     } else {
         Swal.fire({

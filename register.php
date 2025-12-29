@@ -3,7 +3,7 @@ include "src/components/header.php";
 ?>
 
 <!-- Page Wrapper -->
-<div class="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-8">
+<div class="min-h-screen flex items-center justify-center bg-red-900 px-4 py-8">
 
   <!-- Login Card -->
   <div class="relative w-full max-w-md bg-white border border-red-900 rounded-2xl shadow-xl p-8 space-y-6">

@@ -3,7 +3,8 @@ include "src/components/header.php";
 ?>
 
 <!-- Page Wrapper -->
-<div class="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-8">
+<div class="min-h-screen flex items-center justify-center bg-red-900 px-4 py-8">
+
 
   <!-- Login Card -->
   <div class="relative w-full max-w-md bg-white border border-red-900 rounded-2xl shadow-xl p-8 space-y-6">
@@ -11,7 +12,7 @@ include "src/components/header.php";
     <!-- Logo and Title -->
     <div class="flex flex-col items-center space-y-3">
       <h1 class="text-3xl font-extrabold text-red-900 tracking-wide">
-        Course Scheduling Login
+        Course Scheduling 
       </h1>
     </div>
 
