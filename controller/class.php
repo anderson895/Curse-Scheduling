@@ -647,55 +647,91 @@ public function update_schedule($sch_id, $sch_user_id, $sch_schedule_json) {
     }
 }
 
-// ---------------- ASSIGN RANDOM SLOTS ----------------
 public function assign_random_slots($schedule) {
-    // Available 30-min slots from 7:00 AM to 9:00 PM
-    $available_slots = [];
-    for ($h = 7; $h < 21; $h++) {
-        $available_slots[] = sprintf("%02d:00", $h);
-        $available_slots[] = sprintf("%02d:30", $h);
+    $newSchedule = [];
+
+    // Define blocked time ranges (e.g., lunch break)
+    $blocked_ranges = [
+        ['from' => '12:00', 'to' => '13:00']
+    ];
+
+    // Generate all 30-min slots from 7:00 AM to 9:00 PM
+    $all_slots = [];
+    $current = new DateTime('07:00');
+    $end = new DateTime('21:00');
+
+    while ($current < $end) {
+        $slot_start = clone $current;
+        $current->modify('+30 minutes');
+        $slot_end = clone $current;
+
+        $all_slots[] = ['from' => $slot_start, 'to' => $slot_end];
     }
 
-    $newSchedule = [];
     foreach ($schedule as $day => $curriculum) {
         $newSchedule[$day] = [];
-        $day_slots = $available_slots;
+        $available_slots = $all_slots;
 
         foreach ($curriculum as $id => $entry) {
             $subject = $entry['subject'] ?? $entry;
-            $hours = isset($entry['hours']) ? floatval($entry['hours']) : 0.5;
-            $duration_slots = $hours * 2; // each 0.5 hour = 1 slot
+            $hours = isset($entry['hours']) ? floatval($entry['hours']) : 1;
+            $slots_needed = $hours * 2; // each 0.5h = 1 slot
 
-            // Find possible start indices
-            $possible_starts = [];
-            for ($i = 0; $i <= count($day_slots) - $duration_slots; $i++) {
-                $possible_starts[] = $i;
+            // Try to find sequential slots that do not overlap blocked ranges
+            $assigned = [];
+            $attempts = 0;
+            while (empty($assigned) && $attempts < count($available_slots)) {
+                for ($i = 0; $i <= count($available_slots) - $slots_needed; $i++) {
+                    $candidate = array_slice($available_slots, $i, $slots_needed);
+                    $conflict = false;
+                    foreach ($candidate as $slot) {
+                        foreach ($blocked_ranges as $range) {
+                            $range_start = new DateTime($range['from']);
+                            $range_end = new DateTime($range['to']);
+                            if ($slot['from'] < $range_end && $slot['to'] > $range_start) {
+                                $conflict = true;
+                                break 2;
+                            }
+                        }
+                    }
+                    if (!$conflict) {
+                        $assigned = $candidate;
+                        array_splice($available_slots, $i, $slots_needed); // remove assigned slots
+                        break;
+                    }
+                }
+                // If no slots found, move the schedule after the blocked range (e.g., 1:00 PM)
+                if (empty($assigned)) {
+                    $available_slots = array_filter($available_slots, function($slot) use ($blocked_ranges) {
+                        foreach ($blocked_ranges as $range) {
+                            $range_end = new DateTime($range['to']);
+                            if ($slot['from'] >= $range_end) return true;
+                        }
+                        return false;
+                    });
+                }
+                $attempts++;
             }
 
-            if (empty($possible_starts)) break;
+            if (empty($assigned)) {
+                error_log("Not enough slots for {$subject} on {$day}");
+                continue;
+            }
 
-            $start_index = $possible_starts[array_rand($possible_starts)];
-            $start_time = $day_slots[$start_index];
-            $end_time_index = $start_index + $duration_slots - 1;
-            $end_time = $this->increment_slot($day_slots[$end_time_index], 30);
-
-            // Assign schedule entry with subject, hours, and time
             $newSchedule[$day][] = [
                 'subject' => $subject,
-                'hours'   => $hours,
-                'time'    => [
-                    'from' => $start_time,
-                    'to'   => $end_time
+                'hours' => $hours,
+                'time' => [
+                    'from' => $assigned[0]['from']->format('H:i'),
+                    'to' => end($assigned)['to']->format('H:i')
                 ]
             ];
-
-            // Remove used slots
-            array_splice($day_slots, $start_index, $duration_slots);
         }
     }
 
     return $newSchedule;
 }
+
 
 // ---------------- HELPER: increment a time string ----------------
 private function increment_slot($time, $minutes) {

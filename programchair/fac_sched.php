@@ -20,8 +20,24 @@ include "../src/components/programchair/nav.php";
     </button>
   </div>
 
+
+
+  <div class="mb-4">
+    <input type="text" id="scheduleSearch"
+      placeholder="Search program, semester, instructor..."
+      class="w-full md:w-1/3 border p-2 rounded focus:ring-2 focus:ring-red-500">
+  </div>
+  
+
+
+
   <!-- Schedule Table -->
   <div id="scheduleTable" class="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-300"></div>
+
+  <div id="noSearchResult" class="hidden text-center text-gray-500 p-4">
+    No matching records found.
+  </div>
+
 
   <!-- CREATE SCHEDULE MODAL -->
 <div id="scheduleModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-black/50 p-4">
@@ -32,13 +48,27 @@ include "../src/components/programchair/nav.php";
     <form id="scheduleForm" class="space-y-4">
 
       <!-- Select Faculty -->
-      <select name="sch_user_id" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-        <option value="">Select Instructor</option>
-      </select>
+    <select id="sch_user_id" name="sch_user_id" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
+      <option value="">Select Instructor</option>
+    </select>
 
-      <!-- Program, Semester, Instructor -->
-      <input type="text" name="program" placeholder="Program" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-      <input type="text" name="semester" placeholder="Semester (e.g. 2nd Sem SY 2025-2026)" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
+    <!-- Program Dropdown -->
+    <select id="program" name="program" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
+      <option value="" disabled selected>Select Program</option>
+      <option value="BS Computer Engineering (BSCoE)">BS Computer Engineering (BSCoE)</option>
+      <option value="BS Management (BSM)">BS Management (BSM)</option>
+    </select>
+
+    <!-- Semester Dropdown -->
+    <select id="semester" name="semester" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
+      <option value="" disabled selected>Select Semester</option>
+      <option value="1st Sem SY 2025-2026">1st Sem SY 2025-2026</option>
+      <option value="2nd Sem SY 2025-2026">2nd Sem SY 2025-2026</option>
+      <option value="Summer SY 2025-2026">Summer SY 2025-2026</option>
+    </select>
+
+
+
       
       <!-- Schedule Builder -->
       <div id="scheduleBuilder" class="border p-3 rounded space-y-2 overflow-x-auto">

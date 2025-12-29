@@ -112,6 +112,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // ---------- SCHEDULE ----------
         } else if (isset($_POST['requestType']) && in_array($_POST['requestType'], ['create_schedule', 'update_schedule'])) {
+
+
+            // echo "<pre>";
+            // print_r($_POST);
+            // echo "</pre>";
+
             $sch_id = $_POST['sch_id'] ?? null;
             $sch_user_id = intval($_POST['sch_user_id'] ?? 0);
             $sch_schedule = $_POST['sch_schedule'] ?? '{}'; // JSON string from frontend
