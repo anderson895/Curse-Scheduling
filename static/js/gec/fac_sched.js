@@ -18,9 +18,9 @@ $(document).ready(function () {
   });
 
   // ==============================
-  // LOAD FACULTY
+  // LOAD Instructors
   // ==============================
-  function loadFaculty() {
+  function loadInstructors() {
     $.ajax({
       url: '../controller/end-points/get_controller.php',
       method: 'GET',
@@ -63,23 +63,36 @@ $(document).ready(function () {
   let entryCounter = 0;
 
   $('#addEntry').click(() => {
-    let day = $('.daySelect').val();
-    let subject = $('.subjectSelect').val();
-    let hours = parseFloat($('.hoursSelect').val());
+  let day = $('.daySelect').val();
+  let subject = $('.subjectSelect').val();
+  let hours = parseFloat($('.hoursSelect').val());
 
-    if (!day || !subject) return alert('Please select a day and subject');
+  if (!day || !subject) return alert('Please select a day and subject');
 
-    scheduleEntries[day] = scheduleEntries[day] || {};
-    let entryId = ++entryCounter;
-    scheduleEntries[day][entryId] = { subject, hours };
+  scheduleEntries[day] = scheduleEntries[day] || {};
 
-    $('#entriesList').append(`
-      <li class="border border-gray-200 p-2 rounded mb-1 flex justify-between items-center bg-gray-50" data-day="${day}" data-id="${entryId}">
-        <span>${day} => ${subject} (${hours % 1 === 0 ? hours + ' hour' : (hours*60) + ' mins'})</span>
-        <button type="button" class="removeEntry text-red-600 font-bold px-1 rounded">×</button>
-      </li>
-    `);
-  });
+  // Calculate total hours for this day
+  let totalHours = Object.values(scheduleEntries[day]).reduce((sum, entry) => sum + entry.hours, 0);
+ if (totalHours + hours > 13) {
+  return alert('Cannot add entry. Total hours per day cannot exceed 13 hours.');
+}
+
+  let entryId = ++entryCounter;
+  scheduleEntries[day][entryId] = { subject, hours };
+
+  $('#entriesList').append(`
+    <li class="border border-gray-200 p-2 rounded mb-1 flex justify-between items-center bg-gray-50" data-day="${day}" data-id="${entryId}">
+      <span>${day} => ${subject} (${hours % 1 === 0 ? hours + ' hour' : (hours*60) + ' mins'})</span>
+      <button type="button"
+        class="removeEntry cursor-pointer text-red-600 font-bold px-1 rounded
+              hover:bg-red-100 hover:text-red-800 hover:scale-110
+              transition duration-200 ease-in-out">
+        ×
+      </button>
+    </li>
+  `);
+});
+
 
   $(document).on('click', '.removeEntry', function() {
     let li = $(this).closest('li');
@@ -114,18 +127,21 @@ $(document).ready(function () {
                       </thead>
                       <tbody>`;
         res.data.forEach(sch => {
-          html += `<tr class="border-b hover:bg-gray-50">
-                    <td class="p-2">${sch.sch_schedule.program || ''}</td>
-                    <td class="p-2">${sch.sch_schedule.semester || ''}</td>
-                    <td class="p-2">${sch.faculty_name || ''}</td>
-                    <td class="p-2 capitalize">${sch.user_type || ''}</td>
-                    <td class="p-2 flex gap-2">
-                      <a href="view_fac_sched.php?sch_id=${sch.sch_id}" 
-                         class="viewSchedule bg-gray-500 hover:bg-gray-400 text-white px-3 py-1 rounded">View</a>
-                      <button class="editSchedule cursor-pointer bg-yellow-500 hover:bg-yellow-400 text-white px-3 py-1 rounded" data-id="${sch.sch_id}">Edit</button>
-                      <button class="deleteSchedule cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded" data-id="${sch.sch_id}">Delete</button>
-                    </td>
-                  </tr>`;
+         html += `<tr class="schedule-row border-b hover:bg-gray-50">
+          <td class="p-2">${sch.sch_schedule.program || ''}</td>
+          <td class="p-2">${sch.sch_schedule.semester || ''}</td>
+          <td class="p-2">${sch.faculty_name || ''}</td>
+          <td class="p-2 capitalize">${sch.user_type || ''}</td>
+          <td class="p-2 flex gap-2">
+            <a href="view_fac_sched.php?sch_id=${sch.sch_id}"
+              class="viewSchedule bg-gray-500 hover:bg-gray-400 text-white px-3 py-1 rounded">View</a>
+            <button class="editSchedule cursor-pointer bg-yellow-500 hover:bg-yellow-400 text-white px-3 py-1 rounded"
+              data-id="${sch.sch_id}">Edit</button>
+            <button class="deleteSchedule cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded"
+              data-id="${sch.sch_id}">Delete</button>
+          </td>
+        </tr>`;
+
         });
         html += `</tbody></table>`;
         $('#scheduleTable').html(html);
@@ -133,6 +149,30 @@ $(document).ready(function () {
     }
   });
 }
+
+
+
+// ==============================
+// SEARCH FILTER + EMPTY RESULT
+// ==============================
+$(document).on('keyup', '#scheduleSearch', function () {
+  let value = $(this).val().toLowerCase();
+  let visibleCount = 0;
+
+  $('.schedule-row').each(function () {
+    let match = $(this).text().toLowerCase().indexOf(value) > -1;
+    $(this).toggle(match);
+    if (match) visibleCount++;
+  });
+
+  // Show / hide empty result message
+  if (visibleCount === 0) {
+    $('#noSearchResult').removeClass('hidden');
+  } else {
+    $('#noSearchResult').addClass('hidden');
+  }
+});
+
 
 
 
@@ -151,8 +191,8 @@ $(document).ready(function () {
         if(sch) {
           $('#scheduleModal').removeClass('hidden');
           $('select[name="sch_user_id"]').val(sch.sch_user_id);
-          $('input[name="program"]').val(sch.sch_schedule.program);
-          $('input[name="semester"]').val(sch.sch_schedule.semester);
+          $('#program').val(sch.sch_schedule.program);
+          $('#semester').val(sch.sch_schedule.semester);
           $('input[name="instructor"]').val(sch.sch_schedule.instructor);
 
           // Populate existing entries
@@ -181,7 +221,14 @@ $(document).ready(function () {
               $('#entriesList').append(`
                 <li class="border border-gray-200 p-2 rounded mb-1 flex justify-between items-center bg-gray-50" data-day="${day}" data-id="${entryId}">
                   <span>${day} ${formattedTime} => ${entry.subject} (${entry.hours} ${entry.hours % 1 === 0 ? 'hour' : 'mins'})</span>
-                  <button type="button" class="removeEntry text-red-600 font-bold px-1 rounded">×</button>
+                 <button type="button"
+                  class="removeEntry cursor-pointer text-red-600 font-bold px-1 rounded
+                        hover:bg-red-100 hover:text-red-800 hover:scale-110
+                        transition duration-200 ease-in-out">
+                  ×
+                </button>
+
+
                 </li>
               `);
             });
@@ -218,6 +265,8 @@ $(document).ready(function () {
   $('#scheduleForm').submit(function(e) {
     e.preventDefault();
 
+    
+
     if(!editId) {
       let hasEntries = Object.keys(scheduleEntries).some(day =>
         Object.keys(scheduleEntries[day] || {}).length > 0
@@ -240,8 +289,8 @@ $(document).ready(function () {
       sch_id: editId,
       sch_user_id: $('select[name="sch_user_id"]').val(),
       sch_schedule: JSON.stringify({
-        program: $('input[name="program"]').val(),
-        semester: $('input[name="semester"]').val(),
+        program: $("#program").val(),
+        semester: $("#semester").val(),
         schedule: scheduleForDB
       })
     };
@@ -269,7 +318,7 @@ $(document).ready(function () {
   // ==============================
   // INITIAL LOAD
   // ==============================
-  loadFaculty();
+  loadInstructors();
   loadSubjects();
   loadSchedules();
 

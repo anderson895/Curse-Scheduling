@@ -17,13 +17,10 @@ include "../src/components/programchair/nav.php";
 
   <!-- Program Info -->
   <div class="text-center border-b">
-    <h1 class="text-lg font-bold uppercase py-2 sch_schedule_title">
-      Bachelor of Science in Mechanical Engineering
+    <h1 class="text-lg font-bold uppercase py-2 sch_schedule_title">sch_schedule_title
     </h1>
-    <p class="text-sm font-semibold sch_schedule_sy">Second Semester – SY 2025–2026</p>
-    <div class="bg-yellow-300 font-bold py-1 mt-2 sch_schedule_author">
-      Engr. Christopher Lennon Dela Cruz
-    </div>
+    <p class="text-sm font-semibold sch_schedule_sy">sch_schedule_sy</p>
+    <div class="bg-yellow-300 font-bold py-1 mt-2 sch_schedule_author capitalize">sch_schedule_author</div>
   </div>
 
   <!-- Schedule Table -->

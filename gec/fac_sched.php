@@ -20,79 +20,105 @@ include "../src/components/gec/nav.php";
     </button>
   </div>
 
+
+
+  <div class="mb-4">
+    <input type="text" id="scheduleSearch"
+      placeholder="Search program, semester, instructor..."
+      class="w-full md:w-1/3 border p-2 rounded focus:ring-2 focus:ring-red-500">
+  </div>
+  
+
+
+
   <!-- Schedule Table -->
   <div id="scheduleTable" class="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-300"></div>
 
-  <!-- CREATE SCHEDULE MODAL -->
-  <div id="scheduleModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="bg-white w-full sm:max-w-3xl md:max-w-4xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh]">
-
-      <h2 class="text-xl font-bold text-red-900 mb-4">Create Schedule</h2>
-
-      <form id="scheduleForm" class="space-y-4">
-
-        <!-- Select Faculty -->
-        <select name="sch_user_id" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-          <option value="">Select Instructor</option>
-        </select>
-
-        <!-- Program, Semester, Instructor -->
-        <input type="text" name="program" placeholder="Program" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-        <input type="text" name="semester" placeholder="Semester (e.g. 2nd Sem SY 2025-2026)" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-        
-
-        <!-- Schedule Builder -->
-        <div id="scheduleBuilder" class="border p-3 rounded space-y-2 overflow-x-auto">
-          <h4 class="font-bold mb-2">Add Schedule Entry</h4>
-          <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center mb-2">
-
-            <button type="button" id="addEntry" class="cursor-pointer bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded mt-2 sm:mt-0">
-              ADD
-            </button>
-
-            <select class="daySelect border p-2 rounded w-full sm:w-auto cursor-pointer">
-              <option value="Monday">Monday</option>
-              <option value="Tuesday">Tuesday</option>
-              <option value="Wednesday">Wednesday</option>
-              <option value="Thursday">Thursday</option>
-              <option value="Friday">Friday</option>
-            </select>
-
-            <select class="subjectSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
-              <option value="Math">Math</option>
-              <option value="English">English</option>
-              <option value="Science">Science</option>
-            </select>
-
-            <!-- Input para sa hours -->
-            <select class="hoursSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
-              <option value="0.5">30 mins</option>
-              <option value="1">1 hour</option>
-              <option value="1.5">1.5 hours</option>
-              <option value="2">2 hours</option>
-              <option value="2.5">2.5 hours</option>
-              <option value="3">3 hours</option>
-            </select>
-
-
-            
-          </div>
-
-          <ul id="entriesList" class="list-disc pl-5 max-h-32 overflow-y-auto"></ul>
-        </div>
-
-
-        <!-- Modal Actions -->
-        <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3">
-          <button type="button" id="closeScheduleModal" class="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded cursor-pointer">Cancel</button>
-          <button type="submit" class="px-4 py-2 bg-red-900 hover:bg-red-800 text-white rounde cursor-pointer">Save Schedule</button>
-        </div>
-
-      </form>
-    </div>
+  <div id="noSearchResult" class="hidden text-center text-gray-500 p-4">
+    No matching records found.
   </div>
 
+
+  <!-- CREATE SCHEDULE MODAL -->
+<div id="scheduleModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-black/50 p-4">
+  <div class="bg-white w-full sm:max-w-4xl md:max-w-6xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh]">
+
+    <h2 class="text-xl font-bold text-red-900 mb-4">Create Schedule</h2>
+
+    <form id="scheduleForm" class="space-y-4">
+
+      <!-- Select Faculty -->
+    <select id="sch_user_id" name="sch_user_id" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
+      <option value="">Select Instructor</option>
+    </select>
+
+    <!-- Program Dropdown -->
+    <select id="program" name="program" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
+      <option value="" disabled selected>Select Program</option>
+      <option value="BS Computer Engineering (BSCoE)">BS Computer Engineering (BSCoE)</option>
+      <option value="BS Management (BSM)">BS Management (BSM)</option>
+    </select>
+
+    <!-- Semester Dropdown -->
+    <select id="semester" name="semester" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
+      <option value="" disabled selected>Select Semester</option>
+      <option value="1st Sem SY 2025-2026">1st Sem SY 2025-2026</option>
+      <option value="2nd Sem SY 2025-2026">2nd Sem SY 2025-2026</option>
+      <option value="Summer SY 2025-2026">Summer SY 2025-2026</option>
+    </select>
+
+
+
+      
+      <!-- Schedule Builder -->
+      <div id="scheduleBuilder" class="border p-3 rounded space-y-2 overflow-x-auto">
+        <h4 class="font-bold mb-2">Add Schedule Entry</h4>
+        <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center mb-2">
+
+          <button type="button" id="addEntry" class="cursor-pointer bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded mt-2 sm:mt-0">
+            ADD
+          </button>
+
+          <select class="daySelect border p-2 rounded w-full sm:w-auto cursor-pointer">
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+          </select>
+
+          <select class="subjectSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
+            <option value="Math">Math</option>
+            <option value="English">English</option>
+            <option value="Science">Science</option>
+          </select>
+
+          <select class="hoursSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
+            <option value="0.5">30 mins</option>
+            <option value="1">1 hour</option>
+            <option value="1.5">1.5 hours</option>
+            <option value="2">2 hours</option>
+            <option value="2.5">2.5 hours</option>
+            <option value="3">3 hours</option>
+            <option value="3.5">3.5 hours</option>
+            <option value="4">4 hours</option>
+          </select>
+
+        </div>
+
+        <ul id="entriesList" class="list-disc pl-5 max-h-32 overflow-y-auto"></ul>
+      </div>
+
+      <!-- Modal Actions -->
+      <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3">
+        <button type="button" id="closeScheduleModal" class="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded cursor-pointer">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-red-900 hover:bg-red-800 text-white rounded cursor-pointer">Save Schedule</button>
+      </div>
+
+    </form>
+  </div>
 </div>
+
 
 <?php
 include "../src/components/gec/footer.php";
