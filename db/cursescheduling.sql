@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 29, 2025 at 04:55 AM
+-- Generation Time: Dec 29, 2025 at 10:43 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -3540,9 +3540,9 @@ CREATE TABLE `schedule` (
 --
 
 INSERT INTO `schedule` (`sch_id`, `sch_user_id`, `sch_schedule`) VALUES
-(15, 2, '{\"program\":\"BSIT\",\"semester\":\"SY-2025\",\"schedule\":{\"Monday\":[]}}'),
-(16, 5, '{\"program\":\"dawd\",\"semester\":\"sefsef\",\"schedule\":{\"Monday\":[{\"subject\":\"0001\",\"hours\":2,\"time\":{\"from\":\"13:30\",\"to\":\"15:30\"}},{\"subject\":\"0001\",\"hours\":0.5,\"time\":{\"from\":\"16:30\",\"to\":\"17:00\"}},{\"subject\":\"0001\",\"hours\":0.5,\"time\":{\"from\":\"15:30\",\"to\":\"16:00\"}},{\"subject\":\"0001\",\"hours\":0.5,\"time\":{\"from\":\"18:30\",\"to\":\"19:00\"}},{\"subject\":\"0001\",\"hours\":0.5,\"time\":{\"from\":\"09:00\",\"to\":\"09:30\"}}]}}'),
-(18, 6, '{\"program\":\"BSIT\",\"semester\":\"SY-2025\",\"schedule\":{\"Monday\":[{\"subject\":\"CHEM 103\",\"hours\":0.5,\"time\":{\"from\":\"13:30\",\"to\":\"14:00\"}}]}}');
+(15, 2, '{\"program\":\"BS Computer Engineering (BSCoE)\",\"semester\":\"1st Sem SY 2025-2026\",\"schedule\":{\"Monday\":[{\"subject\":\"CHEM 103\",\"hours\":0.5,\"time\":{\"from\":\"20:00\",\"to\":\"20:30\"}}]}}'),
+(16, 5, '{\"program\":\"BS Computer Engineering (BSCoE)\",\"semester\":\"1st Sem SY 2025-2026\",\"schedule\":{\"Monday\":[{\"subject\":\"MAT 123\",\"hours\":0.5,\"time\":{\"from\":\"15:30\",\"to\":\"16:00\"}},{\"subject\":\"FCL.200\",\"hours\":0.5,\"time\":{\"from\":\"14:30\",\"to\":\"15:00\"}},{\"subject\":\"NSTP100\",\"hours\":0.5,\"time\":{\"from\":\"12:30\",\"to\":\"13:00\"}}]}}'),
+(21, 6, '{\"program\":\"BS Computer Engineering (BSCoE)\",\"semester\":\"2nd Sem SY 2025-2026\",\"schedule\":{\"Monday\":[{\"subject\":\"PSY100\",\"hours\":4,\"time\":{\"from\":\"07:00\",\"to\":\"11:00\"}},{\"subject\":\"PSY100\",\"hours\":4,\"time\":{\"from\":\"13:00\",\"to\":\"17:00\"}},{\"subject\":\"PSY100\",\"hours\":4,\"time\":{\"from\":\"17:00\",\"to\":\"21:00\"}},{\"subject\":\"FCL.200\",\"hours\":0.5,\"time\":{\"from\":\"11:00\",\"to\":\"11:30\"}}],\"Wednesday\":[{\"subject\":\"ENG 100\",\"hours\":2,\"time\":{\"from\":\"07:00\",\"to\":\"09:00\"}}]}}');
 
 -- --------------------------------------------------------
 
@@ -3608,7 +3608,8 @@ INSERT INTO `users` (`user_id`, `user_username`, `user_email`, `user_password`, 
 -- Indexes for table `schedule`
 --
 ALTER TABLE `schedule`
-  ADD PRIMARY KEY (`sch_id`);
+  ADD PRIMARY KEY (`sch_id`),
+  ADD KEY `sch_user_id` (`sch_user_id`);
 
 --
 -- Indexes for table `subjects`
@@ -3630,7 +3631,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `schedule`
 --
 ALTER TABLE `schedule`
-  MODIFY `sch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `sch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `subjects`
@@ -3643,6 +3644,16 @@ ALTER TABLE `subjects`
 --
 ALTER TABLE `users`
   MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `schedule`
+--
+ALTER TABLE `schedule`
+  ADD CONSTRAINT `schedule_ibfk_1` FOREIGN KEY (`sch_user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
