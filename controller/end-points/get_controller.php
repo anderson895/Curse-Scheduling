@@ -43,8 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         } else if ($_GET['requestType'] == 'get_schedule_gec_details') {
 
-            
-            
             $faculty = $db->get_schedule_gec_details($_SESSION['user_id']);
             echo json_encode(['status' => 200, 'data' => $faculty]);
 
@@ -79,7 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             echo json_encode($users);
             exit;
 
-        }  else {
+        }else if ($_GET['requestType'] == 'fetchDashboard') {
+            $result = $db->fetchDashboard(); 
+            echo json_encode($result);
+            exit;
+
+        }else {
             http_response_code(404);
             echo json_encode(['status' => 404, 'message' => 'Request Type Not Found']);
         }

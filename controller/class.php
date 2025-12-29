@@ -40,6 +40,24 @@ class global_class extends db_connect
         return $this->conn->query($query)->fetch_all(MYSQLI_ASSOC);
     }
 
+    public function fetchDashboard() {
+        $dashboard = [];
+
+        // Total Users
+        $userResult = $this->conn->query("SELECT COUNT(*) AS total_users FROM users");
+        $dashboard['total_users'] = $userResult ? $userResult->fetch_assoc()['total_users'] : 0;
+
+        // Total Subjects
+        $subjectResult = $this->conn->query("SELECT COUNT(*) AS total_subjects FROM curriculum");
+        $dashboard['total_subjects'] = $subjectResult ? $subjectResult->fetch_assoc()['total_subjects'] : 0;
+
+        // Total Schedules
+        $scheduleResult = $this->conn->query("SELECT COUNT(*) AS total_schedules FROM schedule");
+        $dashboard['total_schedules'] = $scheduleResult ? $scheduleResult->fetch_assoc()['total_schedules'] : 0;
+
+        return $dashboard;
+    }
+
 
 
 public function fetchAllSchedule($schId = null)
