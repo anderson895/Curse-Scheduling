@@ -55,8 +55,13 @@ include "../src/components/gec/nav.php";
     <!-- Program Dropdown -->
     <select id="program" name="program" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
       <option value="" disabled selected>Select Program</option>
-      <option value="BS Computer Engineering (BSCoE)">BS Computer Engineering (BSCoE)</option>
-      <option value="BS Management (BSM)">BS Management (BSM)</option>
+      <option value="BSCE">BS Civil Engineering (BSCE)</option>
+      <option value="BSCOE">BS Computer Engineering (BSCOE)</option>
+      <option value="BSEE">BS Electrical Engineering (BSEE)</option>
+      <option value="BSECE">BS Electronics Engineering (BSECE)</option>
+      <option value="BSIE">BS Industrial Engineering (BSIE)</option>
+      <option value="BSME">BS Mechanical Engineering (BSME)</option>
+
     </select>
 
     <!-- Semester Dropdown -->
