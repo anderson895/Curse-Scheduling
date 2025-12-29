@@ -73,9 +73,9 @@ $(document).ready(function () {
 
   // Calculate total hours for this day
   let totalHours = Object.values(scheduleEntries[day]).reduce((sum, entry) => sum + entry.hours, 0);
-  if (totalHours + hours > 14) {
-    return alert('Cannot add entry. Total hours per day cannot exceed 14.');
-  }
+ if (totalHours + hours > 13) {
+  return alert('Cannot add entry. Total hours per day cannot exceed 13.');
+}
 
   let entryId = ++entryCounter;
   scheduleEntries[day][entryId] = { subject, hours };
