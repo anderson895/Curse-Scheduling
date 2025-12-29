@@ -11,12 +11,12 @@ include "../src/components/dean/nav.php";
 
     <!-- Card Header -->
     <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-      <h3 class="text-lg font-semibold text-red-900">Subject List</h3>
+      <h3 class="text-lg font-semibold text-red-900">Curriculum List</h3>
 
       <button id="addBtn"
         class="flex cursor-pointer items-center gap-2 bg-red-900 hover:bg-red-800 text-white px-4 py-2 rounded-md shadow">
         <span class="material-icons text-sm">add</span>
-        Add Subject
+        Add Curriculum
       </button>
     </div>
 
@@ -25,17 +25,24 @@ include "../src/components/dean/nav.php";
       <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden text-sm">
         <thead class="bg-red-900 text-white">
           <tr>
+            <th class="p-3 text-left">Program</th>
+            <th class="p-3 text-left">Curriculum Year</th>
+            <th class="p-3 text-left">Year Level</th>
+            <th class="p-3 text-left">Semester</th>
             <th class="p-3 text-left">Code</th>
             <th class="p-3 text-left">Name</th>
-            <th class="p-3 text-left">Units</th>
-            <th class="p-3 text-left">Type</th> <!-- New column -->
+            <th class="p-3 text-left">Lec hrs</th>
+            <th class="p-3 text-left">Lab hrs</th>
+            <th class="p-3 text-left">Lec Units</th>
+            <th class="p-3 text-left">Lab Units</th>
+            <th class="p-3 text-left">Prerequisite</th>
             <th class="p-3 text-center">Actions</th>
           </tr>
       </thead>
 
         <tbody id="subjectTableBody" class="divide-y">
           <tr>
-            <td colspan="4" class="text-center p-6 text-gray-500">
+            <td colspan="12" class="text-center p-6 text-gray-500">
               Loading...
             </td>
           </tr>
@@ -56,54 +63,62 @@ include "../src/components/dean/nav.php";
     <h2 class="text-xl font-bold text-red-900 mb-4">Add Subject</h2>
 
     <form id="addSubjectForm" class="space-y-4">
-
-
-
-      <!-- Subject Code -->
       <div>
-        <label class="block text-sm font-semibold mb-1">Subject Code</label>
-        <input type="text" name="subject_code" required
-          class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+        <label class="block text-gray-700">Program</label>
+        <input type="text" name="program" class="w-full border p-2 rounded" required>
       </div>
-
-      <!-- Subject Name -->
       <div>
-        <label class="block text-sm font-semibold mb-1">Subject Name</label>
-        <input type="text" name="subject_name" required
-          class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+        <label class="block text-gray-700">Curriculum Year</label>
+        <input type="text" name="curriculum_year" class="w-full border p-2 rounded" required>
       </div>
-
-      <!-- Units -->
       <div>
-        <label class="block text-sm font-semibold mb-1">Units</label>
-        <input type="number" name="units" required
-          class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+        <label class="block text-gray-700">Year Level</label>
+        <input type="number" name="year_level" class="w-full border p-2 rounded" required>
       </div>
-
-      <!-- Subject Type -->
       <div>
-        <label class="block text-sm font-semibold mb-1">Type</label>
-        <select name="subject_type" required
-                class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
-          <option value="" disabled selected>Select Type</option>
-          <option value="Major">Major</option>
-          <option value="Minor">Minor</option>
-        </select>
+        <label class="block text-gray-700">Semester</label>
+        <input type="text" name="semester" class="w-full border p-2 rounded" required>
       </div>
-
+      <div>
+        <label class="block text-gray-700">Subject Code</label>
+        <input type="text" name="subject_code" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Subject Name</label>
+        <input type="text" name="subject_name" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Lecture Hours</label>
+        <input type="number" name="lec_hours" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Lab Hours</label>
+        <input type="number" name="lab_hours" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Lecture Units</label>
+        <input type="number" name="lec_units" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Lab Units</label>
+        <input type="number" name="lab_units" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Prerequisite</label>
+        <input type="text" name="prerequisite" class="w-full border p-2 rounded">
+      </div>
 
       <!-- Buttons -->
       <div class="flex justify-end gap-2 pt-4">
-        <button type="button" id="closeAddSubjectModal"
-          class="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
+        <button type="button" id="closeAddSubjectModal" class="cursor-pointer px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
           Cancel
         </button>
-        <button type="submit"
-          class="px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800">
+        <button type="submit" class="cursor-pointer px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800">
           Save
         </button>
       </div>
     </form>
+
   </div>
 </div>
 
@@ -122,54 +137,71 @@ include "../src/components/dean/nav.php";
   class="fixed inset-0 hidden z-50 items-center justify-center bg-[rgba(0,0,0,0.5)] transition-opacity duration-300">
 
   <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-6">
-    <h2 class="text-xl font-bold text-red-900 mb-4">Edit Subject</h2>
+    <h2 class="text-xl font-bold text-red-900 mb-4">Edit Subject</h2> 
 
     <form id="editSubjectForm" class="space-y-4">
       <input type="hidden" name="subject_id" id="edit_subject_id">
 
       <div>
-        <label class="block text-sm font-semibold mb-1">Subject Code</label>
-        <input type="text" name="subject_code" id="edit_subject_code" required
-          class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+        <label class="block text-gray-700">Program</label>
+        <input type="text" name="program" id="edit_program" class="w-full border p-2 rounded" required>
       </div>
-
       <div>
-        <label class="block text-sm font-semibold mb-1">Subject Name</label>
-        <input type="text" name="subject_name" id="edit_subject_name" required
-          class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+        <label class="block text-gray-700">Curriculum Year</label>
+        <input type="text" name="curriculum_year" id="edit_curriculum_year" class="w-full border p-2 rounded" required>
       </div>
-
       <div>
-        <label class="block text-sm font-semibold mb-1">Units</label>
-        <input type="number" name="units" id="edit_subject_unit" required
-          class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
+        <label class="block text-gray-700">Year Level</label>
+        <input type="number" name="year_level" id="edit_year_level" class="w-full border p-2 rounded" required>
       </div>
-
-      <!-- Subject Type -->
       <div>
-        <label class="block text-sm font-semibold mb-1">Type</label>
-        <select name="subject_type" id="edit_subject_type" required
-                class="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-500">
-          <option value="" disabled>Select Type</option>
-          <option value="Major">Major</option>
-          <option value="Minor">Minor</option>
-        </select>
+        <label class="block text-gray-700">Semester</label>
+        <input type="text" name="semester" id="edit_semester" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Subject Code</label>
+        <input type="text" name="subject_code" id="edit_subject_code" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Subject Name</label>
+        <input type="text" name="subject_name" id="edit_subject_name" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Lecture Hours</label>
+        <input type="number" name="lec_hours" id="edit_lec_hours" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Lab Hours</label>
+        <input type="number" name="lab_hours" id="edit_lab_hours" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Lecture Units</label>
+        <input type="number" name="lec_units" id="edit_lec_units" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Lab Units</label>
+        <input type="number" name="lab_units" id="edit_lab_units" class="w-full border p-2 rounded" required>
+      </div>
+      <div>
+        <label class="block text-gray-700">Prerequisite</label>
+        <input type="text" name="prerequisite" id="edit_prerequisite" class="w-full border p-2 rounded">
       </div>
 
-
+      <!-- Buttons -->
       <div class="flex justify-end gap-2 pt-4">
-        <button type="button" id="closeEditSubjectModal"
-          class="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
+        <button type="button" id="closeEditSubjectModal" class="cursor-pointer px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">
           Cancel
         </button>
-        <button type="submit"
-          class="px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800">
+        <button type="submit" class="cursor-pointer px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800">
           Update
         </button>
       </div>
     </form>
+
   </div>
 </div>
+
+
 
 
 

@@ -99,7 +99,7 @@ $(document).ready(function() {
               <tr class="hover:bg-gray-50">
                 <td class="p-3">${subject.subject_code}</td>
                 <td class="p-3">${subject.subject_name}</td>
-                <td class="p-3">${subject.subject_unit}</td>
+                <td class="p-3">${subject.lec_units}</td>
                 <td class="p-3">${subject.subject_type}</td>
                 <td class="p-3 text-center">
                   <button class="editBtn px-3 py-1 bg-gray-700 cursor-pointer text-white rounded-md text-sm" data-id="${subject.subject_id}">Edit</button>
@@ -164,7 +164,7 @@ $(document).on('click', '.editBtn', function() {
         $('#edit_subject_id').val(subject.subject_id);
         $('#edit_subject_code').val(subject.subject_code);
         $('#edit_subject_name').val(subject.subject_name);
-        $('#edit_subject_unit').val(subject.subject_unit);
+        $('#edit_subject_unit').val(subject.lec_units);
         $('#edit_subject_type').val(subject.subject_type);
 
         // Open modal

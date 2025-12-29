@@ -1,87 +1,7 @@
 $(document).ready(function () {
 
-  // ==========================
-  // OPEN MODAL
-  // ==========================
-  $('#addBtn').on('click', function () {
-    $('#addSubjectModal').removeClass('hidden').addClass('flex');
-  });
-
-  // ==========================
-  // CLOSE MODAL
-  // ==========================
-  $('#closeAddSubjectModal').on('click', function () {
-    $('#addSubjectModal').addClass('hidden').removeClass('flex');
-    $('#addSubjectForm')[0].reset();
-  });
-
-  // CLOSE WHEN CLICK OUTSIDE
-  $('#addSubjectModal').on('click', function (e) {
-    if (e.target.id === 'addSubjectModal') {
-      $(this).addClass('hidden').removeClass('flex');
-      $('#addSubjectForm')[0].reset();
-    }
-  });
-
-  // ==========================
-  // SUBMIT FORM (AJAX)
-  // ==========================
-  $('#addSubjectForm').on('submit', function (e) {
-    e.preventDefault();
-
-    $.ajax({
-      url: '../controller/end-points/post_controller.php',
-      method: 'POST',
-      data: $(this).serialize() + '&requestType=add_subject',
-      dataType: 'json',
-      success: function (response) {
-
-        if (response.status === 'success') {
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            text: response.message || 'Subject added successfully',
-            confirmButtonColor: '#7f1d1d' // Tailwind red-900
-          }).then(() => {
-            $('#addSubjectModal').addClass('hidden').removeClass('flex');
-            $('#addSubjectForm')[0].reset();
-
-            // OPTIONAL: reload subject list
-            location.reload();
-          });
-
-        } else {
-
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: response.message || 'Failed to add subject',
-            confirmButtonColor: '#7f1d1d'
-          });
-
-        }
-      },
-      error: function () {
-        Swal.fire({
-          icon: 'error',
-          title: 'Server Error',
-          text: 'Something went wrong. Please try again.',
-          confirmButtonColor: '#7f1d1d'
-        });
-      }
-    });
-  });
-
-});
-
-
-
-// GET ALL SUBJECTS AND POPULATE TABLE
-$(document).ready(function() {
-
   // ===============================
-  // Function to fetch all subjects
+  // FETCH SUBJECTS
   // ===============================
   function fetchSubjects() {
     $.ajax({
@@ -89,201 +9,216 @@ $(document).ready(function() {
       type: "GET",
       data: { requestType: "get_all_subjects" },
       dataType: "json",
-      success: function(response) {
+      success: function (response) {
         const tbody = $("#subjectTableBody");
-        tbody.empty(); // Clear previous content
+        tbody.empty();
 
-        if(response.status === 200 && response.data.length > 0) {
+        if (response.status === 200 && Array.isArray(response.data) && response.data.length > 0) {
           response.data.forEach(subject => {
             tbody.append(`
               <tr class="hover:bg-gray-50">
+                <td class="p-3">${subject.program}</td>
+                <td class="p-3">${subject.curriculum_year}</td>
+                <td class="p-3">${subject.year_level}</td>
+                <td class="p-3">${subject.semester}</td>
                 <td class="p-3">${subject.subject_code}</td>
                 <td class="p-3">${subject.subject_name}</td>
-                <td class="p-3">${subject.subject_unit}</td>
-                <td class="p-3">${subject.subject_type}</td>
-                <td class="p-3 text-center">
-                  <button class="editBtn px-3 py-1 bg-gray-700 cursor-pointer text-white rounded-md text-sm" data-id="${subject.subject_id}">Edit</button>
-                  <button class="deleteBtn px-3 py-1 bg-red-700 cursor-pointer text-white rounded-md text-sm" data-id="${subject.subject_id}">Delete</button>
+                <td class="p-3">${subject.lec_hours}</td>
+                <td class="p-3">${subject.lab_hours}</td>
+                <td class="p-3">${subject.lec_units}</td>
+                <td class="p-3">${subject.lab_units}</td>
+                <td class="p-3">${subject.prerequisite ?? 'N/A'}</td>
+                <td class="p-3 text-center space-x-2">
+                  <button class="editBtn bg-gray-700 cursor-pointer text-white px-3 py-1 rounded"
+                    data-id="${subject.curriculum_id}">Edit</button>
+                  <button class="deleteBtn bg-red-700 cursor-pointer text-white px-3 py-1 rounded"
+                    data-id="${subject.curriculum_id}">Delete</button>
                 </td>
               </tr>
             `);
           });
         } else {
-          tbody.append(`
-            <tr>
-              <td colspan="4" class="text-center p-6 text-gray-500">No subjects found.</td>
-            </tr>
-          `);
+          tbody.html(`<tr><td colspan="12" class="text-center p-6 text-gray-500">No subjects found.</td></tr>`);
         }
       },
-      error: function(err) {
+      error: function (err) {
         console.error("Error fetching subjects:", err);
-        $("#subjectTableBody").html(`
-          <tr>
-            <td colspan="4" class="text-center p-6 text-red-500">Failed to load subjects.</td>
-          </tr>
-        `);
+        $("#subjectTableBody").html(`<tr><td colspan="12" class="text-center p-6 text-red-500">Failed to load subjects.</td></tr>`);
       }
     });
   }
 
-  // Initial fetch
   fetchSubjects();
 
   // ===============================
-  // Add Subject Modal Open/Close
+  // OPEN / CLOSE ADD MODAL
   // ===============================
-  $('#addBtn').on('click', function() {
-    $('#addSubjectModal').removeClass('hidden').addClass('flex');
-  });
-
-  $('#closeAddSubjectModal').on('click', function() {
-    $('#addSubjectModal').removeClass('flex').addClass('hidden');
+  $('#addBtn').click(() => $('#addSubjectModal').removeClass('hidden').addClass('flex'));
+  $('#closeAddSubjectModal').click(() => {
+    $('#addSubjectModal').addClass('hidden').removeClass('flex');
     $('#addSubjectForm')[0].reset();
   });
-
-
-  // ===============================
-  // ===============================
-// Open Edit Modal and Populate Fields
-// ===============================
-$(document).on('click', '.editBtn', function() {
-  const id = $(this).data('id');
-
-  // Fetch subject details by ID (you can also pass data from the table directly)
-  $.ajax({
-    url: '../controller/end-points/get_controller.php',
-    type: 'GET',
-    data: { requestType: 'get_subject_by_id', subject_id: id },
-    dataType: 'json',
-    success: function(response) {
-      if(response.status === 200) {
-        const subject = response.data;
-
-        // Populate form fields
-        $('#edit_subject_id').val(subject.subject_id);
-        $('#edit_subject_code').val(subject.subject_code);
-        $('#edit_subject_name').val(subject.subject_name);
-        $('#edit_subject_unit').val(subject.subject_unit);
-        $('#edit_subject_type').val(subject.subject_type);
-
-        // Open modal
-        $('#editSubjectModal').removeClass('hidden').addClass('flex');
-      } else {
-        alert('Failed to fetch subject details.');
-      }
-    },
-    error: function() {
-      alert('Server error while fetching subject.');
+  $('#addSubjectModal').click(function (e) {
+    if (e.target.id === 'addSubjectModal') {
+      $(this).addClass('hidden').removeClass('flex');
+      $('#addSubjectForm')[0].reset();
     }
   });
+
+  // ===============================
+// ADD SUBJECT
+// ===============================
+$('#addSubjectForm').submit(function (e) {
+    e.preventDefault();
+
+    const $form = $(this);
+    const $submitBtn = $form.find('button[type="submit"]');
+
+    // Disable submit button to prevent multiple clicks
+    $submitBtn.prop('disabled', true);
+
+    $.ajax({
+        url: '../controller/end-points/post_controller.php',
+        method: 'POST',
+        data: $form.serialize() + '&requestType=add_subject',
+        dataType: 'json',
+        success: function (res) {
+            if (res.status === 'success') {
+                Swal.fire('Success', res.message, 'success').then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Error', res.message, 'error');
+            }
+        },
+        error: function () {
+            Swal.fire('Server Error', 'Something went wrong. Please try again.', 'error');
+        },
+        complete: function () {
+            // Re-enable the submit button
+            $submitBtn.prop('disabled', false);
+        }
+    });
 });
 
-// ===============================
-// Close Edit Modal
-// ===============================
-$('#closeEditSubjectModal').on('click', function() {
-  $('#editSubjectModal').addClass('hidden').removeClass('flex');
-  $('#editSubjectForm')[0].reset();
-});
 
-// ===============================
-// Submit Edit Form (AJAX)
-// ===============================
-$('#editSubjectForm').on('submit', function(e) {
-  e.preventDefault();
 
-  $.ajax({
-    url: '../controller/end-points/post_controller.php',
-    type: 'POST',
-    data: $(this).serialize() + '&requestType=update_subject',
-    dataType: 'json',
-    success: function(response) {
-      if(response.status === 'success') {
-        Swal.fire({
-          icon: 'success',
-          title: 'Updated!',
-          text: response.message || 'Subject updated successfully',
-          confirmButtonColor: '#7f1d1d'
-        }).then(() => {
-          $('#editSubjectModal').addClass('hidden').removeClass('flex');
-          $('#editSubjectForm')[0].reset();
-          fetchSubjects(); // Refresh table
-        });
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: response.message || 'Failed to update subject',
-          confirmButtonColor: '#7f1d1d'
-        });
+
+  // ===============================
+  // OPEN EDIT MODAL & POPULATE
+  // ===============================
+  $(document).on('click', '.editBtn', function () {
+    const id = $(this).data('id');
+
+    $.ajax({
+      url: '../controller/end-points/get_controller.php',
+      type: 'GET',
+      data: { requestType: 'get_curriculum_by_id', curriculum_id: id },
+      dataType: 'json',
+      success: function (res) {
+        if (res.status === 200) {
+          const s = res.data;
+
+
+          // Populate fields
+          $('#edit_subject_id').val(s.curriculum_id);
+          $('#edit_program').val(s.program);
+          $('#edit_curriculum_year').val(s.curriculum_year);
+          $('#edit_year_level').val(s.year_level);
+          $('#edit_semester').val(s.semester);
+          $('#edit_subject_code').val(s.subject_code);
+          $('#edit_subject_name').val(s.subject_name);
+          $('#edit_lec_hours').val(s.lec_hours);
+          $('#edit_lab_hours').val(s.lab_hours);
+          $('#edit_lec_units').val(s.lec_units);
+          $('#edit_lab_units').val(s.lab_units);
+          $('#edit_prerequisite').val(s.prerequisite);
+
+          $('#editSubjectModal').removeClass('hidden').addClass('flex');
+        } else {
+          Swal.fire('Error', 'Failed to fetch subject details', 'error');
+        }
+      },
+      error: function () {
+        Swal.fire('Server Error', 'Something went wrong while fetching subject.', 'error');
       }
-    },
-    error: function() {
-      Swal.fire({
-        icon: 'error',
-        title: 'Server Error',
-        text: 'Something went wrong. Please try again.',
-        confirmButtonColor: '#7f1d1d'
-      });
-    }
+    });
   });
-});
-  // ===============================
-  // Delete Subject Handler
-  // ===============================
+
+  $('#closeEditSubjectModal').click(() => {
+    $('#editSubjectModal').addClass('hidden').removeClass('flex');
+    $('#editSubjectForm')[0].reset();
+  });
 
   // ===============================
-// Delete Subject
+// UPDATE SUBJECT
 // ===============================
-$(document).on('click', '.deleteBtn', function() {
-  const id = $(this).data('id');
+$('#editSubjectForm').submit(function (e) {
+    e.preventDefault();
 
-  Swal.fire({
-    title: 'Are you sure?',
-    text: "This will permanently delete the subject.",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#7f1d1d', // Tailwind red-900
-    cancelButtonColor: '#6b7280', // Tailwind gray-500
-    confirmButtonText: 'Yes, delete it!',
-    cancelButtonText: 'Cancel'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      $.ajax({
+    const $form = $(this);
+    const $submitBtn = $form.find('button[type="submit"]');
+    $submitBtn.prop('disabled', true);
+
+    $.ajax({
         url: '../controller/end-points/post_controller.php',
         type: 'POST',
-        data: { requestType: 'delete_subject', subject_id: id },
+        data: $form.serialize() + '&requestType=update_subject',
         dataType: 'json',
-        success: function(response) {
-          if(response.status === 'success') {
-            Swal.fire({
-              icon: 'success',
-              title: 'Deleted!',
-              text: response.message || 'Subject deleted successfully',
-              confirmButtonColor: '#7f1d1d'
-            });
-            fetchSubjects(); // Refresh table
-          } else {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: response.message || 'Failed to delete subject',
-              confirmButtonColor: '#7f1d1d'
-            });
-          }
+        success: function (res) {
+            if (res.status === 'success') {
+                Swal.fire('Updated!', res.message, 'success').then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Error', res.message, 'error');
+            }
         },
-        error: function() {
-          Swal.fire({
-            icon: 'error',
-            title: 'Server Error',
-            text: 'Something went wrong. Please try again.',
-            confirmButtonColor: '#7f1d1d'
-          });
+        error: function () {
+            Swal.fire('Server Error', 'Something went wrong. Please try again.', 'error');
+        },
+        complete: function () {
+            $submitBtn.prop('disabled', false);
         }
-      });
-    }
-  });
+    });
+});
+
+// ===============================
+// DELETE SUBJECT
+// ===============================
+$(document).on('click', '.deleteBtn', function () {
+    const id = $(this).data('id');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This will permanently delete the subject.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#7f1d1d',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '../controller/end-points/post_controller.php',
+                type: 'POST',
+                data: { requestType: 'delete_subject', curriculum_id: id },
+                dataType: 'json',
+                success: function (res) {
+                    if (res.status === 'success') {
+                        Swal.fire('Deleted!', res.message, 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Server Error', 'Something went wrong. Please try again.', 'error');
+                }
+            });
+        }
+    });
 });
 
 

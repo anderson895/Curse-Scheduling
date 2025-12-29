@@ -60,19 +60,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
 
         // ---------- SUBJECT ----------
-        } else if($_POST['requestType'] == 'update_subject') {
+        } else if ($_POST['requestType'] == 'add_subject') {
+            $program         = $_POST['program'];
+            $curriculum_year = $_POST['curriculum_year'];
+            $year_level      = $_POST['year_level'];
+            $semester        = $_POST['semester'];
+            $subject_code    = $_POST['subject_code'];
+            $subject_name    = $_POST['subject_name'];
+            $lec_hours       = $_POST['lec_hours'];
+            $lab_hours       = $_POST['lab_hours'];
+            $lec_units       = $_POST['lec_units'];
+            $lab_units       = $_POST['lab_units'];
+            $prerequisite    = $_POST['prerequisite'] ?? null;
 
-            echo "<pre>";
-            print_r($_POST);
-            echo "</pre>";
+            $result = $db->add_subject($program, $curriculum_year, $year_level, $semester, $subject_code, $subject_name, $lec_hours, $lab_hours, $lec_units, $lab_units, $prerequisite);
 
-            $subject_id   = $_POST['subject_id'];
-            $subject_code = $_POST['subject_code'];
-            $subject_name = $_POST['subject_name'];
-            $units        = $_POST['units'];
-            $subject_type = $_POST['subject_type']; // ✅ Add type
+            echo json_encode($result['success'] 
+                ? ['status'=>'success','message'=>$result['message']] 
+                : ['status'=>'error','message'=>$result['message']]
+            );
 
-            $result = $db->update_subject($subject_id, $subject_code, $subject_name, $units, $subject_type);
+        } else if ($_POST['requestType'] == 'update_subject') {
+            $subject_id      = $_POST['subject_id'];
+            $program         = $_POST['program'];
+            $curriculum_year = $_POST['curriculum_year'];
+            $year_level      = $_POST['year_level'];
+            $semester        = $_POST['semester'];
+            $subject_code    = $_POST['subject_code'];
+            $subject_name    = $_POST['subject_name'];
+            $lec_hours       = $_POST['lec_hours'];
+            $lab_hours       = $_POST['lab_hours'];
+            $lec_units       = $_POST['lec_units'];
+            $lab_units       = $_POST['lab_units'];
+            $prerequisite    = $_POST['prerequisite'] ?? null;
+
+            $result = $db->update_subject($subject_id, $program, $curriculum_year, $year_level, $semester, $subject_code, $subject_name, $lec_hours, $lab_hours, $lec_units, $lab_units, $prerequisite);
+
             echo json_encode($result['success'] 
                 ? ['status'=>'success','message'=>$result['message']] 
                 : ['status'=>'error','message'=>$result['message']]
@@ -81,53 +104,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else if ($_POST['requestType'] == 'delete_subject') {
             $subject_id = $_POST['subject_id'];
             $result = $db->delete_subject($subject_id);
+
             echo json_encode($result['success'] 
                 ? ['status'=>'success','message'=>$result['message']] 
                 : ['status'=>'error','message'=>$result['message']]
             );
 
-        } else if ($_POST['requestType'] == 'add_subject') {
-            $subject_code = $_POST['subject_code'];
-            $subject_name = $_POST['subject_name'];
-            $units        = $_POST['units'];
-            $subject_type = $_POST['subject_type']; // ✅ Add type
-
-            $result = $db->add_subject($subject_code, $subject_name, $units, $subject_type);
-            echo json_encode($result['success'] 
-                ? ['status'=>'success','message'=>$result['message']] 
-                : ['status'=>'error','message'=>$result['message']]
-            );
-
-        // ---------- CURRICULUM ----------
-        } else if ($_POST['requestType'] == 'add_curriculum') {
-           $year_semester = $_POST['year_semester'];
-            $subject_ids = $_POST['subject_ids']; // array of subject_ids
-
-            $success_count = 0;
-            foreach ($subject_ids as $subject_id) {
-                $result = $db->add_curriculum($year_semester, $subject_id);
-                if ($result['success']) $success_count++;
-            }
-
-            if ($success_count === count($subject_ids)) {
-                echo json_encode(['status'=>'success','message'=>'Curriculum added successfully']);
-            } else {
-                echo json_encode(['status'=>'error','message'=>'Some subjects could not be added']);
-            }
-
-        } else if ($_POST['requestType'] == 'update_curriculum') {
-            $id = $_POST['id'];
-            $year_semester = $_POST['year_semester'];
-            $subject_id = $_POST['subject_id'];
-
-            $result = $db->update_curriculum($id, $year_semester, $subject_id);
-            echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
-
-        } else if ($_POST['requestType'] == 'delete_curriculum') {
-            $id = $_POST['id'];
-            $result = $db->delete_curriculum($id);
-            echo json_encode($result['success'] ? ['status'=>'success','message'=>$result['message']] : ['status'=>'error','message'=>$result['message']]);
-
+        // ---------- SCHEDULE ----------
         } else if (isset($_POST['requestType']) && in_array($_POST['requestType'], ['create_schedule', 'update_schedule'])) {
             $sch_id = $_POST['sch_id'] ?? null;
             $sch_user_id = intval($_POST['sch_user_id'] ?? 0);

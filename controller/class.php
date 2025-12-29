@@ -36,7 +36,7 @@ public function fetchAllSchedule($schId = null)
             foreach ($schedule['schedule'] as $day => &$daySlots) {
                 foreach ($daySlots as &$slot) {
                     $subjectCode = $slot['subject'];
-                    $subResult = $this->conn->query("SELECT * FROM subjects WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
+                    $subResult = $this->conn->query("SELECT * FROM curriculum WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
                     if ($subResult && $subRow = $subResult->fetch_assoc()) {
                         $slot['subject_details'] = $subRow; 
                     } else {
@@ -225,7 +225,7 @@ public function fetchAllSchedule($schId = null)
         foreach ($schedule['schedule'] as $day => &$daySlots) {
             foreach ($daySlots as &$slot) {
                 $subjectCode = $slot['subject'];
-                $subResult = $this->conn->query("SELECT * FROM subjects WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
+                $subResult = $this->conn->query("SELECT * FROM curriculum WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
                 if ($subResult && $subRow = $subResult->fetch_assoc()) {
                     $slot['subject_details'] = $subRow;
                 } else {
@@ -277,7 +277,7 @@ public function get_schedules_gec_details($user_id) {
         foreach ($schedule['schedule'] as $day => &$daySlots) {
             foreach ($daySlots as &$slot) {
                 $subjectCode = $slot['subject'];
-                $subResult = $this->conn->query("SELECT * FROM subjects WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
+                $subResult = $this->conn->query("SELECT * FROM curriculum WHERE subject_code = '" . $this->conn->real_escape_string($subjectCode) . "' LIMIT 1");
                 if ($subResult && $subRow = $subResult->fetch_assoc()) {
                     $slot['subject_details'] = $subRow;
                 } else {
@@ -391,92 +391,74 @@ public function delete_schedule($sch_id) {
         }
     }
 
-        public function add_subject($subject_code, $subject_name, $units, $subject_type) {
-            $query = "INSERT INTO `subjects`(`subject_code`, `subject_name`, `subject_unit`, `subject_type`) 
-                    VALUES (?, ?, ?, ?)";
+        public function add_subject($program, $curriculum_year, $year_level, $semester, $subject_code, $subject_name, $lec_hours, $lab_hours, $lec_units, $lab_units, $prerequisite) {
+            $query = "INSERT INTO `curriculum`(`program`,`curriculum_year`,`year_level`,`semester`,`subject_code`,`subject_name`,`lec_hours`,`lab_hours`,`lec_units`,`lab_units`,`prerequisite`)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $this->conn->prepare($query);
-            $stmt->bind_param("ssis", $subject_code, $subject_name, $units, $subject_type);
+            $stmt->bind_param("ssiissiiiis", $program, $curriculum_year, $year_level, $semester, $subject_code, $subject_name, $lec_hours, $lab_hours, $lec_units, $lab_units, $prerequisite);
 
             if ($stmt->execute()) {
-                return [
-                    'success' => true,
-                    'message' => 'Subject added successfully.'
-                ];
+                return ['success' => true, 'message' => 'Subject added successfully.'];
             } else {
-                return [
-                    'success' => false,
-                    'message' => 'Failed to add subject. Please try again.'
-                ];
+                return ['success' => false, 'message' => 'Failed to add subject. Please try again.'];
             }
         }
 
 
 
         public function get_all_subjects() {
-            $query = "SELECT * FROM `subjects`";
+            $query = "SELECT * FROM `curriculum`";
             $stmt = $this->conn->prepare($query);
             $stmt->execute();
             $result = $stmt->get_result();
             return $result->fetch_all(MYSQLI_ASSOC);
         }
 
-        public function get_subject_by_id($subject_id) {
-            $query = "SELECT * FROM `subjects` WHERE `subject_id` = ?";
+        public function get_curriculum_by_id($curriculum_id) {
+            $query = "SELECT * FROM `curriculum` WHERE `curriculum_id` = ?";
             $stmt = $this->conn->prepare($query);
-            $stmt->bind_param("i", $subject_id);
+            $stmt->bind_param("i", $curriculum_id);
             $stmt->execute();
             $result = $stmt->get_result();
             return $result->fetch_assoc();
         }
 
-        public function update_subject($subject_id, $subject_code, $subject_name, $units, $subject_type) {
-            $query = "UPDATE `subjects` 
-                    SET `subject_code` = ?, `subject_name` = ?, `subject_unit` = ?, `subject_type` = ? 
-                    WHERE `subject_id` = ?";
+        public function update_subject($curriculum_id, $program, $curriculum_year, $year_level, $semester, $subject_code, $subject_name, $lec_hours, $lab_hours, $lec_units, $lab_units, $prerequisite) {
+            $query = "UPDATE `curriculum` 
+                    SET `program`=?, `curriculum_year`=?, `year_level`=?, `semester`=?, `subject_code`=?, `subject_name`=?, `lec_hours`=?, `lab_hours`=?, `lec_units`=?, `lab_units`=?, `prerequisite`=?
+                    WHERE `curriculum_id`=?";
 
             $stmt = $this->conn->prepare($query);
-            $stmt->bind_param("ssisi", $subject_code, $subject_name, $units, $subject_type, $subject_id);
+            $stmt->bind_param("ssiissiiiisi", $program, $curriculum_year, $year_level, $semester, $subject_code, $subject_name, $lec_hours, $lab_hours, $lec_units, $lab_units, $prerequisite, $curriculum_id);
 
             if ($stmt->execute()) {
-                return [
-                    'success' => true,
-                    'message' => 'Subject updated successfully.'
-                ];
+                return ['success' => true, 'message' => 'Subject updated successfully.'];
             } else {
-                return [
-                    'success' => false,
-                    'message' => 'Failed to update subject. Please try again.'
-                ];
+                return ['success' => false, 'message' => 'Failed to update subject. Please try again.'];
             }
         }
 
 
-    public function delete_subject($subject_id) {
-        $query = "DELETE FROM `subjects` WHERE `subject_id` = ?";
+    public function delete_subject($curriculum_id) {
+        $query = "DELETE FROM `curriculum` WHERE `curriculum_id`=?";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("i", $subject_id);
+        $stmt->bind_param("i", $curriculum_id);
 
         if ($stmt->execute()) {
-            return [
-                'success' => true,
-                'message' => 'Subject deleted successfully.'
-            ];
+            return ['success' => true, 'message' => 'Subject deleted successfully.'];
         } else {
-            return [
-                'success' => false,
-                'message' => 'Failed to delete subject. Please try again.'
-            ];
+            return ['success' => false, 'message' => 'Failed to delete subject. Please try again.'];
         }
     }
 
     public function get_curriculum() {
-        // Join curriculum with subjects to get subject details
+        // Join curriculum with curriculum to get subject details
         $sql = "SELECT c.id, c.year_semester, 
                     s.subject_id, s.subject_code, s.subject_name, s.subject_unit
                 FROM curriculum c
-                JOIN subjects s ON c.subject_id = s.subject_id
+                JOIN curriculum s ON c.subject_id = s.subject_id
                 ORDER BY c.year_semester, s.subject_code";
         
         $result = $this->conn->query($sql);
@@ -489,29 +471,14 @@ public function delete_schedule($sch_id) {
         return $data;
     }   
 
-    public function get_curriculum_by_id($curriculum_id) {
-        $id = intval($curriculum_id);
-
-        // Join curriculum with subjects to get subject details
-        $sql = "SELECT c.id, c.year_semester, 
-                    s.subject_id, s.subject_code, s.subject_name, s.subject_unit
-                FROM curriculum c
-                JOIN subjects s ON c.subject_id = s.subject_id
-                WHERE c.id = $id";
-        
-        $result = $this->conn->query($sql);
-        if ($result) {
-            return $result->fetch_assoc();
-        }
-        return null;
-    }
+   
     
 
-    public function add_curriculum($year_semester, $subject_id) {
+    public function add_curriculum($year_semester, $curriculum_id) {
         $year_semester = $this->conn->real_escape_string($year_semester);
-        $subject_id = intval($subject_id);
+        $curriculum_id = intval($curriculum_id);
 
-        $sql = "INSERT INTO curriculum (year_semester, subject_id) VALUES ('$year_semester', $subject_id)";
+        $sql = "INSERT INTO curriculum (year_semester, subject_id) VALUES ('$year_semester', $curriculum_id)";
         if ($this->conn->query($sql)) {
             return ['success'=>true, 'message'=>'Curriculum added successfully'];
         } else {
@@ -519,12 +486,12 @@ public function delete_schedule($sch_id) {
         }
     }
 
-    public function update_curriculum($id, $year_semester, $subject_id) {
+    public function update_curriculum($id, $year_semester, $curriculum_id) {
         $id = intval($id);
         $year_semester = $this->conn->real_escape_string($year_semester);
-        $subject_id = intval($subject_id);
+        $curriculum_id = intval($curriculum_id);
 
-        $sql = "UPDATE curriculum SET year_semester='$year_semester', subject_id=$subject_id WHERE id=$id";
+        $sql = "UPDATE curriculum SET year_semester='$year_semester', subject_id=$curriculum_id WHERE id=$id";
         if ($this->conn->query($sql)) {
             return ['success'=>true, 'message'=>'Curriculum updated successfully'];
         } else {
@@ -602,7 +569,7 @@ public function create_schedule($sch_user_id, $sch_schedule_json) {
     $scheduleData = json_decode($sch_schedule_json, true);
 
     if (!isset($scheduleData['schedule']) || empty($scheduleData['schedule'])) {
-        return ['success' => false, 'message' => 'No subjects to schedule.'];
+        return ['success' => false, 'message' => 'No curriculum to schedule.'];
     }
 
     // Generate random time slots based on entry hours
@@ -656,7 +623,7 @@ public function update_schedule($sch_id, $sch_user_id, $sch_schedule_json) {
 
     $scheduleData = json_decode($sch_schedule_json, true);
     if (!isset($scheduleData['schedule']) || empty($scheduleData['schedule'])) {
-        return ['success' => false, 'message' => 'No subjects to schedule.'];
+        return ['success' => false, 'message' => 'No curriculum to schedule.'];
     }
 
     // Generate random time slots based on entry hours
@@ -690,11 +657,11 @@ public function assign_random_slots($schedule) {
     }
 
     $newSchedule = [];
-    foreach ($schedule as $day => $subjects) {
+    foreach ($schedule as $day => $curriculum) {
         $newSchedule[$day] = [];
         $day_slots = $available_slots;
 
-        foreach ($subjects as $id => $entry) {
+        foreach ($curriculum as $id => $entry) {
             $subject = $entry['subject'] ?? $entry;
             $hours = isset($entry['hours']) ? floatval($entry['hours']) : 0.5;
             $duration_slots = $hours * 2; // each 0.5 hour = 1 slot
