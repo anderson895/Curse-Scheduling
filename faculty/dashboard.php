@@ -14,7 +14,7 @@ $sch_id = $schedule[0]['sch_id'] ?? null;
     if (schId) {
         window.location.href = "view_fac_sched.php?sch_id=" + schId;
     } else {
-        alert("No schedule ID found.");
+        window.location.href = "view_fac_sched.php?sch_id=noschedule";
     }
 </script>
 
