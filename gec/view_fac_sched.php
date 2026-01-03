@@ -17,7 +17,7 @@ include "../src/components/gec/nav.php";
 
   <!-- Program Info -->
   <div class="text-center border-b">
-    <h1 class="text-lg font-bold uppercase py-2 sch_schedule_title">sch_schedule_title
+    <h1 class="text-lg font-bold uppercase py-2 sch_schedule_title uppercase">
     </h1>
     <p class="text-sm font-semibold sch_schedule_sy">sch_schedule_sy</p>
     <div class="bg-yellow-300 font-bold py-1 mt-2 sch_schedule_author capitalize">sch_schedule_author</div>
