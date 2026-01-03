@@ -90,6 +90,8 @@ include "../src/components/programchair/nav.php";
             <option value="Wednesday">Wednesday</option>
             <option value="Thursday">Thursday</option>
             <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+            
           </select>
 
           <select class="subjectSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
