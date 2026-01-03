@@ -90,7 +90,7 @@ include "../src/components/dean/nav.php";
   <div class="bg-white w-full max-w-lg sm:max-w-md rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh]">
     <h2 class="text-xl font-bold text-red-900 mb-4">Edit Subject</h2>
     <form id="editSubjectForm" class="space-y-4">
-      <input type="hidden" name="subject_id" id="edit_subject_id">
+      <input type="text" name="subject_id" id="edit_subject_id">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div><label class="block text-gray-700 text-sm sm:text-base">Program</label><input type="text" name="program" id="edit_program" class="w-full border p-2 rounded" required></div>
         <div><label class="block text-gray-700 text-sm sm:text-base">Curriculum Year</label><input type="text" name="curriculum_year" id="edit_curriculum_year" class="w-full border p-2 rounded" required></div>

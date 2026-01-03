@@ -102,8 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
 
         } else if ($_POST['requestType'] == 'delete_subject') {
-            $subject_id = $_POST['subject_id'];
-            $result = $db->delete_subject($subject_id);
+            $curriculum_id = $_POST['curriculum_id'];
+            $result = $db->delete_subject($curriculum_id);
 
             echo json_encode($result['success'] 
                 ? ['status'=>'success','message'=>$result['message']] 

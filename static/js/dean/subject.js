@@ -222,14 +222,22 @@ $(document).on('click', '#pagination button', function () {
   $(document).on('click', '.editBtn', function () {
     const id = $(this).data('id');
 
+
+
     $.ajax({
       url: '../controller/end-points/get_controller.php',
       type: 'GET',
       data: { requestType: 'get_curriculum_by_id', curriculum_id: id },
       dataType: 'json',
       success: function (res) {
+
+       
+
         if (res.status === 200) {
           const s = res.data;
+
+          console.log(s);
+
           $('#edit_subject_id').val(s.curriculum_id);
           $('#edit_program').val(s.program);
           $('#edit_curriculum_year').val(s.curriculum_year);
@@ -263,6 +271,9 @@ $(document).on('click', '#pagination button', function () {
   // ===============================
   $('#editSubjectForm').submit(function (e) {
     e.preventDefault();
+
+
+
     const $form = $(this);
     const $submitBtn = $form.find('button[type="submit"]');
     $submitBtn.prop('disabled', true);
