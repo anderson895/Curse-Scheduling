@@ -51,7 +51,7 @@ $(document).ready(function() {
                 else if(type === 'schedule') {
                     html += '<h3 class="text-lg font-bold mb-2">Schedule Report</h3>';
                     res.forEach(s => {
-                        html += `<h4 class="font-semibold mt-2">${s.user_fname} ${s.user_lname}</h4>`;
+                        html += `<h4 class="font-semibold mt-2 capitalize">${s.user_fname} ${s.user_lname}</h4>`;
                         try {
                             let scheduleObj = JSON.parse(s.sch_schedule);
                             html += '<table class="table-auto border-collapse border border-gray-300 w-full mb-4">';
@@ -134,15 +134,54 @@ $(document).ready(function() {
     });
 
     // -------------------- Print button --------------------
-    $('#printReport').click(function() {
-        let printContents = document.getElementById('reportContainer').innerHTML;
-        let w = window.open('', '', 'height=600,width=1000');
-        w.document.write('<html><head><title>Reports</title></head><body>');
-        w.document.write(printContents);
-        w.document.write('</body></html>');
-        w.document.close();
-        w.print();
-    });
+    $('#printReport').click(function () {
+    let printContents = document.getElementById('reportContainer').innerHTML;
+
+    let w = window.open('', '', 'height=800,width=1100');
+    w.document.write(`
+        <html>
+        <head>
+            <title>Print Report</title>
+
+            <!-- Tailwind CDN -->
+            <script src="https://cdn.tailwindcss.com"></script>
+
+            <style>
+                @page {
+                    size: A4;
+                    margin: 20mm;
+                }
+
+                body {
+                    font-family: ui-sans-serif, system-ui;
+                }
+
+                table {
+                    page-break-inside: avoid;
+                }
+
+                h3, h4 {
+                    page-break-after: avoid;
+                }
+
+                tr {
+                    page-break-inside: avoid;
+                }
+            </style>
+        </head>
+        <body class="bg-white text-gray-900 text-sm">
+            <div class="max-w-full">
+                ${printContents}
+            </div>
+        </body>
+        </html>
+    `);
+
+    w.document.close();
+    w.focus();
+    w.print();
+});
+
 
     // -------------------- Default tab ----------
     renderReport('curriculum');
