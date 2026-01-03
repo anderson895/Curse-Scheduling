@@ -43,7 +43,7 @@
 
     
 
-      <a href="view_fac_sched.php?sch_id=<?= !empty($schId) ? $schId : 'noschedule' ?>"
+      <a href="view_fac_sched.php?sch_id=<?= !empty($sch_id) ? $sch_id : 'noschedule' ?>"
         class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
         <span class="material-icons">table_view</span>
         <span>Schedule</span>

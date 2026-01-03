@@ -3,10 +3,7 @@ include "../src/components/faculty/header.php";
 include "../src/components/faculty/nav.php";
 ?>
 
-<?php
-// Kunin ang sch_id mula sa schedule array
-$sch_id = $schedule[0]['sch_id'] ?? null;
-?>
+
 
 <script>
     // JS auto-redirect

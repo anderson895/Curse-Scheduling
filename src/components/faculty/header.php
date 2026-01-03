@@ -21,8 +21,13 @@ if (isset($_SESSION['user_id'])) {
 $schedule = $db->get_user_schedule($id);
 
 
+$sch_id = $schedule[0]['sch_id'] ?? null;
+echo '
+<script>
+  var schId = <?= json_encode($sch_id) ?>;
+</script>
+';
 ?>
-
 
 
 <!DOCTYPE html>
