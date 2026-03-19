@@ -18,10 +18,55 @@ include "../src/components/dean/nav.php";
       </button>
     </div>
 
-    <!-- Search -->
-    <div class="p-4 sm:p-6">
-      <input type="text" id="subjectSearch" placeholder="Search subjects..."
-        class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500 focus:outline-none text-sm sm:text-base">
+    <!-- Filters -->
+    <div class="p-4 sm:p-6 flex flex-wrap gap-3 items-end">
+      <!-- Text search -->
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-xs text-gray-500 mb-1">Search</label>
+        <input type="text" id="subjectSearch" placeholder="Search code or name..."
+          class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500 focus:outline-none text-sm">
+      </div>
+      <!-- Program filter -->
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Program</label>
+        <select id="filterProgram" class="border p-2 rounded focus:ring-2 focus:ring-red-500 text-sm cursor-pointer">
+          <option value="">All Programs</option>
+          <option value="BSCE">BSCE</option>
+          <option value="BSCoE">BSCoE</option>
+          <option value="BSEE">BSEE</option>
+          <option value="BSECE">BSECE</option>
+          <option value="BSIE">BSIE</option>
+          <option value="BSME">BSME</option>
+        </select>
+      </div>
+      <!-- Year Level filter -->
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Year Level</label>
+        <select id="filterYear" class="border p-2 rounded focus:ring-2 focus:ring-red-500 text-sm cursor-pointer">
+          <option value="">All Years</option>
+          <option value="1">1st Year</option>
+          <option value="2">2nd Year</option>
+          <option value="3">3rd Year</option>
+          <option value="4">4th Year</option>
+          <option value="5">5th Year</option>
+        </select>
+      </div>
+      <!-- Semester filter -->
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Semester</label>
+        <select id="filterSemester" class="border p-2 rounded focus:ring-2 focus:ring-red-500 text-sm cursor-pointer">
+          <option value="">All Semesters</option>
+          <option value="1st">1st Semester</option>
+          <option value="2nd">2nd Semester</option>
+          <option value="Summer">Summer</option>
+        </select>
+      </div>
+      <!-- Reset -->
+      <div>
+        <button id="resetFilters" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded text-sm">
+          Reset
+        </button>
+      </div>
     </div>
 
     <!-- Card Body -->

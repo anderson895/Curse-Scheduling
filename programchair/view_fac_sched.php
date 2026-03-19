@@ -1,3 +1,29 @@
+
+<!-- EDIT TIME MODAL (Dean/Program Chair) -->
+<div id="editTimeModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-black/50 p-4">
+  <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-6">
+    <h2 class="text-lg font-bold text-red-900 mb-1">Edit Schedule Time</h2>
+    <p id="editTimeSubjectLabel" class="text-sm text-gray-600 mb-4 font-semibold"></p>
+    <div id="editTimeConflict" class="hidden bg-red-100 border border-red-400 text-red-700 text-sm rounded p-2 mb-3"></div>
+    <form id="editTimeForm" class="space-y-4">
+      <input type="hidden" id="editTimeSchId">
+      <input type="hidden" id="editTimeDay">
+      <input type="hidden" id="editTimeEntryIndex">
+      <div>
+        <label class="block text-sm font-semibold mb-1">Start Time</label>
+        <input type="time" id="editTimeFrom" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" min="07:00" max="21:00" required>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1">End Time</label>
+        <input type="time" id="editTimeTo" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" min="07:00" max="21:00" required>
+      </div>
+      <div class="flex gap-2 justify-end">
+        <button type="button" id="closeEditTimeModal" class="cursor-pointer bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+        <button type="submit" class="cursor-pointer bg-red-900 hover:bg-red-800 text-white px-4 py-2 rounded">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
 <?php
 include "../src/components/programchair/header.php";
 include "../src/components/programchair/nav.php";
@@ -17,10 +43,9 @@ include "../src/components/programchair/nav.php";
 
   <!-- Program Info -->
   <div class="text-center border-b">
-    <h1 class="text-lg font-bold uppercase py-2 sch_schedule_title">sch_schedule_title
-    </h1>
-    <p class="text-sm font-semibold sch_schedule_sy">sch_schedule_sy</p>
-    <div class="bg-yellow-300 font-bold py-1 mt-2 sch_schedule_author capitalize">sch_schedule_author</div>
+    <h1 class="text-lg font-bold uppercase py-2 sch_schedule_title"></h1>
+    <p class="text-sm font-semibold sch_schedule_sy"></p>
+    <div class="bg-yellow-300 font-bold py-1 mt-2 sch_schedule_author capitalize hidden"></div>
   </div>
 
   <!-- Schedule Table -->

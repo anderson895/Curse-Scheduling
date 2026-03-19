@@ -93,11 +93,18 @@ include "../src/components/dean/nav.php";
             <option value="Saturday">Saturday</option>
           </select>
 
-          <select class="subjectSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
-            <option value="Math">Math</option>
-            <option value="English">English</option>
-            <option value="Science">Science</option>
-          </select>
+          <!-- Searchable subject picker -->
+          <div class="subject-picker relative w-full sm:w-auto">
+            <input type="text" id="subjectSearch"
+              placeholder="Search subject code or name..."
+              autocomplete="off"
+              class="border p-2 rounded w-full sm:w-80 focus:ring-2 focus:ring-red-500 text-sm"
+            >
+            <input type="hidden" class="subjectSelect" value="">
+            <div id="subjectDropdown"
+              class="absolute z-50 hidden bg-white border border-gray-300 rounded shadow-lg w-full sm:w-80 max-h-52 overflow-y-auto text-sm">
+            </div>
+          </div>
 
           <select class="hoursSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
             <option value="0.5">30 mins</option>

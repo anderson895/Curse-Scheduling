@@ -1,11 +1,6 @@
 <?php
 include "../src/components/faculty/header.php";
 include "../src/components/faculty/nav.php";
-
-
-
-
-
 ?>
 
 <!-- Top Bar -->
@@ -20,19 +15,20 @@ include "../src/components/faculty/nav.php";
 
 <div class="bg-white rounded-lg shadow-md overflow-hidden">
 
-  <!-- Program Info -->
-  <div class="text-center border-b">
-    <h1 class="text-lg font-bold uppercase py-2 sch_schedule_title uppercase">
-      Bachelor of Science in Mechanical Engineering
-    </h1>
-    <p class="text-sm font-semibold sch_schedule_sy">Second Semester – SY 2025–2026</p>
-    <div class="bg-yellow-300 font-bold py-1 mt-2 sch_schedule_author capitalize">
-      Engr. Christopher Lennon Dela Cruz
-    </div>
+  <!-- Program Info — blank by default, filled by JS -->
+  <div class="text-center border-b" id="scheduleHeader">
+    <h1 class="text-lg font-bold uppercase py-2 sch_schedule_title"></h1>
+    <p class="text-sm font-semibold sch_schedule_sy"></p>
+    <div class="bg-yellow-300 font-bold py-1 mt-2 sch_schedule_author capitalize hidden"></div>
+  </div>
+
+  <!-- No schedule message (shown when empty) -->
+  <div id="noScheduleMsg" class="hidden text-center text-gray-400 py-16 italic text-lg">
+    No schedule has been set yet.
   </div>
 
   <!-- Schedule Table -->
-  <div class="overflow-x-auto">
+  <div class="overflow-x-auto" id="scheduleTableWrap">
     <table class="min-w-full border-collapse text-sm">
       <thead>
         <tr class="bg-blue-900 text-white">
@@ -45,7 +41,6 @@ include "../src/components/faculty/nav.php";
           <th class="border p-2">Saturday</th>
         </tr>
       </thead>
-
       <tbody id="scheduleBody"></tbody>
     </table>
   </div>
@@ -56,6 +51,5 @@ include "../src/components/faculty/nav.php";
 <?php
 include "../src/components/faculty/footer.php";
 ?>
-
 
 <script src="../static/js/faculty/view_fac_sched.js"></script>

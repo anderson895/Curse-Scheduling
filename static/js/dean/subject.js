@@ -35,19 +35,31 @@ $(document).ready(function () {
   // ===============================
   // RENDER TABLE
   // ===============================
+  function getFiltered() {
+    const q        = ($('#subjectSearch').val() || '').toLowerCase();
+    const program  = $('#filterProgram').val() || '';
+    const year     = $('#filterYear').val() || '';
+    const semester = $('#filterSemester').val() || '';
+
+    return subjects.filter(s => {
+      const matchText = !q || (
+        s.subject_code.toLowerCase().includes(q) ||
+        s.subject_name.toLowerCase().includes(q) ||
+        s.program.toLowerCase().includes(q) ||
+        s.curriculum_year.toLowerCase().includes(q)
+      );
+      const matchProgram  = !program  || s.program === program;
+      const matchYear     = !year     || s.year_level.toString() === year;
+      const matchSemester = !semester || s.semester.toLowerCase().startsWith(semester.toLowerCase());
+      return matchText && matchProgram && matchYear && matchSemester;
+    });
+  }
+
   function renderTable() {
     const tbody = $("#subjectTableBody");
     tbody.empty();
 
-    const searchValue = $('#subjectSearch').val()?.toLowerCase() || '';
-    const filteredSubjects = subjects.filter(s =>
-      s.program.toLowerCase().includes(searchValue) ||
-      s.curriculum_year.toLowerCase().includes(searchValue) ||
-      s.year_level.toString().includes(searchValue) ||
-      s.semester.toLowerCase().includes(searchValue) ||
-      s.subject_code.toLowerCase().includes(searchValue) ||
-      s.subject_name.toLowerCase().includes(searchValue)
-    );
+    const filteredSubjects = getFiltered();
 
     const start = (currentPage - 1) * rowsPerPage;
     const paginatedSubjects = filteredSubjects.slice(start, start + rowsPerPage);
@@ -81,15 +93,7 @@ $(document).ready(function () {
   }
 
 function renderPagination() {
-  const searchValue = $('#subjectSearch').val()?.toLowerCase() || '';
-  const filteredSubjects = subjects.filter(s =>
-    s.program.toLowerCase().includes(searchValue) ||
-    s.curriculum_year.toLowerCase().includes(searchValue) ||
-    s.year_level.toString().includes(searchValue) ||
-    s.semester.toLowerCase().includes(searchValue) ||
-    s.subject_code.toLowerCase().includes(searchValue) ||
-    s.subject_name.toLowerCase().includes(searchValue)
-  );
+  const filteredSubjects = getFiltered();
 
   const pageCount = Math.ceil(filteredSubjects.length / rowsPerPage);
   const pagination = $("#pagination");
@@ -149,10 +153,9 @@ function renderPagination() {
 }
 
 
-// Pagination click remains the same
 $(document).on('click', '#pagination button', function () {
   const page = $(this).data('page');
-  const totalPages = Math.ceil(subjects.length / rowsPerPage);
+  const totalPages = Math.ceil(getFiltered().length / rowsPerPage);
   if (page < 1 || page > totalPages) return;
   currentPage = page;
   renderTable();
@@ -161,12 +164,18 @@ $(document).on('click', '#pagination button', function () {
 
 
   // ===============================
-  // SEARCH FILTER
+  // SEARCH + DROPDOWN FILTERS
   // ===============================
   $(document).on('keyup', '#subjectSearch', function () {
-    currentPage = 1;
-    renderTable();
-    renderPagination();
+    currentPage = 1; renderTable(); renderPagination();
+  });
+  $(document).on('change', '#filterProgram, #filterYear, #filterSemester', function () {
+    currentPage = 1; renderTable(); renderPagination();
+  });
+  $(document).on('click', '#resetFilters', function () {
+    $('#subjectSearch').val('');
+    $('#filterProgram, #filterYear, #filterSemester').val('');
+    currentPage = 1; renderTable(); renderPagination();
   });
 
   // ===============================
