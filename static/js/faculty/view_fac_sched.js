@@ -50,6 +50,8 @@ $(document).ready(function () {
   });
 
   function showEmpty() {
+
+    
     $(".sch_schedule_title").text("");
     $(".sch_schedule_sy").text("");
     $(".sch_schedule_author").text("").addClass("hidden");

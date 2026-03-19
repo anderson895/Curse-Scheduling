@@ -66,6 +66,17 @@ $(document).ready(function () {
   }
 
   // Show dropdown when typing
+  function positionDropdown() {
+    const input = document.getElementById('subjectSearch');
+    if (!input) return;
+    const rect = input.getBoundingClientRect();
+    const dd = document.getElementById('subjectDropdown');
+    if (!dd) return;
+    dd.style.top   = (rect.bottom + window.scrollY) + 'px';
+    dd.style.left  = (rect.left  + window.scrollX) + 'px';
+    dd.style.width = rect.width + 'px';
+  }
+
   $(document).on('input', '#subjectSearch', function () {
     const q = $(this).val().trim().toLowerCase();
     if (q.length === 0) {
@@ -76,21 +87,28 @@ $(document).ready(function () {
     const filtered = allSubjects.filter(s =>
       s.subject_code.toLowerCase().includes(q) ||
       s.subject_name.toLowerCase().includes(q)
-    ).slice(0, 50);
+    ).slice(0, 60);
 
     if (filtered.length === 0) {
-      $('#subjectDropdown').html('<div class="p-2 text-gray-400 text-xs">No subjects found.</div>').removeClass('hidden');
-      return;
+      $('#subjectDropdown').html('<div class="p-2 text-gray-400 text-xs">No subjects found.</div>');
+    } else {
+      let html = '';
+      filtered.forEach(s => {
+        html += `<div class="subject-option px-3 py-2 hover:bg-red-50 cursor-pointer border-b border-gray-100 flex flex-col"
+                    data-code="${s.subject_code}" data-name="${s.subject_name}">
+                    <span class="font-semibold text-gray-800">${s.subject_code}</span>
+                    <span class="text-gray-500 text-xs">${s.subject_name}</span>
+                 </div>`;
+      });
+      $('#subjectDropdown').html(html);
     }
-    let html = '';
-    filtered.forEach(s => {
-      html += `<div class="subject-option p-2 hover:bg-red-50 cursor-pointer border-b border-gray-100"
-                  data-code="${s.subject_code}" data-name="${s.subject_name}">
-                  <span class="font-semibold">${s.subject_code}</span>
-                  <span class="text-gray-500 text-xs ml-1">— ${s.subject_name}</span>
-               </div>`;
-    });
-    $('#subjectDropdown').html(html).removeClass('hidden');
+    positionDropdown();
+    $('#subjectDropdown').removeClass('hidden');
+  });
+
+  // Reposition on scroll/resize
+  $(window).on('scroll resize', function () {
+    if (!$('#subjectDropdown').hasClass('hidden')) positionDropdown();
   });
 
   // Pick a subject from dropdown
