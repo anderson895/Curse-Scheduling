@@ -147,18 +147,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // Assign random time slots based on entry hours
-            if (!empty($scheduleData['schedule'])) {
-                $scheduleData['schedule'] = $db->assign_random_slots($scheduleData['schedule']);
-            }
-
-            // Re-encode JSON
+            // Re-encode JSON (time assignment happens inside create_schedule/update_schedule with conflict awareness)
             $sch_schedule_clean = json_encode($scheduleData);
 
-            // Validation: prevent duplicate schedules for the same user
+            // Validation: prevent duplicate schedules for the same user + same semester
             if ($_POST['requestType'] === 'create_schedule') {
-                if ($db->schedule_exists($sch_user_id)) {
-                    echo json_encode(['status' => 'error', 'message' => 'Schedule already exists for this user.']);
+                $semester_check = $scheduleData['semester'] ?? '';
+                if ($db->schedule_exists($sch_user_id, $semester_check)) {
+                    echo json_encode(['status' => 'error', 'message' => 'Schedule already exists for this user on the selected semester.']);
                     exit;
                 }
                 $result = $db->create_schedule($sch_user_id, $sch_schedule_clean);
@@ -168,10 +164,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Return JSON response
-            echo json_encode($result['success'] 
-                ? ['status' => 'success', 'message' => $result['message']] 
-                : ['status' => 'error',   'message' => $result['message']]
-            );
+            if ($result['success']) {
+                // Check if any entries had no available slot
+                $saved_data = json_decode($result['saved_json'] ?? '{}', true);
+                $warnings = [];
+                foreach (($saved_data['schedule'] ?? []) as $day => $entries) {
+                    foreach ($entries as $entry) {
+                        if (!empty($entry['conflict_warning'])) {
+                            $warnings[] = "{$entry['subject']} on {$day}";
+                        }
+                    }
+                }
+                $msg = $result['message'];
+                if (!empty($warnings)) {
+                    $msg .= ' Warning: No available time slot for: ' . implode(', ', $warnings) . '. Please edit their time manually.';
+                }
+                echo json_encode(['status' => 'success', 'message' => $msg]);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => $result['message']]);
+            }
         } else if ($_POST['requestType'] === 'delete_schedule') {
             $sch_id = $_POST['sch_id'];
             $result = $db->delete_schedule($sch_id);
@@ -179,7 +190,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ? ['status' => 'success', 'message' => $result['message']] 
                 : ['status' => 'error', 'message' => $result['message']]
             );
-        }else {
+        } else if ($_POST['requestType'] === 'edit_entry_time') {
+            $sch_id      = intval($_POST['sch_id']);
+            $day         = $_POST['day'];
+            $entry_index = intval($_POST['entry_index']);
+            $new_from    = $_POST['new_from'];
+            $new_to      = $_POST['new_to'];
+            $result = $db->edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to);
+            echo json_encode($result['success']
+                ? ['status' => 'success', 'message' => $result['message']]
+                : ['status' => 'error',   'message' => $result['message']]
+            );
+
+        } else if ($_POST['requestType'] === 'check_conflict') {
+            $exclude_sch_id = intval($_POST['exclude_sch_id'] ?? 0);
+            $day            = $_POST['day'];
+            $new_from       = $_POST['new_from'];
+            $new_to         = $_POST['new_to'];
+            $conflicts = $db->check_schedule_conflict($exclude_sch_id, $day, $new_from, $new_to);
+            echo json_encode(['status' => 200, 'conflicts' => $conflicts]);
+
+        } else {
             http_response_code(404);
             echo json_encode(['status'=>404,'message'=>'Request Type Not Found']);
         }

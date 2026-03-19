@@ -185,7 +185,7 @@ public function fetchAllSchedule($schId = null)
 
 
     public function get_faculty_and_gec() {
-        $query = "SELECT * FROM `users` WHERE `user_type` IN (?, ?)";
+        $query = "SELECT * FROM `users` WHERE `user_type` IN (?, ?) AND `user_status` = 1";
         $stmt = $this->conn->prepare($query);
         
         $faculty = 'faculty';
@@ -597,17 +597,21 @@ public function delete_schedule($sch_id) {
 public function create_schedule($sch_user_id, $sch_schedule_json) {
     $sch_user_id = intval($sch_user_id);
 
-    // Check if user already has a schedule
-    $check_stmt = $this->conn->prepare("SELECT sch_id FROM schedule WHERE sch_user_id = ?");
+    // Decode to get semester for duplicate check
+    $scheduleData = json_decode($sch_schedule_json, true);
+    $semester = $scheduleData['semester'] ?? '';
+
+    // Check if user already has a schedule for the SAME semester
+    $check_stmt = $this->conn->prepare("SELECT sch_id FROM schedule WHERE sch_user_id = ? AND JSON_UNQUOTE(JSON_EXTRACT(sch_schedule, '$.semester')) = ?");
     if (!$check_stmt) {
         return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
     }
-    $check_stmt->bind_param("i", $sch_user_id);
+    $check_stmt->bind_param("is", $sch_user_id, $semester);
     $check_stmt->execute();
     $check_stmt->store_result();
     if ($check_stmt->num_rows > 0) {
         $check_stmt->close();
-        return ['success' => false, 'message' => 'Schedule already exists for this user.'];
+        return ['success' => false, 'message' => 'Schedule already exists for this user on the selected semester.'];
     }
     $check_stmt->close();
 
@@ -618,8 +622,8 @@ public function create_schedule($sch_user_id, $sch_schedule_json) {
         return ['success' => false, 'message' => 'No curriculum to schedule.'];
     }
 
-    // Generate random time slots based on entry hours
-    $scheduleData['schedule'] = $this->assign_random_slots($scheduleData['schedule']);
+    // Generate time slots — avoid conflicts with ALL existing schedules
+    $scheduleData['schedule'] = $this->assign_random_slots($scheduleData['schedule'], 0);
 
     // Encode back to JSON
     $sch_schedule_json = json_encode($scheduleData);
@@ -633,7 +637,7 @@ public function create_schedule($sch_user_id, $sch_schedule_json) {
 
     if ($stmt->execute()) {
         $stmt->close();
-        return ['success' => true, 'message' => 'Schedule created successfully.'];
+        return ['success' => true, 'message' => 'Schedule created successfully.', 'saved_json' => $sch_schedule_json];
     } else {
         $stmt->close();
         return ['success' => false, 'message' => 'Failed to create schedule: ' . $stmt->error];
@@ -641,25 +645,26 @@ public function create_schedule($sch_user_id, $sch_schedule_json) {
 }
 
 
-// ---------------- CHECK IF SCHEDULE EXISTS ----------------
-public function schedule_exists($sch_user_id) {
+// ---------------- CHECK IF SCHEDULE EXISTS (per user + semester) ----------------
+public function schedule_exists($sch_user_id, $semester = '') {
     $sch_user_id = intval($sch_user_id);
 
-    $stmt = $this->conn->prepare("SELECT sch_id FROM schedule WHERE sch_user_id = ?");
-    if (!$stmt) {
-        return false; // treat error as "not exists"
+    if ($semester !== '') {
+        $stmt = $this->conn->prepare("SELECT sch_id FROM schedule WHERE sch_user_id = ? AND JSON_UNQUOTE(JSON_EXTRACT(sch_schedule, '$.semester')) = ?");
+        if (!$stmt) return false;
+        $stmt->bind_param("is", $sch_user_id, $semester);
+    } else {
+        $stmt = $this->conn->prepare("SELECT sch_id FROM schedule WHERE sch_user_id = ?");
+        if (!$stmt) return false;
+        $stmt->bind_param("i", $sch_user_id);
     }
 
-    $stmt->bind_param("i", $sch_user_id);
     $stmt->execute();
     $stmt->store_result();
-
     $exists = $stmt->num_rows > 0;
     $stmt->close();
-
     return $exists;
 }
-
 
 
 // ---------------- UPDATE SCHEDULE ----------------
@@ -672,8 +677,8 @@ public function update_schedule($sch_id, $sch_user_id, $sch_schedule_json) {
         return ['success' => false, 'message' => 'No curriculum to schedule.'];
     }
 
-    // Generate random time slots based on entry hours
-    $scheduleData['schedule'] = $this->assign_random_slots($scheduleData['schedule']);
+    // Generate time slots — exclude this schedule's own slots to avoid false self-conflicts
+    $scheduleData['schedule'] = $this->assign_random_slots($scheduleData['schedule'], $sch_id);
 
     $sch_schedule_json = json_encode($scheduleData);
 
@@ -693,83 +698,123 @@ public function update_schedule($sch_id, $sch_user_id, $sch_schedule_json) {
     }
 }
 
-public function assign_random_slots($schedule) {
+// Get all occupied time slots per day from ALL existing schedules (optionally excluding one sch_id)
+public function get_occupied_slots($exclude_sch_id = 0) {
+    $occupied = []; // ['Monday' => [['from'=>DateTime, 'to'=>DateTime], ...], ...]
+
+    $stmt = $this->conn->prepare("SELECT sch_id, sch_schedule FROM schedule");
+    if (!$stmt) return $occupied;
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        if (intval($row['sch_id']) === intval($exclude_sch_id)) continue;
+        $data = json_decode($row['sch_schedule'], true);
+        foreach (($data['schedule'] ?? []) as $day => $entries) {
+            foreach ($entries as $entry) {
+                if (!isset($entry['time'])) continue;
+                $occupied[$day][] = [
+                    'from' => new DateTime($entry['time']['from']),
+                    'to'   => new DateTime($entry['time']['to'])
+                ];
+            }
+        }
+    }
+    $stmt->close();
+    return $occupied;
+}
+
+public function assign_random_slots($schedule, $exclude_sch_id = 0) {
     $newSchedule = [];
 
-    // Define blocked time ranges (e.g., lunch break)
+    // Blocked ranges: lunch break
     $blocked_ranges = [
         ['from' => '12:00', 'to' => '13:00']
     ];
 
+    // Get all slots already used by other schedules (conflict avoidance)
+    $occupied = $this->get_occupied_slots($exclude_sch_id);
+
     // Generate all 30-min slots from 7:00 AM to 9:00 PM
     $all_slots = [];
     $current = new DateTime('07:00');
-    $end = new DateTime('21:00');
-
+    $end     = new DateTime('21:00');
     while ($current < $end) {
         $slot_start = clone $current;
         $current->modify('+30 minutes');
         $slot_end = clone $current;
-
         $all_slots[] = ['from' => $slot_start, 'to' => $slot_end];
     }
 
     foreach ($schedule as $day => $curriculum) {
         $newSchedule[$day] = [];
-        $available_slots = $all_slots;
+
+        // Remove slots blocked by lunch and by existing schedules on this day
+        $day_occupied = $occupied[$day] ?? [];
+        $available_slots = array_values(array_filter($all_slots, function($slot) use ($blocked_ranges, $day_occupied) {
+            // Check lunch
+            foreach ($blocked_ranges as $range) {
+                $rs = new DateTime($range['from']);
+                $re = new DateTime($range['to']);
+                if ($slot['from'] < $re && $slot['to'] > $rs) return false;
+            }
+            // Check other schedules
+            foreach ($day_occupied as $occ) {
+                if ($slot['from'] < $occ['to'] && $slot['to'] > $occ['from']) return false;
+            }
+            return true;
+        }));
+
+        // Re-index for array_slice / array_splice to work correctly
+        $available_slots = array_values($available_slots);
 
         foreach ($curriculum as $id => $entry) {
-            $subject = $entry['subject'] ?? $entry;
-            $hours = isset($entry['hours']) ? floatval($entry['hours']) : 1;
-            $slots_needed = $hours * 2; // each 0.5h = 1 slot
+            $subject      = $entry['subject'] ?? $entry;
+            $hours        = isset($entry['hours']) ? floatval($entry['hours']) : 1;
+            $slots_needed = intval($hours * 2); // each 0.5h = 1 slot
 
-            // Try to find sequential slots that do not overlap blocked ranges
             $assigned = [];
-            $attempts = 0;
-            while (empty($assigned) && $attempts < count($available_slots)) {
-                for ($i = 0; $i <= count($available_slots) - $slots_needed; $i++) {
-                    $candidate = array_slice($available_slots, $i, $slots_needed);
-                    $conflict = false;
-                    foreach ($candidate as $slot) {
-                        foreach ($blocked_ranges as $range) {
-                            $range_start = new DateTime($range['from']);
-                            $range_end = new DateTime($range['to']);
-                            if ($slot['from'] < $range_end && $slot['to'] > $range_start) {
-                                $conflict = true;
-                                break 2;
-                            }
-                        }
-                    }
-                    if (!$conflict) {
-                        $assigned = $candidate;
-                        array_splice($available_slots, $i, $slots_needed); // remove assigned slots
+
+            for ($i = 0; $i <= count($available_slots) - $slots_needed; $i++) {
+                $candidate = array_slice($available_slots, $i, $slots_needed);
+
+                // Ensure slots are consecutive (no gaps)
+                $consecutive = true;
+                for ($c = 0; $c < count($candidate) - 1; $c++) {
+                    if ($candidate[$c]['to'] != $candidate[$c+1]['from']) {
+                        $consecutive = false;
                         break;
                     }
                 }
-                // If no slots found, move the schedule after the blocked range (e.g., 1:00 PM)
-                if (empty($assigned)) {
-                    $available_slots = array_filter($available_slots, function($slot) use ($blocked_ranges) {
-                        foreach ($blocked_ranges as $range) {
-                            $range_end = new DateTime($range['to']);
-                            if ($slot['from'] >= $range_end) return true;
-                        }
-                        return false;
-                    });
-                }
-                $attempts++;
+                if (!$consecutive) continue;
+
+                $assigned = $candidate;
+                array_splice($available_slots, $i, $slots_needed);
+                break;
             }
 
             if (empty($assigned)) {
-                error_log("Not enough slots for {$subject} on {$day}");
+                error_log("No available slots for {$subject} on {$day} — all slots occupied or not enough space.");
+                // Still add the entry but mark time as unassigned so it doesn't silently disappear
+                $newSchedule[$day][] = [
+                    'subject' => $subject,
+                    'hours'   => $hours,
+                    'time'    => ['from' => '00:00', 'to' => '00:00'],
+                    'conflict_warning' => true
+                ];
                 continue;
+            }
+
+            // Mark these newly assigned slots as occupied for subsequent entries in this schedule
+            foreach ($assigned as $a) {
+                $day_occupied[] = ['from' => $a['from'], 'to' => $a['to']];
             }
 
             $newSchedule[$day][] = [
                 'subject' => $subject,
-                'hours' => $hours,
-                'time' => [
+                'hours'   => $hours,
+                'time'    => [
                     'from' => $assigned[0]['from']->format('H:i'),
-                    'to' => end($assigned)['to']->format('H:i')
+                    'to'   => end($assigned)['to']->format('H:i')
                 ]
             ];
         }
@@ -798,5 +843,66 @@ private function increment_slot($time, $minutes) {
 
     
 
+
+
+// ---- CHECK TIME CONFLICT across all schedules ----
+public function check_schedule_conflict($exclude_sch_id, $day, $time_from, $time_to) {
+    $stmt = $this->conn->prepare("SELECT s.sch_id, s.sch_schedule, u.user_fname, u.user_lname FROM schedule s JOIN users u ON s.sch_user_id = u.user_id");
+    if (!$stmt) return [];
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $conflicts = [];
+    $new_from = new DateTime($time_from);
+    $new_to   = new DateTime($time_to);
+    while ($row = $result->fetch_assoc()) {
+        if (intval($row['sch_id']) === intval($exclude_sch_id)) continue;
+        $data = json_decode($row['sch_schedule'], true);
+        $daySchedule = $data['schedule'][$day] ?? [];
+        foreach ($daySchedule as $entry) {
+            if (!isset($entry['time'])) continue;
+            $ex_from = new DateTime($entry['time']['from']);
+            $ex_to   = new DateTime($entry['time']['to']);
+            if ($new_from < $ex_to && $new_to > $ex_from) {
+                $conflicts[] = $row['user_fname'] . ' ' . $row['user_lname'];
+                break;
+            }
+        }
+    }
+    $stmt->close();
+    return $conflicts;
+}
+
+// ---- MANUALLY EDIT A SPECIFIC ENTRY TIME ----
+public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to) {
+    $sch_id = intval($sch_id);
+    $stmt = $this->conn->prepare("SELECT sch_schedule FROM schedule WHERE sch_id = ?");
+    if (!$stmt) return ['success' => false, 'message' => 'Prepare failed'];
+    $stmt->bind_param("i", $sch_id);
+    $stmt->execute();
+    $res = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$res) return ['success' => false, 'message' => 'Schedule not found'];
+    $data = json_decode($res['sch_schedule'], true);
+    if (!isset($data['schedule'][$day][$entry_index])) {
+        return ['success' => false, 'message' => 'Entry not found'];
+    }
+    $from_dt = DateTime::createFromFormat('H:i', $new_from);
+    $to_dt   = DateTime::createFromFormat('H:i', $new_to);
+    if (!$from_dt || !$to_dt) return ['success' => false, 'message' => 'Invalid time format'];
+    if ($from_dt >= $to_dt)   return ['success' => false, 'message' => 'Start time must be before end time'];
+    $conflicts = $this->check_schedule_conflict($sch_id, $day, $new_from, $new_to);
+    if (!empty($conflicts)) {
+        return ['success' => false, 'message' => 'Time conflict with: ' . implode(', ', $conflicts)];
+    }
+    $data['schedule'][$day][$entry_index]['time']['from'] = $new_from;
+    $data['schedule'][$day][$entry_index]['time']['to']   = $new_to;
+    $new_json = json_encode($data);
+    $upd = $this->conn->prepare("UPDATE schedule SET sch_schedule = ? WHERE sch_id = ?");
+    if (!$upd) return ['success' => false, 'message' => 'Prepare failed'];
+    $upd->bind_param("si", $new_json, $sch_id);
+    if ($upd->execute()) { $upd->close(); return ['success' => true, 'message' => 'Schedule time updated successfully.']; }
+    $upd->close();
+    return ['success' => false, 'message' => 'Update failed'];
+}
 
 }
