@@ -173,12 +173,12 @@ $(document).ready(function () {
       data: { requestType: 'check_conflict', exclude_sch_id: sch_id, day, new_from: from, new_to: to },
       dataType: 'json',
       success: function(res) {
-        if (res.conflicts && res.conflicts.length > 0) {
-          $('#editTimeConflict').removeClass('hidden')
-            .text('⚠ Conflict with: ' + res.conflicts.join(', '));
-        } else {
-          $('#editTimeConflict').addClass('hidden').text('');
-        }
+        // if (res.conflicts && res.conflicts.length > 0) {
+        //   $('#editTimeConflict').removeClass('hidden')
+        //     .text('⚠ Conflict with: ' + res.conflicts.join(', '));
+        // } else {
+        //   $('#editTimeConflict').addClass('hidden').text('');
+        // }
       }
     });
   }

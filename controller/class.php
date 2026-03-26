@@ -843,10 +843,8 @@ private function increment_slot($time, $minutes) {
 
     
 
-
-
 // ---- CHECK TIME CONFLICT across all schedules ----
-public function check_schedule_conflict($exclude_sch_id, $day, $time_from, $time_to) {
+public function check_schedule_conflict($exclude_sch_id, $day, $time_from, $time_to, $subject = null) {
     $stmt = $this->conn->prepare("SELECT s.sch_id, s.sch_schedule, u.user_fname, u.user_lname FROM schedule s JOIN users u ON s.sch_user_id = u.user_id");
     if (!$stmt) return [];
     $stmt->execute();
@@ -860,6 +858,12 @@ public function check_schedule_conflict($exclude_sch_id, $day, $time_from, $time
         $daySchedule = $data['schedule'][$day] ?? [];
         foreach ($daySchedule as $entry) {
             if (!isset($entry['time'])) continue;
+
+            // ✅ Skip if different subject (only flag conflict if same subject)
+            if ($subject !== null && isset($entry['subject']) && $entry['subject'] !== $subject) {
+                continue;
+            }
+
             $ex_from = new DateTime($entry['time']['from']);
             $ex_to   = new DateTime($entry['time']['to']);
             if ($new_from < $ex_to && $new_to > $ex_from) {
@@ -890,9 +894,14 @@ public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to)
     $to_dt   = DateTime::createFromFormat('H:i', $new_to);
     if (!$from_dt || !$to_dt) return ['success' => false, 'message' => 'Invalid time format'];
     if ($from_dt >= $to_dt)   return ['success' => false, 'message' => 'Start time must be before end time'];
-    $conflicts = $this->check_schedule_conflict($sch_id, $day, $new_from, $new_to);
+
+    // ✅ Get the subject of the entry being edited
+    $subject = $data['schedule'][$day][$entry_index]['subject'] ?? null;
+
+    // ✅ Pass subject to conflict check — only flag if same subject overlaps
+    $conflicts = $this->check_schedule_conflict($sch_id, $day, $new_from, $new_to, $subject);
     if (!empty($conflicts)) {
-        return ['success' => false, 'message' => 'Time conflict with: ' . implode(', ', $conflicts)];
+        return ['success' => false, 'message' => 'Time conflict with same subject in: ' . implode(', ', $conflicts)];
     }
     $data['schedule'][$day][$entry_index]['time']['from'] = $new_from;
     $data['schedule'][$day][$entry_index]['time']['to']   = $new_to;
