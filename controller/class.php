@@ -932,4 +932,6 @@ public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to)
     return ['success' => false, 'message' => 'Update failed'];
 }
 
+
+
 }
