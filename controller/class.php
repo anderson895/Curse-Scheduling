@@ -895,14 +895,32 @@ public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to)
     if (!$from_dt || !$to_dt) return ['success' => false, 'message' => 'Invalid time format'];
     if ($from_dt >= $to_dt)   return ['success' => false, 'message' => 'Start time must be before end time'];
 
-    // ✅ Get the subject of the entry being edited
-    $subject = $data['schedule'][$day][$entry_index]['subject'] ?? null;
+    // ✅ Self-conflict check — ibang entries ng sariling schedule sa parehong araw
+    $own_entries = $data['schedule'][$day] ?? [];
+    foreach ($own_entries as $idx => $entry) {
+        if ($idx === $entry_index) continue; // Skip ang entry na ine-edit
+        if (!isset($entry['time'])) continue;
 
-    // ✅ Pass subject to conflict check — only flag if same subject overlaps
+        $ex_from = DateTime::createFromFormat('H:i', $entry['time']['from']);
+        $ex_to   = DateTime::createFromFormat('H:i', $entry['time']['to']);
+        if (!$ex_from || !$ex_to) continue;
+
+        if ($from_dt < $ex_to && $to_dt > $ex_from) {
+            $conflict_subject = $entry['subject'] ?? 'another subject';
+            return [
+                'success' => false,
+                'message' => "Time conflict with your own schedule: '{$conflict_subject}' is already at {$entry['time']['from']} - {$entry['time']['to']} on {$day}."
+            ];
+        }
+    }
+
+    // ✅ Cross-schedule conflict — same subject lang ang iche-check
+    $subject = $data['schedule'][$day][$entry_index]['subject'] ?? null;
     $conflicts = $this->check_schedule_conflict($sch_id, $day, $new_from, $new_to, $subject);
     if (!empty($conflicts)) {
         return ['success' => false, 'message' => 'Time conflict with same subject in: ' . implode(', ', $conflicts)];
     }
+
     $data['schedule'][$day][$entry_index]['time']['from'] = $new_from;
     $data['schedule'][$day][$entry_index]['time']['to']   = $new_to;
     $new_json = json_encode($data);
