@@ -49,6 +49,11 @@
         <span>Schedule</span>
       </a>
 
+      <a href="rooms" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+        <span class="material-icons">meeting_room</span>
+        <span>Available Rooms</span>
+      </a>
+
       
 
       
