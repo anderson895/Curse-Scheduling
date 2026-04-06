@@ -95,6 +95,7 @@ function renderSchedule(data) {
           subject_unit: entry.subject_details ? entry.subject_details.subject_unit : '',
           subject_type: entry.subject_details ? entry.subject_details.subject_type : '',
           faculty,
+          room: entry.room || '',
           rowspan: slots
         };
       });
@@ -126,8 +127,8 @@ function renderSchedule(data) {
                      rowspan="${entry.rowspan}">
                     <div>${entry.subject_code}</div>
                     <div>${entry.subject_name}</div>
-                    
                     <div class="text-[10px]">${entry.faculty}</div>
+                    ${entry.room ? `<div class="text-[10px] font-semibold text-blue-700">Room: ${entry.room}</div>` : ''}
                   </td>`;
         } else {
           // Check if inside a merged rowspan

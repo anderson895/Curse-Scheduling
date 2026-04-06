@@ -14,6 +14,10 @@
         <input type="time" id="editTimeFrom" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" min="07:00" max="21:00" required>
       </div>
       <div>
+        <label class="block text-sm font-semibold mb-1">Room Number</label>
+        <input type="text" id="editTimeRoom" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" placeholder="e.g. 301">
+      </div>
+      <div>
         <label class="block text-sm font-semibold mb-1">End Time</label>
         <input type="time" id="editTimeTo" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" min="07:00" max="21:00" required>
       </div>

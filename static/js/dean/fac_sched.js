@@ -14,6 +14,7 @@ $(document).ready(function () {
     $('#subjectSearch').val('');
     $('.subjectSelect').val('');
     $('#subjectDropdown').addClass('hidden');
+    $('#roomInput').val('');
     scheduleEntries = {};
     editId = null;
     entryCounter = 0;
@@ -138,6 +139,7 @@ $(document).ready(function () {
     const day     = $('.daySelect').val();
     const subject = $('.subjectSelect').val();
     const hours   = parseFloat($('.hoursSelect').val());
+    const room    = $('#roomInput').val().trim();
 
     if (!day)     return alert('Please select a day.');
     if (!subject) return alert('Please select a subject.');
@@ -149,13 +151,13 @@ $(document).ready(function () {
     }
 
     const entryId = ++entryCounter;
-    scheduleEntries[day][entryId] = { subject, hours };
+    scheduleEntries[day][entryId] = { subject, hours, room };
 
     const label = $('#subjectSearch').val() || subject;
     $('#entriesList').append(`
       <li class="border border-gray-200 p-2 rounded mb-1 flex justify-between items-center bg-gray-50"
           data-day="${day}" data-id="${entryId}">
-        <span>${day} ➜ <strong>${subject}</strong> (${hours % 1 === 0 ? hours + ' hr' : (hours*60) + ' mins'})</span>
+        <span>${day} ➜ <strong>${subject}</strong> (${hours % 1 === 0 ? hours + ' hr' : (hours*60) + ' mins'})${room ? ` — Room: ${room}` : ''}</span>
         <button type="button" class="removeEntry cursor-pointer text-red-600 font-bold px-1 rounded hover:bg-red-100 transition">×</button>
       </li>
     `);
@@ -163,6 +165,7 @@ $(document).ready(function () {
     // Reset subject picker
     $('#subjectSearch').val('');
     $('.subjectSelect').val('');
+    $('#roomInput').val('');
   });
 
   $(document).on('click', '.removeEntry', function () {
@@ -270,12 +273,13 @@ $(document).ready(function () {
           dbSchedule[day].forEach(entry => {
             const entryId = ++entryCounter;
             scheduleEntries[day] = scheduleEntries[day] || {};
-            scheduleEntries[day][entryId] = { subject: entry.subject, hours: entry.hours || 1 };
+            scheduleEntries[day][entryId] = { subject: entry.subject, hours: entry.hours || 1, room: entry.room || '' };
             const timeStr = entry.time ? `${fmt(entry.time.from)} - ${fmt(entry.time.to)}` : '';
+            const roomStr = entry.room ? ` — Room: ${entry.room}` : '';
             $('#entriesList').append(`
               <li class="border border-gray-200 p-2 rounded mb-1 flex justify-between items-center bg-gray-50"
                   data-day="${day}" data-id="${entryId}">
-                <span>${day} ${timeStr} ➜ <strong>${entry.subject}</strong> (${entry.hours} hr)</span>
+                <span>${day} ${timeStr} ➜ <strong>${entry.subject}</strong> (${entry.hours} hr)${roomStr}</span>
                 <button type="button" class="removeEntry cursor-pointer text-red-600 font-bold px-1 rounded hover:bg-red-100 transition">×</button>
               </li>
             `);
@@ -318,7 +322,7 @@ $(document).ready(function () {
       scheduleForDB[day] = {};
       for (const id in scheduleEntries[day]) {
         const e = scheduleEntries[day][id];
-        scheduleForDB[day][id] = { subject: e.subject, hours: e.hours };
+        scheduleForDB[day][id] = { subject: e.subject, hours: e.hours, room: e.room || '' };
       }
     }
 
@@ -345,6 +349,7 @@ $(document).ready(function () {
         $('#entriesList').empty();
         $('#subjectSearch').val('');
         $('.subjectSelect').val('');
+        $('#roomInput').val('');
         scheduleEntries = {};
         editId = null;
         entryCounter = 0;

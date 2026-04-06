@@ -82,6 +82,7 @@ $(document).ready(function () {
             subject_code: entry.subject,
             subject_name: entry.subject_details ? entry.subject_details.subject_name : entry.subject,
             faculty,
+            room: entry.room || '',
             rowspan: slots
           };
         });
@@ -109,6 +110,7 @@ $(document).ready(function () {
                       <div class="font-bold">${entry.subject_code}</div>
                       <div class="text-gray-600">${entry.subject_name}</div>
                       <div class="text-[10px] text-gray-500">${entry.faculty}</div>
+                      ${entry.room ? `<div class="text-[10px] font-semibold text-blue-700">Room: ${entry.room}</div>` : ''}
                     </td>`;
           } else {
             let skip = false;

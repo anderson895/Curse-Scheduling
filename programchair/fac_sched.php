@@ -120,6 +120,10 @@ include "../src/components/programchair/nav.php";
             <option value="4">4 hours</option>
           </select>
 
+          <input type="text" id="roomInput" placeholder="Room No. (e.g. 301)"
+            class="border p-2 rounded w-full sm:w-32 focus:ring-2 focus:ring-red-500 text-sm"
+            autocomplete="off">
+
         </div>
 
         <ul id="entriesList" class="list-disc pl-5 max-h-32 overflow-y-auto"></ul>

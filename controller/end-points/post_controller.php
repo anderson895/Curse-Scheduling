@@ -134,10 +134,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (is_array($value)) {
                         $subject = $value['subject'] ?? '';
                         $hours   = isset($value['hours']) ? floatval($value['hours']) : 0.5;
-                        $scheduleData['schedule'][$day][$key] = [
+                        $room    = isset($value['room']) ? trim($value['room']) : '';
+                        $entry_normalized = [
                             'subject' => $subject,
                             'hours'   => $hours
                         ];
+                        if ($room !== '') $entry_normalized['room'] = $room;
+                        $scheduleData['schedule'][$day][$key] = $entry_normalized;
                     } else {
                         $scheduleData['schedule'][$day][$key] = [
                             'subject' => $value,
@@ -196,7 +199,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $entry_index = intval($_POST['entry_index']);
             $new_from    = $_POST['new_from'];
             $new_to      = $_POST['new_to'];
-            $result = $db->edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to);
+            $new_room    = isset($_POST['new_room']) ? trim($_POST['new_room']) : null;
+            $result = $db->edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to, $new_room);
             echo json_encode($result['success']
                 ? ['status' => 'success', 'message' => $result['message']]
                 : ['status' => 'error',   'message' => $result['message']]

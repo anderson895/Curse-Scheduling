@@ -770,6 +770,7 @@ public function assign_random_slots($schedule, $exclude_sch_id = 0) {
         foreach ($curriculum as $id => $entry) {
             $subject      = $entry['subject'] ?? $entry;
             $hours        = isset($entry['hours']) ? floatval($entry['hours']) : 1;
+            $room         = isset($entry['room']) ? trim($entry['room']) : '';
             $slots_needed = intval($hours * 2); // each 0.5h = 1 slot
 
             $assigned = [];
@@ -795,12 +796,14 @@ public function assign_random_slots($schedule, $exclude_sch_id = 0) {
             if (empty($assigned)) {
                 error_log("No available slots for {$subject} on {$day} — all slots occupied or not enough space.");
                 // Still add the entry but mark time as unassigned so it doesn't silently disappear
-                $newSchedule[$day][] = [
+                $entry_data = [
                     'subject' => $subject,
                     'hours'   => $hours,
                     'time'    => ['from' => '00:00', 'to' => '00:00'],
                     'conflict_warning' => true
                 ];
+                if ($room !== '') $entry_data['room'] = $room;
+                $newSchedule[$day][] = $entry_data;
                 continue;
             }
 
@@ -809,7 +812,7 @@ public function assign_random_slots($schedule, $exclude_sch_id = 0) {
                 $day_occupied[] = ['from' => $a['from'], 'to' => $a['to']];
             }
 
-            $newSchedule[$day][] = [
+            $assigned_entry = [
                 'subject' => $subject,
                 'hours'   => $hours,
                 'time'    => [
@@ -817,6 +820,8 @@ public function assign_random_slots($schedule, $exclude_sch_id = 0) {
                     'to'   => end($assigned)['to']->format('H:i')
                 ]
             ];
+            if ($room !== '') $assigned_entry['room'] = $room;
+            $newSchedule[$day][] = $assigned_entry;
         }
     }
 
@@ -877,7 +882,7 @@ public function check_schedule_conflict($exclude_sch_id, $day, $time_from, $time
 }
 
 // ---- MANUALLY EDIT A SPECIFIC ENTRY TIME ----
-public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to) {
+public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to, $new_room = null) {
     $sch_id = intval($sch_id);
     $stmt = $this->conn->prepare("SELECT sch_schedule FROM schedule WHERE sch_id = ?");
     if (!$stmt) return ['success' => false, 'message' => 'Prepare failed'];
@@ -923,6 +928,9 @@ public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to)
 
     $data['schedule'][$day][$entry_index]['time']['from'] = $new_from;
     $data['schedule'][$day][$entry_index]['time']['to']   = $new_to;
+    if ($new_room !== null) {
+        $data['schedule'][$day][$entry_index]['room'] = $new_room;
+    }
     $new_json = json_encode($data);
     $upd = $this->conn->prepare("UPDATE schedule SET sch_schedule = ? WHERE sch_id = ?");
     if (!$upd) return ['success' => false, 'message' => 'Prepare failed'];

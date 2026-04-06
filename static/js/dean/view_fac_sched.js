@@ -75,6 +75,7 @@ $(document).ready(function () {
             subject_name: entry.subject_details ? entry.subject_details.subject_name : entry.subject,
             subject_unit: entry.subject_details ? entry.subject_details.subject_unit : '',
             faculty,
+            room: entry.room || '',
             rowspan: slots,
             entry_index: idx,
             time_from_24: entry.time.from,
@@ -106,14 +107,16 @@ $(document).ready(function () {
                       <div class="font-bold">${entry.subject_code}</div>
                       <div class="text-gray-600">${entry.subject_name}</div>
                       <div class="text-[10px] text-gray-500">${entry.faculty}</div>
+                      ${entry.room ? `<div class="text-[10px] font-semibold text-blue-700">Room: ${entry.room}</div>` : ''}
                       <button class="editEntryTime mt-1 bg-yellow-500 hover:bg-yellow-400 text-white text-[10px] px-2 py-0.5 rounded cursor-pointer"
                         data-sch-id="${schId}"
                         data-day="${entry.day}"
                         data-entry-index="${entry.entry_index}"
                         data-from="${entry.time_from_24}"
                         data-to="${entry.time_to_24}"
+                        data-room="${entry.room}"
                         data-subject="${entry.subject_code}">
-                        ✏ Edit Time
+                        ✏ Edit
                       </button>
                     </td>`;
           } else {
@@ -145,11 +148,13 @@ $(document).ready(function () {
     const to          = btn.data('to');
     const subject     = btn.data('subject');
 
+    const room = btn.data('room') || '';
     $('#editTimeSchId').val(sch_id);
     $('#editTimeDay').val(day);
     $('#editTimeEntryIndex').val(entry_index);
     $('#editTimeFrom').val(from);
     $('#editTimeTo').val(to);
+    $('#editTimeRoom').val(room);
     $('#editTimeSubjectLabel').text(`${subject} — ${day}`);
     $('#editTimeConflict').addClass('hidden').text('');
     $('#editTimeModal').removeClass('hidden');
@@ -194,7 +199,8 @@ $(document).ready(function () {
       day:           $('#editTimeDay').val(),
       entry_index:   $('#editTimeEntryIndex').val(),
       new_from:      $('#editTimeFrom').val(),
-      new_to:        $('#editTimeTo').val()
+      new_to:        $('#editTimeTo').val(),
+      new_room:      $('#editTimeRoom').val()
     };
 
     $.ajax({
