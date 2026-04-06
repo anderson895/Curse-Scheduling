@@ -942,4 +942,51 @@ public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to,
 
 
 
+// ---------------- GET ROOM SCHEDULES (aggregate all entries grouped by room) ----------------
+public function get_room_schedules() {
+    $stmt = $this->conn->prepare("
+        SELECT s.sch_id, s.sch_schedule, u.user_fname, u.user_lname
+        FROM schedule s
+        JOIN users u ON s.sch_user_id = u.user_id
+    ");
+    if (!$stmt) return [];
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $stmt->close();
+
+    $rooms = []; // room => [ {day, from, to, subject, faculty, semester, program} ]
+
+    while ($row = $result->fetch_assoc()) {
+        $data = json_decode($row['sch_schedule'], true);
+        if (!isset($data['schedule'])) continue;
+
+        $faculty = trim($row['user_fname'] . ' ' . $row['user_lname']);
+        $program  = $data['program']  ?? '';
+        $semester = $data['semester'] ?? '';
+
+        foreach ($data['schedule'] as $day => $entries) {
+            foreach ($entries as $entry) {
+                $room = isset($entry['room']) ? trim($entry['room']) : '';
+                if ($room === '') continue;
+
+                if (!isset($rooms[$room])) $rooms[$room] = [];
+                $rooms[$room][] = [
+                    'day'      => $day,
+                    'from'     => $entry['time']['from'] ?? '00:00',
+                    'to'       => $entry['time']['to']   ?? '00:00',
+                    'subject'  => $entry['subject'] ?? '',
+                    'faculty'  => $faculty,
+                    'program'  => $program,
+                    'semester' => $semester,
+                    'sch_id'   => $row['sch_id'],
+                ];
+            }
+        }
+    }
+
+    ksort($rooms); // sort by room name
+    return $rooms;
+}
+
+
 }

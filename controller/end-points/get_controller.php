@@ -82,6 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             echo json_encode($result);
             exit;
 
+        } else if ($_GET['requestType'] == 'get_room_schedules') {
+            $rooms = $db->get_room_schedules();
+            echo json_encode(['status' => 200, 'data' => $rooms]);
+
         }else {
             http_response_code(404);
             echo json_encode(['status' => 404, 'message' => 'Request Type Not Found']);
