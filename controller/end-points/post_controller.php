@@ -211,8 +211,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $day            = $_POST['day'];
             $new_from       = $_POST['new_from'];
             $new_to         = $_POST['new_to'];
-            $conflicts = $db->check_schedule_conflict($exclude_sch_id, $day, $new_from, $new_to);
-            echo json_encode(['status' => 200, 'conflicts' => $conflicts]);
+            $room           = isset($_POST['room']) ? trim($_POST['room']) : '';
+            $entry_index    = isset($_POST['entry_index']) ? intval($_POST['entry_index']) : -1;
+
+            $time_conflicts = $db->check_schedule_conflict($exclude_sch_id, $day, $new_from, $new_to);
+
+            $room_conflicts = [];
+            if ($room !== '') {
+                $room_conflicts_raw = $db->check_room_conflict($room, $day, $new_from, $new_to, $exclude_sch_id, $entry_index);
+                foreach ($room_conflicts_raw as $rc) {
+                    $room_conflicts[] = "Room '{$rc['room']}' — {$rc['faculty']} ({$rc['subject']} {$rc['time']})";
+                }
+            }
+
+            echo json_encode([
+                'status' => 200,
+                'conflicts' => $time_conflicts,
+                'room_conflicts' => $room_conflicts
+            ]);
 
         } else {
             http_response_code(404);

@@ -166,29 +166,37 @@ $(document).ready(function () {
 
   // Real-time conflict check
   function checkConflict() {
-    const sch_id  = $('#editTimeSchId').val();
-    const day     = $('#editTimeDay').val();
-    const from    = $('#editTimeFrom').val();
-    const to      = $('#editTimeTo').val();
+    const sch_id      = $('#editTimeSchId').val();
+    const day         = $('#editTimeDay').val();
+    const from        = $('#editTimeFrom').val();
+    const to          = $('#editTimeTo').val();
+    const room        = $('#editTimeRoom').val().trim();
+    const entry_index = $('#editTimeEntryIndex').val();
     if (!from || !to || from >= to) return;
 
     $.ajax({
       url: '../controller/end-points/post_controller.php',
       method: 'POST',
-      data: { requestType: 'check_conflict', exclude_sch_id: sch_id, day, new_from: from, new_to: to },
+      data: { requestType: 'check_conflict', exclude_sch_id: sch_id, day, new_from: from, new_to: to, room: room, entry_index: entry_index },
       dataType: 'json',
       success: function(res) {
-        // if (res.conflicts && res.conflicts.length > 0) {
-        //   $('#editTimeConflict').removeClass('hidden')
-        //     .text('⚠ Conflict with: ' + res.conflicts.join(', '));
-        // } else {
-        //   $('#editTimeConflict').addClass('hidden').text('');
-        // }
+        let warnings = [];
+        if (res.conflicts && res.conflicts.length > 0) {
+          warnings.push('⚠ Time conflict with: ' + res.conflicts.join(', '));
+        }
+        if (res.room_conflicts && res.room_conflicts.length > 0) {
+          warnings.push('🚪 Room conflict: ' + res.room_conflicts.join(', '));
+        }
+        if (warnings.length > 0) {
+          $('#editTimeConflict').removeClass('hidden').html(warnings.join('<br>'));
+        } else {
+          $('#editTimeConflict').addClass('hidden').text('');
+        }
       }
     });
   }
 
-  $('#editTimeFrom, #editTimeTo').on('change', checkConflict);
+  $('#editTimeFrom, #editTimeTo, #editTimeRoom').on('change keyup', checkConflict);
 
   // Save edited time
   $('#editTimeForm').on('submit', function(e) {

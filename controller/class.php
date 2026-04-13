@@ -881,6 +881,55 @@ public function check_schedule_conflict($exclude_sch_id, $day, $time_from, $time
     return $conflicts;
 }
 
+// ---------------- CHECK ROOM CONFLICT ----------------
+// Checks if a specific room is already occupied at a given day/time across ALL schedules
+public function check_room_conflict($room, $day, $time_from, $time_to, $exclude_sch_id = 0, $exclude_entry_index = -1) {
+    if ($room === null || trim($room) === '') return [];
+
+    $room = trim($room);
+    $stmt = $this->conn->prepare("SELECT s.sch_id, s.sch_schedule, u.user_fname, u.user_lname FROM schedule s JOIN users u ON s.sch_user_id = u.user_id");
+    if (!$stmt) return [];
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $conflicts = [];
+    $new_from_dt = new DateTime($time_from);
+    $new_to_dt   = new DateTime($time_to);
+
+    while ($row = $result->fetch_assoc()) {
+        $is_same_schedule = (intval($row['sch_id']) === intval($exclude_sch_id));
+        $data = json_decode($row['sch_schedule'], true);
+        $daySchedule = $data['schedule'][$day] ?? [];
+
+        foreach ($daySchedule as $idx => $entry) {
+            if (!isset($entry['time'])) continue;
+
+            // Skip the exact entry being edited (same schedule + same index)
+            if ($is_same_schedule && intval($idx) === intval($exclude_entry_index)) continue;
+
+            // Only check entries that have the SAME room
+            $entry_room = isset($entry['room']) ? trim($entry['room']) : '';
+            if ($entry_room === '' || strcasecmp($entry_room, $room) !== 0) continue;
+
+            // Check time overlap
+            $ex_from = new DateTime($entry['time']['from']);
+            $ex_to   = new DateTime($entry['time']['to']);
+            if ($new_from_dt < $ex_to && $new_to_dt > $ex_from) {
+                $faculty_name = $row['user_fname'] . ' ' . $row['user_lname'];
+                $subject = $entry['subject'] ?? 'Unknown';
+                $conflicts[] = [
+                    'faculty' => $faculty_name,
+                    'subject' => $subject,
+                    'time'    => $entry['time']['from'] . '-' . $entry['time']['to'],
+                    'room'    => $entry_room
+                ];
+                break; // one conflict per schedule is enough
+            }
+        }
+    }
+    $stmt->close();
+    return $conflicts;
+}
+
 // ---- MANUALLY EDIT A SPECIFIC ENTRY TIME ----
 public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to, $new_room = null) {
     $sch_id = intval($sch_id);
@@ -924,6 +973,19 @@ public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to,
     $conflicts = $this->check_schedule_conflict($sch_id, $day, $new_from, $new_to, $subject);
     if (!empty($conflicts)) {
         return ['success' => false, 'message' => 'Time conflict with same subject in: ' . implode(', ', $conflicts)];
+    }
+
+    // ✅ Room conflict check — same room, same day, overlapping time across ALL schedules
+    $check_room = ($new_room !== null) ? $new_room : ($data['schedule'][$day][$entry_index]['room'] ?? '');
+    if (trim($check_room) !== '') {
+        $room_conflicts = $this->check_room_conflict($check_room, $day, $new_from, $new_to, $sch_id, $entry_index);
+        if (!empty($room_conflicts)) {
+            $msg_parts = [];
+            foreach ($room_conflicts as $rc) {
+                $msg_parts[] = "{$rc['faculty']} ({$rc['subject']} {$rc['time']})";
+            }
+            return ['success' => false, 'message' => "Room conflict: '{$check_room}' is already occupied on {$day} by " . implode(', ', $msg_parts)];
+        }
     }
 
     $data['schedule'][$day][$entry_index]['time']['from'] = $new_from;
