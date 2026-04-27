@@ -74,10 +74,8 @@ $(document).ready(function () {
     dayOrder.forEach(day => {
       const isToday   = day === today;
       const isActive  = day === selectedDay;
-      html += `<button class="day-tab cursor-pointer px-4 py-2 rounded-md text-sm font-semibold border transition
-                 ${isActive ? 'bg-red-900 text-white border-red-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-red-50'}"
-               data-day="${day}">
-                 ${day.substring(0,3)}${isToday ? ' <span class="text-yellow-300 text-[10px]">TODAY</span>' : ''}
+      html += `<button class="day-tab pc-tab ${isActive ? 'is-active' : ''}" data-day="${day}">
+                 ${day.substring(0,3)}${isToday ? ' <span class="text-[10px] ml-1 ' + (isActive ? 'text-yellow-300' : 'text-red-700') + '">TODAY</span>' : ''}
                </button>`;
     });
     $('#dayTabs').html(html);
@@ -85,10 +83,9 @@ $(document).ready(function () {
 
   $(document).on('click', '.day-tab', function () {
     selectedDay = $(this).data('day');
-    $('.day-tab').removeClass('bg-red-900 text-white border-red-900')
-                  .addClass('bg-white text-gray-700 border-gray-300');
-    $(this).addClass('bg-red-900 text-white border-red-900')
-           .removeClass('bg-white text-gray-700 border-gray-300');
+    $('.day-tab').removeClass('is-active');
+    $(this).addClass('is-active');
+    buildDayTabs();
     renderGrid();
   });
 
@@ -128,11 +125,9 @@ $(document).ready(function () {
     updateStats(allRoomNames.length, availNow, occupiedNow);
 
     // Build header
-    let headHtml = `<th class="border p-2 bg-blue-900 text-white text-xs w-28 sticky left-0 z-10">TIME</th>`;
+    let headHtml = `<th>Time</th>`;
     allRoomNames.forEach(room => {
-      headHtml += `<th class="border p-2 bg-blue-900 text-white text-xs whitespace-nowrap">
-        <span class="material-icons text-sm align-middle">meeting_room</span> ${room}
-      </th>`;
+      headHtml += `<th><span class="material-icons">meeting_room</span> ${room}</th>`;
     });
     $('#availHead').html(headHtml);
 
@@ -144,35 +139,41 @@ $(document).ready(function () {
         const endM     = min + 30 === 60 ? 0 : min + 30;
         const endH     = min + 30 === 60 ? hour + 1 : hour;
         const isNow    = isToday && nowMin >= slotMin && nowMin < slotMin + 30;
+        const rowCls   = [
+          min === 0 ? 'hour-mark' : '',
+          isNow ? 'is-now' : ''
+        ].filter(Boolean).join(' ');
 
-        const timeLbl  = `${formatSlot(hour, min)} – ${formatSlot(endH, endM)}`;
-        const rowClass = isNow ? 'bg-yellow-50' : 'hover:bg-gray-50';
-
-        bodyHtml += `<tr class="${rowClass}">
-          <td class="border px-2 py-1 text-xs font-semibold bg-gray-100 text-center whitespace-nowrap sticky left-0 z-10
-                     ${isNow ? '!bg-yellow-200 font-bold text-yellow-900' : ''}">
-            ${timeLbl}${isNow ? ' <span class="block text-[10px] text-yellow-700">▶ NOW</span>' : ''}
+        bodyHtml += `<tr class="${rowCls}">
+          <td class="time-col">
+            ${formatSlot(hour, min)}
+            <span class="block text-[10px] opacity-60 font-medium">${formatSlot(endH, endM)}</span>
+            ${isNow ? '<span class="rooms-now-tag">NOW</span>' : ''}
           </td>`;
 
         allRoomNames.forEach(room => {
           const entry = occupiedMap[room][slotMin];
           if (entry) {
-            // Occupied — show subject info
-            bodyHtml += `<td class="border p-1 text-xs text-center bg-red-100 font-semibold align-top" rowspan="${entry.rowspan}">
-              <div class="font-bold text-red-800">${entry.subject}</div>
-              <div class="text-gray-500 text-[10px]">${entry.faculty}</div>
-              <span class="inline-block mt-1 bg-red-200 text-red-800 text-[10px] px-1 rounded">OCCUPIED</span>
+            bodyHtml += `<td class="has-slot rooms-occupied" rowspan="${entry.rowspan}">
+              <div class="pc-slot">
+                <div class="pc-slot-subject">${entry.subject}</div>
+                <div class="pc-slot-faculty">${entry.faculty}</div>
+                <span class="rooms-status-tag is-occupied">
+                  <span class="material-icons">do_not_disturb_on</span> Occupied
+                </span>
+              </div>
             </td>`;
           } else {
-            // Check if covered by rowspan above
             let skip = false;
             for (let prev = slotMin - 30; prev >= startHour * 60; prev -= 30) {
               const e = occupiedMap[room][prev];
               if (e && e.rowspan > (slotMin - prev) / 30) { skip = true; break; }
             }
             if (!skip) {
-              bodyHtml += `<td class="border h-8 text-center text-[10px] text-green-600 font-semibold bg-green-50">
-                <span class="material-icons text-[14px] align-middle">check_circle</span> Free
+              bodyHtml += `<td class="rooms-free">
+                <span class="rooms-status-tag is-free">
+                  <span class="material-icons">check_circle</span> Free
+                </span>
               </td>`;
             }
           }

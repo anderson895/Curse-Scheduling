@@ -1004,6 +1004,381 @@ public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to,
 
 
 
+// =============================================================
+// FACULTY META (availability + specializations)
+// =============================================================
+public function get_faculty_meta($user_id) {
+    $user_id = intval($user_id);
+    $stmt = $this->conn->prepare("SELECT availability, specializations FROM faculty_meta WHERE user_id = ?");
+    if (!$stmt) return ['availability' => [], 'specializations' => []];
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $res = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return [
+        'availability'   => $res ? (json_decode($res['availability'] ?? '[]', true) ?: []) : [],
+        'specializations'=> $res ? (json_decode($res['specializations'] ?? '[]', true) ?: []) : []
+    ];
+}
+
+public function save_faculty_meta($user_id, $availability_json, $specializations_json) {
+    $user_id = intval($user_id);
+
+    // Validate JSON
+    if (!is_string($availability_json))    $availability_json = json_encode($availability_json ?: new stdClass());
+    if (!is_string($specializations_json)) $specializations_json = json_encode($specializations_json ?: []);
+    if (json_decode($availability_json, true) === null && trim($availability_json) !== '{}' && trim($availability_json) !== '[]') {
+        return ['success' => false, 'message' => 'Invalid availability format.'];
+    }
+    if (json_decode($specializations_json, true) === null && trim($specializations_json) !== '[]') {
+        return ['success' => false, 'message' => 'Invalid specializations format.'];
+    }
+
+    $stmt = $this->conn->prepare(
+        "INSERT INTO faculty_meta (user_id, availability, specializations)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE availability = VALUES(availability), specializations = VALUES(specializations)"
+    );
+    if (!$stmt) return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
+    $stmt->bind_param("iss", $user_id, $availability_json, $specializations_json);
+    if ($stmt->execute()) { $stmt->close(); return ['success' => true, 'message' => 'Faculty profile saved.']; }
+    $stmt->close();
+    return ['success' => false, 'message' => 'Failed to save faculty profile.'];
+}
+
+public function get_all_faculty_with_meta() {
+    $sql = "SELECT u.user_id, u.user_fname, u.user_lname, u.user_type,
+                   fm.availability, fm.specializations
+            FROM users u
+            LEFT JOIN faculty_meta fm ON fm.user_id = u.user_id
+            WHERE u.user_type IN ('faculty','gec') AND u.user_status = 1";
+    $res = $this->conn->query($sql);
+    $rows = [];
+    while ($r = $res->fetch_assoc()) {
+        $r['availability']    = json_decode($r['availability'] ?? '[]', true) ?: [];
+        $r['specializations'] = json_decode($r['specializations'] ?? '[]', true) ?: [];
+        $rows[] = $r;
+    }
+    return $rows;
+}
+
+// =============================================================
+// SUBJECTS for a given program / year / semester
+// =============================================================
+public function get_subjects_by_program_year($program, $year_level, $semester) {
+    // Frontend uses codes like BSCOE; curriculum uses BSCoE — match loosely (case-insensitive prefix).
+    $sql = "SELECT * FROM curriculum
+            WHERE LOWER(program) = LOWER(?)
+              AND year_level = ?
+              AND semester   = ?
+              AND (lec_hours + lab_hours) > 0";
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bind_param("sss", $program, $year_level, $semester);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+// =============================================================
+// AUTO-GENERATE SCHEDULE
+//   Inputs: program, year_level, semester, list of available rooms
+//   Output: ['saved' => [...], 'unassigned' => [...], 'message' => ...]
+// =============================================================
+public function auto_generate_schedule($program, $year_level, $semester, $rooms = []) {
+    $year_level = (string) $year_level;
+
+    $subjects = $this->get_subjects_by_program_year($program, $year_level, $semester);
+    if (empty($subjects)) {
+        return ['success' => false, 'message' => 'No subjects found for ' . $program . ' year ' . $year_level . ' / ' . $semester . '.'];
+    }
+    $faculty_list = $this->get_all_faculty_with_meta();
+    if (empty($faculty_list)) {
+        return ['success' => false, 'message' => 'No active faculty found.'];
+    }
+    if (empty($rooms)) {
+        $rooms = ['301','302','303','304','305'];
+    }
+
+    // ---------- Build busy maps from existing schedules ----------
+    // faculty_busy[user_id][day] = [{from,to}]; cohort_busy[program|yr|sem][day]; room_busy[room][day]
+    $faculty_busy = [];
+    $cohort_busy  = [];
+    $room_busy    = [];
+
+    $existing = $this->conn->query("SELECT sch_user_id, sch_schedule FROM schedule");
+    while ($row = $existing->fetch_assoc()) {
+        $uid = intval($row['sch_user_id']);
+        $data = json_decode($row['sch_schedule'], true);
+        if (!isset($data['schedule']) || !is_array($data['schedule'])) continue;
+
+        $cohort_key = strtolower($data['program'] ?? '') . '|' . ($data['year_level'] ?? '') . '|' . ($data['semester'] ?? '');
+
+        foreach ($data['schedule'] as $day => $entries) {
+            foreach ($entries as $entry) {
+                if (!isset($entry['time']['from'], $entry['time']['to'])) continue;
+                $from = $entry['time']['from'];
+                $to   = $entry['time']['to'];
+                if ($from === '00:00' && $to === '00:00') continue;
+
+                $faculty_busy[$uid][$day][] = ['from' => $from, 'to' => $to];
+                if (!empty($data['year_level'])) {
+                    $cohort_busy[$cohort_key][$day][] = ['from' => $from, 'to' => $to];
+                }
+                if (!empty($entry['room'])) {
+                    $room_busy[trim($entry['room'])][$day][] = ['from' => $from, 'to' => $to];
+                }
+            }
+        }
+    }
+
+    $current_cohort_key = strtolower($program) . '|' . $year_level . '|' . $semester;
+
+    // ---------- Schedule subjects ----------
+    // longest first → harder to fit later
+    usort($subjects, function($a, $b) {
+        return ($b['lec_hours'] + $b['lab_hours']) <=> ($a['lec_hours'] + $a['lab_hours']);
+    });
+
+    $faculty_load = [];   // user_id => total hours assigned in this run
+    $by_faculty_schedule = []; // user_id => ['Monday'=>[entries...], ...]
+    $unassigned = [];
+
+    foreach ($subjects as $subject) {
+        $hours = floatval($subject['lec_hours']) + floatval($subject['lab_hours']);
+        if ($hours <= 0) continue;
+        $sessions = $this->split_into_sessions($hours);
+
+        // candidate faculty whose specialization matches
+        $code = $subject['subject_code'];
+        $matched = array_values(array_filter($faculty_list, function($f) use ($code) {
+            return in_array($code, $f['specializations'], true);
+        }));
+        if (empty($matched)) {
+            // fallback: any faculty
+            $matched = $faculty_list;
+        }
+        // sort by least loaded so far
+        usort($matched, function($a, $b) use ($faculty_load) {
+            return ($faculty_load[$a['user_id']] ?? 0) <=> ($faculty_load[$b['user_id']] ?? 0);
+        });
+
+        $assigned_for_subject = null;
+        $chosen_faculty = null;
+
+        foreach ($matched as $faculty) {
+            $uid = intval($faculty['user_id']);
+            $availability = $faculty['availability'];
+            if (empty($availability)) continue; // need declared availability
+
+            $attempt = $this->try_assign_sessions(
+                $availability, $sessions,
+                $faculty_busy[$uid] ?? [],
+                $cohort_busy[$current_cohort_key] ?? [],
+                $room_busy, $rooms
+            );
+            if ($attempt !== null) {
+                $assigned_for_subject = $attempt;
+                $chosen_faculty = $faculty;
+                break;
+            }
+        }
+
+        if ($assigned_for_subject === null) {
+            $unassigned[] = [
+                'subject_code' => $code,
+                'subject_name' => $subject['subject_name'],
+                'hours' => $hours,
+                'reason' => 'No matching faculty has a free slot in their availability for this cohort.'
+            ];
+            continue;
+        }
+
+        // Commit assignments to busy maps and to faculty schedule bucket
+        $uid = intval($chosen_faculty['user_id']);
+        $faculty_load[$uid] = ($faculty_load[$uid] ?? 0) + $hours;
+        foreach ($assigned_for_subject as $a) {
+            $faculty_busy[$uid][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
+            $cohort_busy[$current_cohort_key][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
+            $room_busy[$a['room']][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
+
+            $by_faculty_schedule[$uid][$a['day']][] = [
+                'subject' => $code,
+                'hours'   => floatval($a['session_hours']),
+                'time'    => ['from' => $a['from'], 'to' => $a['to']],
+                'room'    => $a['room']
+            ];
+        }
+    }
+
+    // ---------- Persist generated schedules ----------
+    $saved = [];
+    foreach ($by_faculty_schedule as $uid => $sched_by_day) {
+        $payload = [
+            'program'    => $program,
+            'year_level' => $year_level,
+            'semester'   => $semester,
+            'schedule'   => $sched_by_day
+        ];
+        $payload_json = json_encode($payload);
+
+        // If this user already has a row for the same semester + same cohort, merge into it.
+        $existing_id = $this->find_schedule_id_for_cohort($uid, $program, $year_level, $semester);
+        if ($existing_id) {
+            // Merge with existing schedule
+            $get = $this->conn->prepare("SELECT sch_schedule FROM schedule WHERE sch_id = ?");
+            $get->bind_param("i", $existing_id);
+            $get->execute();
+            $row = $get->get_result()->fetch_assoc();
+            $get->close();
+            $existing_data = json_decode($row['sch_schedule'] ?? '{}', true) ?: [];
+            $existing_sched = $existing_data['schedule'] ?? [];
+            foreach ($sched_by_day as $day => $entries) {
+                foreach ($entries as $e) {
+                    $existing_sched[$day][] = $e;
+                }
+            }
+            $existing_data['program']    = $program;
+            $existing_data['year_level'] = $year_level;
+            $existing_data['semester']   = $semester;
+            $existing_data['schedule']   = $existing_sched;
+            $merged = json_encode($existing_data);
+            $upd = $this->conn->prepare("UPDATE schedule SET sch_schedule = ? WHERE sch_id = ?");
+            $upd->bind_param("si", $merged, $existing_id);
+            $upd->execute();
+            $upd->close();
+            $saved[] = ['sch_id' => $existing_id, 'user_id' => $uid, 'merged' => true];
+        } else {
+            $ins = $this->conn->prepare("INSERT INTO schedule (sch_user_id, sch_schedule) VALUES (?, ?)");
+            $ins->bind_param("is", $uid, $payload_json);
+            $ins->execute();
+            $new_id = $ins->insert_id;
+            $ins->close();
+            $saved[] = ['sch_id' => $new_id, 'user_id' => $uid, 'merged' => false];
+        }
+    }
+
+    return [
+        'success'    => true,
+        'message'    => 'Auto-generated ' . count($saved) . ' faculty schedule(s).'
+                      . (empty($unassigned) ? '' : ' ' . count($unassigned) . ' subject(s) could not be auto-assigned.'),
+        'saved'      => $saved,
+        'unassigned' => $unassigned
+    ];
+}
+
+// Split a weekly-hours number into session lengths.
+// Rule (per To-do.txt): if > 1.5 hours, split into 2 equal sessions; otherwise 1 session.
+private function split_into_sessions($hours) {
+    if ($hours <= 1.5) return [$hours];
+    $half = round(($hours / 2) * 2) / 2; // round to nearest 0.5
+    return [$half, $hours - $half];
+}
+
+// Find existing schedule row for (faculty, program, year_level, semester)
+private function find_schedule_id_for_cohort($user_id, $program, $year_level, $semester) {
+    $stmt = $this->conn->prepare(
+        "SELECT sch_id FROM schedule
+         WHERE sch_user_id = ?
+           AND LOWER(JSON_UNQUOTE(JSON_EXTRACT(sch_schedule, '$.program')))    = LOWER(?)
+           AND JSON_UNQUOTE(JSON_EXTRACT(sch_schedule, '$.year_level')) = ?
+           AND JSON_UNQUOTE(JSON_EXTRACT(sch_schedule, '$.semester'))   = ?
+         LIMIT 1"
+    );
+    if (!$stmt) return null;
+    $stmt->bind_param("isss", $user_id, $program, $year_level, $semester);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ? intval($row['sch_id']) : null;
+}
+
+// Greedy session assignment within a faculty's availability window.
+private function try_assign_sessions($availability, $sessions, $fac_busy, $cohort_busy, &$room_busy, $rooms) {
+    $lunch = ['from' => '12:00', 'to' => '13:00'];
+
+    $days_used = [];
+    $assignments = [];
+
+    foreach ($sessions as $session_hours) {
+        $found = null;
+
+        // Try every day in availability that wasn't used yet for this subject
+        foreach ($availability as $day => $windows) {
+            if (in_array($day, $days_used, true)) continue;
+            if (!is_array($windows)) continue;
+
+            foreach ($windows as $win) {
+                $win_from = $this->t($win['from'] ?? '');
+                $win_to   = $this->t($win['to']   ?? '');
+                if (!$win_from || !$win_to) continue;
+
+                $session_minutes = (int) round($session_hours * 60);
+
+                // sweep start times in 30-min steps within the window
+                for ($start = clone $win_from; ; $start->modify('+30 minutes')) {
+                    $end = clone $start;
+                    $end->modify("+{$session_minutes} minutes");
+                    if ($end > $win_to) break;
+
+                    $sf = $start->format('H:i');
+                    $et = $end->format('H:i');
+
+                    // skip lunch
+                    if ($this->overlaps($sf, $et, $lunch['from'], $lunch['to'])) continue;
+                    // faculty conflict (any cohort, any year level — they can't be in 2 places)
+                    if ($this->any_overlap($sf, $et, $fac_busy[$day] ?? [])) continue;
+                    // student cohort conflict
+                    if ($this->any_overlap($sf, $et, $cohort_busy[$day] ?? [])) continue;
+
+                    // pick first room that is free
+                    $room_pick = null;
+                    foreach ($rooms as $room) {
+                        $room = trim($room);
+                        if ($room === '') continue;
+                        if (!$this->any_overlap($sf, $et, $room_busy[$room][$day] ?? [])) {
+                            $room_pick = $room;
+                            break;
+                        }
+                    }
+                    if (!$room_pick) continue;
+
+                    $found = [
+                        'day' => $day, 'from' => $sf, 'to' => $et,
+                        'room' => $room_pick, 'session_hours' => $session_hours
+                    ];
+                    break;
+                }
+                if ($found) break;
+            }
+            if ($found) break;
+        }
+
+        if (!$found) return null; // can't place this session
+        $days_used[] = $found['day'];
+        $assignments[] = $found;
+    }
+    return $assignments;
+}
+
+// helpers
+private function t($hhmm) {
+    if (!is_string($hhmm) || $hhmm === '') return null;
+    $dt = DateTime::createFromFormat('H:i', $hhmm);
+    return $dt ?: null;
+}
+private function overlaps($a_from, $a_to, $b_from, $b_to) {
+    $af = new DateTime($a_from); $at = new DateTime($a_to);
+    $bf = new DateTime($b_from); $bt = new DateTime($b_to);
+    return $af < $bt && $at > $bf;
+}
+private function any_overlap($from, $to, $ranges) {
+    foreach ($ranges as $r) {
+        if ($this->overlaps($from, $to, $r['from'], $r['to'])) return true;
+    }
+    return false;
+}
+
 // ---------------- GET ROOM SCHEDULES (aggregate all entries grouped by room) ----------------
 public function get_room_schedules() {
     $stmt = $this->conn->prepare("

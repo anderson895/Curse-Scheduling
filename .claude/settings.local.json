@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"/c/xampp/mysql/bin/mysql.exe\" -u root cursescheduling)",
+      "Bash(\"/c/xampp/php/php.exe\" -l /c/xampp/htdocs/CourseScheduling_updated/cs_modified/controller/class.php)",
+      "Bash(\"/c/xampp/php/php.exe\" -l /c/xampp/htdocs/CourseScheduling_updated/cs_modified/controller/end-points/get_controller.php)",
+      "Bash(\"/c/xampp/php/php.exe\" -l /c/xampp/htdocs/CourseScheduling_updated/cs_modified/controller/end-points/post_controller.php)",
+      "Bash(/c/xampp/php/php.exe *)",
+      "Bash(diff dean/faculty.js faculty/faculty.js)",
+      "Bash(diff dean/faculty.js gec/faculty.js)",
+      "Bash(diff dean/faculty.js programchair/faculty.js)",
+      "Bash(diff dean/gec.js dean/faculty.js)",
+      "Bash(diff dean/gec.js faculty/gec.js)",
+      "Bash(diff dean/gec.js gec/gec.js)",
+      "Bash(diff dean/gec.js programchair/gec.js)",
+      "Bash(git -C \"C:/xampp/htdocs/CourseScheduling_updated/cs_modified\" log --oneline static/js/programchair/faculty.js)",
+      "Bash(git -C \"C:/xampp/htdocs/CourseScheduling_updated/cs_modified\" show HEAD:static/js/programchair/faculty.js)"
+    ]
+  }
+}

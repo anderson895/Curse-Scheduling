@@ -3,32 +3,51 @@ include "../src/components/programchair/header.php";
 include "../src/components/programchair/nav.php";
 ?>
 
-<div class="p-6 bg-gray-100 min-h-screen">
+<div class="pc-topbar">
+  <div class="pc-topbar-inner">
+    <div class="pc-topbar-title">
+      <div class="pc-topbar-icon"><span class="material-icons">menu_book</span></div>
+      <div>
+        <h2>Curriculum</h2>
+        <p>Maintain program curricula by year level and semester</p>
+      </div>
+    </div>
+    <div class="pc-topbar-meta">
+      <div class="pc-topbar-welcome hidden sm:block">
+        <p class="small">Welcome,</p>
+        <p class="name"><?=ucfirst($On_Session[0]['user_username'])?></p>
+      </div>
+      <div class="pc-avatar"><?php echo strtoupper(substr($On_Session[0]['user_username'], 0, 1)); ?></div>
+    </div>
+  </div>
+</div>
 
-  <!-- SUBJECT CARD -->
-  <div class="bg-white rounded-xl shadow-lg">
+<div class="p-2 sm:p-4">
 
-    <!-- Card Header -->
-    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-      <h3 class="text-lg font-semibold text-red-900">Curriculum</h3>
+  <!-- CURRICULUM CARD -->
+  <div class="pc-card">
 
-      <button id="addBtn"
-        class="flex cursor-pointer items-center gap-2 bg-red-900 hover:bg-red-800 text-white px-4 py-2 rounded-md shadow">
-        <span class="material-icons text-sm">add</span>
-        Add Curriculum
+    <div class="pc-card-header">
+      <div class="pc-card-title">
+        <span class="material-icons">menu_book</span>
+        <span>Curriculum List</span>
+      </div>
+
+      <button id="addBtn" class="pc-btn pc-btn-primary">
+        <span class="material-icons">add</span> Add Curriculum
       </button>
     </div>
 
     <!-- CARD BODY -->
-    <div id="curriculumTable" class="p-6">
-      <table class="min-w-full border border-gray-300 bg-white shadow-md rounded-lg">
-        <thead class="bg-red-900 text-white">
+    <div id="curriculumTable" class="p-4 overflow-x-auto">
+      <table class="pc-table">
+        <thead>
           <tr>
-            <th class="p-2 text-left">Year/Semester</th>
-            <th class="p-2 text-left">Subject Code</th>
-            <th class="p-2 text-left">Subject Name</th>
-            <th class="p-2 text-left">Units</th>
-            <th class="p-2 text-left">Actions</th>
+            <th>Year/Semester</th>
+            <th>Subject Code</th>
+            <th>Subject Name</th>
+            <th>Units</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="curriculumBody"></tbody>
@@ -41,23 +60,24 @@ include "../src/components/programchair/nav.php";
 
 <!-- ADD CURRICULUM MODAL -->
 <div id="addCurriculumModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:50; align-items:center; justify-content:center;">
-  <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-6 mx-auto my-auto">
-    <h2 class="text-xl font-bold text-red-900 mb-4">Add Curriculum</h2>
-    <form id="addCurriculumForm">
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Year/Semester</label>
-        <input type="text" name="year_semester" class="w-full border rounded px-2 py-1" required>
+  <div class="pc-modal-card w-full max-w-md mx-auto my-auto">
+    <div class="pc-modal-header">
+      <span class="material-icons">add_circle</span>
+      <h2>Add Curriculum</h2>
+    </div>
+    <form id="addCurriculumForm" class="p-6 space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-1">Year/Semester</label>
+        <input type="text" name="year_semester" class="pc-input" required>
       </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Subjects</label>
-        <select name="subject_id[]" id="subjectSelect" multiple class="w-full border rounded px-2 py-1" required>
-          <!-- Options loaded via AJAX -->
-        </select>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-1">Subjects</label>
+        <select name="subject_id[]" id="subjectSelect" multiple class="pc-select" required></select>
         <p class="text-xs text-gray-500 mt-1">Hold Ctrl (or Cmd) to select multiple subjects.</p>
       </div>
-      <div class="flex justify-end gap-2">
-        <button type="button" id="closeAddCurriculumModal" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-red-900 text-white rounded">Save</button>
+      <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+        <button type="button" id="closeAddCurriculumModal" class="pc-btn pc-btn-neutral">Cancel</button>
+        <button type="submit" class="pc-btn pc-btn-primary"><span class="material-icons">save</span> Save</button>
       </div>
     </form>
   </div>
@@ -65,23 +85,24 @@ include "../src/components/programchair/nav.php";
 
 <!-- EDIT CURRICULUM MODAL -->
 <div id="editCurriculumModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:50; align-items:center; justify-content:center;">
-  <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-6 mx-auto my-auto">
-    <h2 class="text-xl font-bold text-red-900 mb-4">Edit Curriculum</h2>
-    <form id="editCurriculumForm">
+  <div class="pc-modal-card w-full max-w-md mx-auto my-auto">
+    <div class="pc-modal-header">
+      <span class="material-icons">edit</span>
+      <h2>Edit Curriculum</h2>
+    </div>
+    <form id="editCurriculumForm" class="p-6 space-y-4">
       <input type="hidden" name="id">
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Year/Semester</label>
-        <input type="text" name="year_semester" class="w-full border rounded px-2 py-1">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-1">Year/Semester</label>
+        <input type="text" name="year_semester" class="pc-input">
       </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Subjects</label>
-        <select name="subject_id[]" id="editSubjectSelect" multiple class="w-full border rounded px-2 py-1">
-          <!-- Options loaded via AJAX -->
-        </select>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-1">Subjects</label>
+        <select name="subject_id[]" id="editSubjectSelect" multiple class="pc-select"></select>
       </div>
-      <div class="flex justify-end gap-2">
-        <button type="button" id="closeEditCurriculumModal" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-red-900 text-white rounded">Update</button>
+      <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+        <button type="button" id="closeEditCurriculumModal" class="pc-btn pc-btn-neutral">Cancel</button>
+        <button type="submit" class="pc-btn pc-btn-primary"><span class="material-icons">update</span> Update</button>
       </div>
     </form>
   </div>

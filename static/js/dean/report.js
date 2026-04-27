@@ -129,8 +129,8 @@ $(document).ready(function() {
         let reportType = $(this).data('report');
         renderReport(reportType);
 
-        $('.report-tab').removeClass('bg-white text-red-900').addClass('bg-red-900 text-white');
-        $(this).removeClass('bg-red-900 text-white').addClass('bg-white text-red-900');
+        $('.report-tab').removeClass('is-active');
+        $(this).addClass('is-active');
     });
 
     // -------------------- Print button --------------------
@@ -185,5 +185,5 @@ $(document).ready(function() {
 
     // -------------------- Default tab ----------
     renderReport('curriculum');
-    $('.report-tab[data-report="curriculum"]').removeClass('bg-red-900 text-white').addClass('bg-white text-red-900');
+    $('.report-tab[data-report="curriculum"]').addClass('is-active');
 });

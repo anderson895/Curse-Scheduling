@@ -230,6 +230,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'room_conflicts' => $room_conflicts
             ]);
 
+        } else if ($_POST['requestType'] === 'save_faculty_meta') {
+            $user_id              = intval($_POST['user_id'] ?? 0);
+            $availability_json    = $_POST['availability']    ?? '{}';
+            $specializations_json = $_POST['specializations'] ?? '[]';
+            $result = $db->save_faculty_meta($user_id, $availability_json, $specializations_json);
+            echo json_encode($result['success']
+                ? ['status' => 'success', 'message' => $result['message']]
+                : ['status' => 'error',   'message' => $result['message']]
+            );
+
+        } else if ($_POST['requestType'] === 'auto_generate_schedule') {
+            $program    = $_POST['program']    ?? '';
+            $year_level = $_POST['year_level'] ?? '';
+            $semester   = $_POST['semester']   ?? '';
+            $rooms_raw  = $_POST['rooms']      ?? '';
+            $rooms = array_values(array_filter(array_map('trim', explode(',', $rooms_raw)), function($v) { return $v !== ''; }));
+            $result = $db->auto_generate_schedule($program, $year_level, $semester, $rooms);
+            echo json_encode($result);
+
         } else {
             http_response_code(404);
             echo json_encode(['status'=>404,'message'=>'Request Type Not Found']);

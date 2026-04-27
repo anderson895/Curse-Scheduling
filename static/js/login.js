@@ -17,66 +17,45 @@ $(document).ready(function () {
 
       success: function (response) {
 
-       if (response.status === "success") {
+        if (response.status === "success") {
 
-        const user_type = response.user_type.trim().toLowerCase();
+          const user_type = response.user_type.trim().toLowerCase();
 
-        const routes = {
+          const routes = {
             faculty: "faculty/dashboard",
-            "program chair": "programchair/dashboard", // added space
+            "program chair": "programchair/dashboard",
             dean: "dean/dashboard",
             gec: "gec/dashboard"
-        };
+          };
 
-        Swal.fire({
-        title: 'Login Successful',
-        text: 'Redirecting...',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false,
-        background: '#7f1d1d', // maroon (red-900)
-        color: '#fff',
-        iconColor: '#fecaca', // light red
-        customClass: {
-            popup: 'rounded-xl shadow-xl',
-            title: 'text-white font-bold',
-            htmlContainer: 'text-red-100'
-        }
-    }).then(() => {
-        if (routes[user_type]) {
+          if (!routes[user_type]) {
+            pcToast('Unknown user role: ' + user_type, 'error');
+            $('#spinner').hide();
+            $('#btnLogin').prop('disabled', false);
+            return;
+          }
+
+          pcToast('Welcome back! Redirecting to your dashboard…', 'success', {
+            title: 'Login successful',
+            duration: 1200
+          });
+
+          setTimeout(() => {
             window.location.href = routes[user_type];
+          }, 900);
+
         } else {
-            Swal.fire({
-                title: 'Error',
-                text: 'Unknown user role',
-                icon: 'error',
-                background: '#7f1d1d',
-                color: '#fff',
-                iconColor: '#fecaca'
-            });
+          pcToast(response.message || 'Invalid credentials', 'error', {
+            title: 'Login failed'
+          });
+          $('#spinner').hide();
+          $('#btnLogin').prop('disabled', false);
         }
-    });
 
-
-    } else {
-        Swal.fire({
-            title: 'Login Failed',
-            text: response.message || 'Invalid credentials',
-            icon: 'error'
-        });
-    }
-
-        },
-
-      error: function () {
-        Swal.fire({
-          title: 'Server Error',
-          text: 'Please try again later.',
-          icon: 'error'
-        });
       },
 
-      complete: function () {
+      error: function () {
+        pcToast('Please try again later.', 'error', { title: 'Server error' });
         $('#spinner').hide();
         $('#btnLogin').prop('disabled', false);
       }

@@ -3,90 +3,109 @@ include "../src/components/programchair/header.php";
 include "../src/components/programchair/nav.php";
 ?>
 
-<div class="flex flex-col sm:flex-row justify-between items-center bg-red-900 p-4 mb-6 rounded-md shadow-lg">
-  <h2 class="text-xl font-bold text-white uppercase tracking-wide mb-2 sm:mb-0">Schedule</h2>
-  <div class="w-10 h-10 bg-red-800 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-    <?php echo strtoupper(substr($On_Session[0]['user_username'], 0, 1)); ?>
+<div class="pc-topbar">
+  <div class="pc-topbar-inner">
+    <div class="pc-topbar-title">
+      <div class="pc-topbar-icon"><span class="material-icons">calendar_month</span></div>
+      <div>
+        <h2>Schedule</h2>
+        <p>Plot and review faculty schedules</p>
+      </div>
+    </div>
+    <div class="pc-topbar-meta">
+      <div class="pc-topbar-welcome hidden sm:block">
+        <p class="small">Welcome,</p>
+        <p class="name"><?=ucfirst($On_Session[0]['user_username'])?></p>
+      </div>
+      <div class="pc-avatar"><?php echo strtoupper(substr($On_Session[0]['user_username'], 0, 1)); ?></div>
+    </div>
   </div>
 </div>
 
-<div class="p-4 sm:p-6 bg-gray-100 min-h-screen">
+<div class="p-2 sm:p-4">
 
-  <!-- Header & Create Button -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
-    
-    <button id="openScheduleModal" class="cursor-pointer bg-red-900 hover:bg-red-800 text-white px-4 py-2 rounded shadow">
-      + Create Schedule
-    </button>
+  <div class="pc-card mb-4">
+    <div class="pc-card-body">
+      <button id="openScheduleModal" class="pc-btn pc-btn-primary">
+        <span class="material-icons">add</span> Create Schedule
+      </button>
+    </div>
   </div>
 
   <!-- Schedule Table -->
-  <div id="scheduleTable" class="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-300"></div>
+  <div class="pc-card">
+    <div class="pc-card-header">
+      <div class="pc-card-title">
+        <span class="material-icons">event</span>
+        <span>Faculty Schedules</span>
+      </div>
+    </div>
+    <div id="scheduleTable" style="overflow-x: auto;"></div>
+  </div>
 
   <!-- CREATE SCHEDULE MODAL -->
   <div id="scheduleModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="bg-white w-full sm:max-w-3xl md:max-w-4xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh]">
+    <div class="pc-modal-card w-full sm:max-w-3xl md:max-w-4xl overflow-y-auto max-h-[90vh]">
+      <div class="pc-modal-header">
+        <span class="material-icons">edit_calendar</span>
+        <h2>Create Schedule</h2>
+      </div>
 
-      <h2 class="text-xl font-bold text-red-900 mb-4">Create Schedule</h2>
-
-      <form id="scheduleForm" class="space-y-4">
-
-        <!-- Select Faculty -->
-        <select name="sch_user_id" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
+      <form id="scheduleForm" class="space-y-4 p-6">
+        <select name="sch_user_id" class="pc-select" required>
           <option value="">Select Instructor</option>
         </select>
 
-        <!-- Program, Semester, Instructor -->
-        <input type="text" name="program" placeholder="Program" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-        <input type="text" name="semester" placeholder="Semester (e.g. 2nd Sem SY 2025-2026)" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-        
+        <input type="text" name="program" placeholder="Program" class="pc-input" required>
+        <input type="text" name="semester" placeholder="Semester (e.g. 2nd Sem SY 2025-2026)" class="pc-input" required>
 
         <!-- Schedule Builder -->
-        <div id="scheduleBuilder" class="border p-3 rounded space-y-2 overflow-x-auto">
-          <h4 class="font-bold mb-2">Add Schedule Entry</h4>
-          <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center mb-2">
+        <div id="scheduleBuilder" class="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3 overflow-x-auto">
+          <h4 class="pc-section-title text-sm"><span class="material-icons text-base">add_circle</span> Add Schedule Entry</h4>
+          <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center mb-2">
 
-            <button type="button" id="addEntry" class="cursor-pointer bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded mt-2 sm:mt-0">
-              ADD
+            <div class="w-full sm:w-36 sm:shrink-0">
+              <select class="daySelect pc-select cursor-pointer">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+              </select>
+            </div>
+
+            <div class="w-full sm:flex-1 sm:min-w-0">
+              <select class="subjectSelect pc-select cursor-pointer">
+                <option value="Math">Math</option>
+                <option value="English">English</option>
+                <option value="Science">Science</option>
+              </select>
+            </div>
+
+            <div class="w-full sm:w-32 sm:shrink-0">
+              <select class="hoursSelect pc-select cursor-pointer">
+                <option value="0.5">30 mins</option>
+                <option value="1">1 hour</option>
+                <option value="1.5">1.5 hours</option>
+                <option value="2">2 hours</option>
+                <option value="2.5">2.5 hours</option>
+                <option value="3">3 hours</option>
+              </select>
+            </div>
+
+            <button type="button" id="addEntry" class="pc-btn pc-btn-success sm:shrink-0">
+              <span class="material-icons">add</span> Add
             </button>
-
-            <select class="daySelect border p-2 rounded w-full sm:w-auto cursor-pointer">
-              <option value="Monday">Monday</option>
-              <option value="Tuesday">Tuesday</option>
-              <option value="Wednesday">Wednesday</option>
-              <option value="Thursday">Thursday</option>
-              <option value="Friday">Friday</option>
-              <option value="Saturday">Saturday</option>
-            </select>
-
-            <select class="subjectSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
-              <option value="Math">Math</option>
-              <option value="English">English</option>
-              <option value="Science">Science</option>
-            </select>
-
-            <!-- Input para sa hours -->
-            <select class="hoursSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
-              <option value="0.5">30 mins</option>
-              <option value="1">1 hour</option>
-              <option value="1.5">1.5 hours</option>
-              <option value="2">2 hours</option>
-              <option value="2.5">2.5 hours</option>
-              <option value="3">3 hours</option>
-            </select>
-
-
-            
           </div>
 
-          <ul id="entriesList" class="list-disc pl-5 max-h-32 overflow-y-auto"></ul>
+          <ul id="entriesList" class="list-disc pl-5 max-h-32 overflow-y-auto text-sm text-gray-700"></ul>
         </div>
 
 
-        <!-- Modal Actions -->
-        <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3">
-          <button type="button" id="closeScheduleModal" class="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded cursor-pointer">Cancel</button>
-          <button type="submit" class="px-4 py-2 bg-red-900 hover:bg-red-800 text-white rounde cursor-pointer">Save Schedule</button>
+        <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t border-gray-100">
+          <button type="button" id="closeScheduleModal" class="pc-btn pc-btn-neutral">Cancel</button>
+          <button type="submit" class="pc-btn pc-btn-primary"><span class="material-icons">save</span> Save Schedule</button>
         </div>
 
       </form>

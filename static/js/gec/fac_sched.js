@@ -111,40 +111,69 @@ $(document).ready(function () {
     success: function(res) {
       if(res.status === 200) {
         if(res.data.length === 0) {
-          $('#scheduleTable').html(`<div class="text-center text-gray-500 p-4">No records found.</div>`);
+          $('#scheduleTable').html(`
+            <div class="pc-empty">
+              <span class="material-icons">event_busy</span>
+              <h3>No schedules yet</h3>
+              <p>Create or auto-generate a schedule to get started.</p>
+            </div>
+          `);
           return;
         }
 
-        let html = `<table class="min-w-full border border-gray-300 bg-white shadow-md rounded-lg">
-                      <thead class="bg-red-900 text-white">
-                        <tr>
-                          <th class="p-2 text-left">Program</th>
-                          <th class="p-2 text-left">Semester</th>
-                          <th class="p-2 text-left">Instructor</th>
-                          <th class="p-2 text-left">Type</th>
-                          <th class="p-2 text-left">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>`;
-        res.data.forEach(sch => {
-         html += `<tr class="schedule-row border-b hover:bg-gray-50">
-          <td class="p-2">${sch.sch_schedule.program || ''}</td>
-          <td class="p-2">${sch.sch_schedule.semester || ''}</td>
-          <td class="p-2">${sch.faculty_name || ''}</td>
-          <td class="p-2 capitalize">${sch.user_type || ''}</td>
-          <td class="p-2 flex gap-2">
-            <a href="view_fac_sched.php?sch_id=${sch.sch_id}"
-              class="viewSchedule bg-gray-500 hover:bg-gray-400 text-white px-3 py-1 rounded">View</a>
-            <button class="editSchedule cursor-pointer bg-yellow-500 hover:bg-yellow-400 text-white px-3 py-1 rounded"
-              data-id="${sch.sch_id}">Edit</button>
-            <button class="deleteSchedule cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded"
-              data-id="${sch.sch_id}">Delete</button>
-          </td>
-        </tr>`;
+        const typeChipMap = {
+          dean: 'pc-chip-red',
+          'program chair': 'pc-chip-amber',
+          programchair: 'pc-chip-amber',
+          faculty: 'pc-chip-blue',
+          gec: 'pc-chip-green'
+        };
 
+        let rows = '';
+        res.data.forEach(sch => {
+          const program  = sch.sch_schedule.program || '';
+          const semester = sch.sch_schedule.semester || '';
+          const userType = (sch.user_type || '').toLowerCase();
+          const chipCls  = typeChipMap[userType] || 'pc-chip-gray';
+          const typeLabel = (sch.user_type || '').replace(/\b\w/g, c => c.toUpperCase()) || '—';
+
+          rows += `
+            <tr class="schedule-row">
+              <td>${program ? `<span class="pc-chip pc-chip-red">${program}</span>` : '<span class="pc-text-muted">—</span>'}</td>
+              <td>${semester || '<span class="pc-text-muted">—</span>'}</td>
+              <td>${sch.faculty_name || '<span class="pc-text-muted">—</span>'}</td>
+              <td><span class="pc-chip ${chipCls}">${typeLabel}</span></td>
+              <td>
+                <div style="display:flex; gap:.4rem; flex-wrap:wrap;">
+                  <a href="view_fac_sched.php?sch_id=${sch.sch_id}" class="viewSchedule pc-btn pc-btn-sm pc-btn-neutral">
+                    <span class="material-icons">visibility</span> View
+                  </a>
+                  <button class="editSchedule pc-btn pc-btn-sm pc-btn-ghost" data-id="${sch.sch_id}">
+                    <span class="material-icons">edit</span> Edit
+                  </button>
+                  <button class="deleteSchedule pc-btn pc-btn-sm pc-btn-danger" data-id="${sch.sch_id}">
+                    <span class="material-icons">delete</span> Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
         });
-        html += `</tbody></table>`;
-        $('#scheduleTable').html(html);
+
+        $('#scheduleTable').html(`
+          <table class="pc-table" style="border-radius: 0; box-shadow: none;">
+            <thead>
+              <tr>
+                <th>Program</th>
+                <th>Semester</th>
+                <th>Instructor</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `);
       }
     }
   });

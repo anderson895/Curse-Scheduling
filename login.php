@@ -1,20 +1,11 @@
 <?php
 include "src/components/header.php";
 ?>
+<?php include "src/components/design_system.php"; ?>
 
-<!-- Page Wrapper -->
-<div class="min-h-screen flex items-center justify-center bg-red-900 px-4 py-8">
+<div class="pc-auth-shell">
 
-
-  <!-- Login Card -->
-  <div class="relative w-full max-w-md bg-white border border-red-900 rounded-2xl shadow-xl p-8 space-y-6">
-
-    <!-- Logo and Title -->
-    <div class="flex flex-col items-center space-y-3">
-      <h1 class="text-3xl font-extrabold text-red-900 tracking-wide">
-        Course Scheduling 
-      </h1>
-    </div>
+  <div class="pc-auth-card relative">
 
     <!-- Spinner Overlay -->
     <div id="spinner"
@@ -23,40 +14,36 @@ include "src/components/header.php";
       <div class="w-12 h-12 border-4 border-red-900 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
+    <!-- Header -->
+    <div class="pc-auth-header">
+      <img src="static/logo.jpg" alt="Logo">
+      <h1>Course Scheduling</h1>
+      <p>Sign in to continue</p>
+    </div>
+
     <!-- Login Form -->
-    <form id="frmLogin" method="POST" class="space-y-5">
+    <div class="pc-auth-body">
+      <form id="frmLogin" method="POST" class="space-y-4">
 
-      <div>
-        <label for="username" class="block text-red-900 font-semibold mb-1">
-          Username
-        </label>
-        <input type="text" id="username" name="username" required
-               class="w-full px-4 py-2 rounded-lg bg-gray-50 text-gray-800
-                      border border-red-900
-                      focus:outline-none focus:ring-2 focus:ring-red-800"/>
+        <div>
+          <label for="username" class="pc-label">Username</label>
+          <input type="text" id="username" name="username" required class="pc-input" autocomplete="username">
+        </div>
+
+        <div>
+          <label for="password" class="pc-label">Password</label>
+          <input type="password" id="password" name="password" required class="pc-input" autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="btnLogin" class="pc-btn pc-btn-primary w-full justify-center">
+          <span class="material-icons">login</span> Login
+        </button>
+      </form>
+
+      <div class="text-center text-sm text-gray-600 mt-5 pt-4 border-t border-gray-100">
+        Don't have an account?
+        <a href="register" class="pc-text-red font-bold hover:underline ml-1">Register</a>
       </div>
-
-      <div>
-        <label for="password" class="block text-red-900 font-semibold mb-1">
-          Password
-        </label>
-        <input type="password" id="password" name="password" required
-               class="w-full px-4 py-2 rounded-lg bg-gray-50 text-gray-800
-                      border border-red-900
-                      focus:outline-none focus:ring-2 focus:ring-red-800"/>
-      </div>
-
-      <button type="submit" id="btnLogin"
-              class="w-full cursor-pointer bg-red-900 text-white font-bold
-                     py-2 rounded-full hover:bg-red-800 transition">
-        Login
-      </button>
-    </form>
-
-    <!-- Footer / Links -->
-    <div class="text-center text-sm text-red-900">
-      Don't have an account?
-      <a href="register" class="text-red-800 font-bold hover:underline">Register</a>
     </div>
 
   </div>

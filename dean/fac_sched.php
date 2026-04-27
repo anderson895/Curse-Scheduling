@@ -3,141 +3,255 @@ include "../src/components/dean/header.php";
 include "../src/components/dean/nav.php";
 ?>
 
-<div class="flex flex-col sm:flex-row justify-between items-center bg-red-900 p-4 mb-6 rounded-md shadow-lg">
-  <h2 class="text-xl font-bold text-white uppercase tracking-wide mb-2 sm:mb-0">Schedule</h2>
-  <div class="w-10 h-10 bg-red-800 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-    <?php echo strtoupper(substr($On_Session[0]['user_username'], 0, 1)); ?>
+<div class="pc-topbar">
+  <div class="pc-topbar-inner">
+    <div class="pc-topbar-title">
+      <div class="pc-topbar-icon"><span class="material-icons">calendar_month</span></div>
+      <div>
+        <h2>Schedule</h2>
+        <p>Plot and review faculty schedules</p>
+      </div>
+    </div>
+    <div class="pc-topbar-meta">
+      <div class="pc-topbar-welcome hidden sm:block">
+        <p class="small">Welcome,</p>
+        <p class="name"><?=ucfirst($On_Session[0]['user_username'])?></p>
+      </div>
+      <div class="pc-avatar"><?php echo strtoupper(substr($On_Session[0]['user_username'], 0, 1)); ?></div>
+    </div>
   </div>
 </div>
 
-<div class="p-4 sm:p-6 bg-gray-100 min-h-screen">
+<div class="p-2 sm:p-4">
 
-  <!-- Header & Create Button -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
-    
-    <button id="openScheduleModal" class="cursor-pointer bg-red-900 hover:bg-red-800 text-white px-4 py-2 rounded shadow">
-      + Create Schedule
-    </button>
+  <!-- Toolbar -->
+  <div class="pc-card mb-4">
+    <div class="pc-card-body flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+
+      <div class="flex flex-wrap gap-2">
+        <button id="openScheduleModal" class="pc-btn pc-btn-primary">
+          <span class="material-icons">add</span> Create Schedule
+        </button>
+        <button id="openAutoGenModal" class="pc-btn pc-btn-success">
+          <span class="material-icons">bolt</span> Auto-Generate Schedule
+        </button>
+      </div>
+
+      <div class="pc-search-wrap w-full md:w-80">
+        <span class="material-icons">search</span>
+        <input type="text" id="scheduleSearch" placeholder="Search program, semester, instructor..." class="pc-input">
+      </div>
+    </div>
   </div>
-
-
-
-  <div class="mb-4">
-    <input type="text" id="scheduleSearch"
-      placeholder="Search program, semester, instructor..."
-      class="w-full md:w-1/3 border p-2 rounded focus:ring-2 focus:ring-red-500">
-  </div>
-  
-
-
 
   <!-- Schedule Table -->
-  <div id="scheduleTable" class="overflow-x-auto bg-white rounded-lg shadow-md border border-gray-300"></div>
+  <div class="pc-card">
+    <div class="pc-card-header">
+      <div class="pc-card-title">
+        <span class="material-icons">event</span>
+        <span>Faculty Schedules</span>
+      </div>
+    </div>
+    <div id="scheduleTable" style="overflow-x: auto;"></div>
+  </div>
 
-  <div id="noSearchResult" class="hidden text-center text-gray-500 p-4">
-    No matching records found.
+  <div id="noSearchResult" class="hidden pc-empty mt-2">
+    <span class="material-icons">search_off</span>
+    <h3>No matching records</h3>
+    <p>Try a different search term.</p>
   </div>
 
 
   <!-- CREATE SCHEDULE MODAL -->
-<div id="scheduleModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-black/50 p-4">
-  <div class="bg-white w-full sm:max-w-4xl md:max-w-6xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh]">
+  <div id="scheduleModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="pc-modal-card w-full sm:max-w-4xl md:max-w-6xl overflow-y-auto max-h-[90vh]">
 
-    <h2 class="text-xl font-bold text-red-900 mb-4">Create Schedule</h2>
+      <div class="pc-modal-header">
+        <span class="material-icons">edit_calendar</span>
+        <h2>Create Schedule</h2>
+      </div>
 
-    <form id="scheduleForm" class="space-y-4">
+      <form id="scheduleForm" class="space-y-4 p-6">
 
-      <!-- Select Faculty -->
-    <select id="sch_user_id" name="sch_user_id" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-      <option value="">Select Instructor</option>
-    </select>
-
-    <!-- Program Dropdown -->
-    <select id="program" name="program" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-      <option value="" disabled selected>Select Program</option>
-      <option value="BSCE">BS Civil Engineering (BSCE)</option>
-      <option value="BSCOE">BS Computer Engineering (BSCOE)</option>
-      <option value="BSEE">BS Electrical Engineering (BSEE)</option>
-      <option value="BSECE">BS Electronics Engineering (BSECE)</option>
-      <option value="BSIE">BS Industrial Engineering (BSIE)</option>
-      <option value="BSME">BS Mechanical Engineering (BSME)</option>
-
-    </select>
-
-    <!-- Semester Dropdown -->
-    <select id="semester" name="semester" class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500" required>
-      <option value="" disabled selected>Select Semester</option>
-      <option value="1st Sem SY 2025-2026">1st Sem SY 2025-2026</option>
-      <option value="2nd Sem SY 2025-2026">2nd Sem SY 2025-2026</option>
-      <option value="Summer SY 2025-2026">Summer SY 2025-2026</option>
-    </select>
-
-
-
-      
-      <!-- Schedule Builder -->
-      <div id="scheduleBuilder" class="border p-3 rounded space-y-2 overflow-x-auto">
-        <h4 class="font-bold mb-2">Add Schedule Entry</h4>
-        <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center mb-2">
-
-          <button type="button" id="addEntry" class="cursor-pointer bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded mt-2 sm:mt-0">
-            ADD
-          </button>
-
-          <select class="daySelect border p-2 rounded w-full sm:w-auto cursor-pointer">
-            <option value="Monday">Monday</option>
-            <option value="Tuesday">Tuesday</option>
-            <option value="Wednesday">Wednesday</option>
-            <option value="Thursday">Thursday</option>
-            <option value="Friday">Friday</option>
-            <option value="Saturday">Saturday</option>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <select id="sch_user_id" name="sch_user_id" class="pc-select" required>
+            <option value="">Select Instructor</option>
           </select>
 
-          <!-- Searchable subject picker -->
-          <div class="subject-picker w-full sm:w-auto">
-            <input type="text" id="subjectSearch"
-              placeholder="Search subject code or name..."
-              autocomplete="off"
-              class="border p-2 rounded w-full sm:w-80 focus:ring-2 focus:ring-red-500 text-sm"
-            >
-            <input type="hidden" class="subjectSelect" value="">
-          </div>
-          <!-- Dropdown rendered outside modal to avoid overflow clipping -->
-          <div id="subjectDropdown"
-            class="fixed z-[9999] hidden bg-white border border-gray-300 rounded shadow-xl max-h-52 overflow-y-auto text-sm"
-            style="min-width:320px;">
-          </div>
-
-          <select class="hoursSelect border p-2 rounded w-full sm:w-auto cursor-pointer">
-            <option value="0.5">30 mins</option>
-            <option value="1">1 hour</option>
-            <option value="1.5">1.5 hours</option>
-            <option value="2">2 hours</option>
-            <option value="2.5">2.5 hours</option>
-            <option value="3">3 hours</option>
-            <option value="3.5">3.5 hours</option>
-            <option value="4">4 hours</option>
+          <select id="program" name="program" class="pc-select" required>
+            <option value="" disabled selected>Select Program</option>
+            <option value="BSCE">BS Civil Engineering (BSCE)</option>
+            <option value="BSCOE">BS Computer Engineering (BSCOE)</option>
+            <option value="BSEE">BS Electrical Engineering (BSEE)</option>
+            <option value="BSECE">BS Electronics Engineering (BSECE)</option>
+            <option value="BSIE">BS Industrial Engineering (BSIE)</option>
+            <option value="BSME">BS Mechanical Engineering (BSME)</option>
           </select>
 
-          <input type="text" id="roomInput" placeholder="Room No. (e.g. 301)"
-            class="border p-2 rounded w-full sm:w-32 focus:ring-2 focus:ring-red-500 text-sm"
-            autocomplete="off">
-
+          <select id="semester" name="semester" class="pc-select" required>
+            <option value="" disabled selected>Select Semester</option>
+            <option value="1st Sem SY 2025-2026">1st Sem SY 2025-2026</option>
+            <option value="2nd Sem SY 2025-2026">2nd Sem SY 2025-2026</option>
+            <option value="Summer SY 2025-2026">Summer SY 2025-2026</option>
+          </select>
         </div>
 
-        <ul id="entriesList" class="list-disc pl-5 max-h-32 overflow-y-auto"></ul>
-      </div>
+        <!-- Schedule Builder -->
+        <div id="scheduleBuilder" class="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3 overflow-x-auto">
+          <h4 class="pc-section-title text-sm"><span class="material-icons text-base">add_circle</span> Add Schedule Entry</h4>
+          <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center mb-2">
 
-      <!-- Modal Actions -->
-      <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3">
-        <button type="button" id="closeScheduleModal" class="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded cursor-pointer">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-red-900 hover:bg-red-800 text-white rounded cursor-pointer">Save Schedule</button>
-      </div>
+            <div class="w-full sm:w-36 sm:shrink-0">
+              <select class="daySelect pc-select cursor-pointer">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+              </select>
+            </div>
 
-    </form>
+            <div class="subject-picker w-full sm:flex-1 sm:min-w-0">
+              <input type="text" id="subjectSearch"
+                placeholder="Search subject code or name..."
+                autocomplete="off"
+                class="pc-input text-sm">
+              <input type="hidden" class="subjectSelect" value="">
+            </div>
+            <div id="subjectDropdown"
+              class="fixed z-[9999] hidden bg-white border border-gray-300 rounded shadow-xl max-h-52 overflow-y-auto text-sm"
+              style="min-width:320px;">
+            </div>
+
+            <div class="w-full sm:w-32 sm:shrink-0">
+              <select class="hoursSelect pc-select cursor-pointer">
+                <option value="0.5">30 mins</option>
+                <option value="1">1 hour</option>
+                <option value="1.5">1.5 hours</option>
+                <option value="2">2 hours</option>
+                <option value="2.5">2.5 hours</option>
+                <option value="3">3 hours</option>
+                <option value="3.5">3.5 hours</option>
+                <option value="4">4 hours</option>
+              </select>
+            </div>
+
+            <div class="w-full sm:w-32 sm:shrink-0">
+              <input type="text" id="roomInput" placeholder="Room No. (e.g. 301)"
+                class="pc-input text-sm" autocomplete="off">
+            </div>
+
+            <button type="button" id="addEntry" class="pc-btn pc-btn-success sm:shrink-0">
+              <span class="material-icons">add</span> Add
+            </button>
+          </div>
+
+          <ul id="entriesList" class="list-disc pl-5 max-h-32 overflow-y-auto text-sm text-gray-700"></ul>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t border-gray-100">
+          <button type="button" id="closeScheduleModal" class="pc-btn pc-btn-neutral">Cancel</button>
+          <button type="submit" class="pc-btn pc-btn-primary">
+            <span class="material-icons">save</span> Save Schedule
+          </button>
+        </div>
+
+      </form>
+    </div>
   </div>
-</div>
 
+
+  <!-- AUTO-GENERATE SCHEDULE MODAL -->
+  <div id="autoGenModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="pc-modal-card overflow-y-auto" style="width: 100%; max-width: 640px; max-height: 90vh;">
+
+      <div class="pc-modal-header pc-modal-header-emerald">
+        <span class="material-icons">bolt</span>
+        <h2>Auto-Generate Schedule</h2>
+      </div>
+
+      <div class="p-6">
+        <p class="text-sm text-gray-500 mb-4">
+          The system will plot a conflict-free schedule using each faculty's availability,
+          specializations, and existing schedules across year levels.
+        </p>
+
+        <form id="autoGenForm" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-semibold uppercase tracking-wide text-gray-600">Program</label>
+              <select id="autoProgram" name="program" required class="pc-select mt-1">
+                <option value="" disabled selected>Select Program</option>
+                <option value="BSCE">BS Civil Engineering (BSCE)</option>
+                <option value="BSCoE">BS Computer Engineering (BSCoE)</option>
+                <option value="BSEE">BS Electrical Engineering (BSEE)</option>
+                <option value="BSECE">BS Electronics Engineering (BSECE)</option>
+                <option value="BSIE">BS Industrial Engineering (BSIE)</option>
+                <option value="BSME">BS Mechanical Engineering (BSME)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold uppercase tracking-wide text-gray-600">Year Level</label>
+              <select id="autoYearLevel" name="year_level" required class="pc-select mt-1">
+                <option value="" disabled selected>Select Year</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+                <option value="5">5th Year</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold uppercase tracking-wide text-gray-600">Semester</label>
+              <select id="autoSemester" name="semester" required class="pc-select mt-1">
+                <option value="" disabled selected>Select Semester</option>
+                <option value="1st">1st Semester</option>
+                <option value="2nd">2nd Semester</option>
+                <option value="Summer">Summer</option>
+              </select>
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="text-xs font-semibold uppercase tracking-wide text-gray-600">Available Rooms</label>
+              <div class="pc-room-picker mt-1">
+                <div id="autoRoomsChips" style="display: contents;"></div>
+                <input type="text" id="autoRoomsInput" class="pc-room-input"
+                  placeholder="Type room and press Enter…" autocomplete="off">
+              </div>
+              <input type="hidden" id="autoRooms" name="rooms" value="301,302,303,304,305">
+              <div id="autoRoomsSuggest" class="pc-room-suggest">
+                <span class="pc-room-suggest-label">Quick add:</span>
+                <button type="button" class="pc-quick-room" data-room="301">301</button>
+                <button type="button" class="pc-quick-room" data-room="302">302</button>
+                <button type="button" class="pc-quick-room" data-room="303">303</button>
+                <button type="button" class="pc-quick-room" data-room="304">304</button>
+                <button type="button" class="pc-quick-room" data-room="305">305</button>
+                <button type="button" class="pc-quick-room" data-room="306">306</button>
+                <button type="button" class="pc-quick-room" data-room="307">307</button>
+                <button type="button" class="pc-quick-room" data-room="308">308</button>
+                <button type="button" class="pc-quick-room" data-room="309">309</button>
+                <button type="button" class="pc-quick-room" data-room="310">310</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="autoGenResult" class="hidden rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm"></div>
+
+          <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+            <button type="button" id="closeAutoGenModal" class="pc-btn pc-btn-neutral">Cancel</button>
+            <button type="submit" class="pc-btn pc-btn-success">
+              <span class="material-icons">auto_awesome</span> Generate
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
 
 <?php
 include "../src/components/dean/footer.php";

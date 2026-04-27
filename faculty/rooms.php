@@ -3,61 +3,103 @@ include "../src/components/faculty/header.php";
 include "../src/components/faculty/nav.php";
 ?>
 
-<!-- Top Bar -->
-<div class="flex justify-between items-center bg-red-900 p-4 mb-6 rounded-md shadow-lg">
-  <h2 class="text-xl font-bold text-white uppercase tracking-wide">Available Rooms</h2>
-  <div class="w-10 h-10 bg-red-800 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-    <?php echo strtoupper(substr($On_Session[0]['user_username'], 0, 1)); ?>
+<div class="pc-topbar">
+  <div class="pc-topbar-inner">
+    <div class="pc-topbar-title">
+      <div class="pc-topbar-icon"><span class="material-icons">meeting_room</span></div>
+      <div>
+        <h2>Available Rooms</h2>
+        <p>Live room availability across the week</p>
+      </div>
+    </div>
+    <div class="pc-topbar-meta">
+      <div class="pc-topbar-welcome hidden sm:block">
+        <p class="small">Welcome,</p>
+        <p class="name"><?=ucfirst($On_Session[0]['user_username'])?></p>
+      </div>
+      <div class="pc-avatar"><?php echo strtoupper(substr($On_Session[0]['user_username'], 0, 1)); ?></div>
+    </div>
   </div>
 </div>
 
-<div class="p-4 sm:p-6 bg-gray-100 min-h-screen">
+<div class="p-2 sm:p-4">
 
   <!-- Stats Bar -->
-  <div class="grid grid-cols-3 gap-4 mb-5">
-    <div class="bg-white rounded-lg shadow-md p-4 text-center">
-      <div class="text-2xl font-bold text-red-900" id="statTotal">—</div>
-      <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Total Rooms</div>
+  <div class="rooms-stats-grid mb-5">
+    <div class="pc-card rooms-stat rooms-stat--total">
+      <div class="pc-card-body flex items-center gap-3">
+        <div class="rooms-stat-icon"><span class="material-icons">meeting_room</span></div>
+        <div>
+          <div class="rooms-stat-value" id="statTotal">—</div>
+          <div class="rooms-stat-label">Total Rooms</div>
+        </div>
+      </div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-4 text-center">
-      <div class="text-2xl font-bold text-green-600" id="statAvail">—</div>
-      <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Available Now</div>
+    <div class="pc-card rooms-stat rooms-stat--avail">
+      <div class="pc-card-body flex items-center gap-3">
+        <div class="rooms-stat-icon"><span class="material-icons">check_circle</span></div>
+        <div>
+          <div class="rooms-stat-value" id="statAvail">—</div>
+          <div class="rooms-stat-label">Available Now</div>
+        </div>
+      </div>
     </div>
-    <div class="bg-white rounded-lg shadow-md p-4 text-center">
-      <div class="text-2xl font-bold text-red-600" id="statOccupied">—</div>
-      <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Occupied Now</div>
+    <div class="pc-card rooms-stat rooms-stat--occupied">
+      <div class="pc-card-body flex items-center gap-3">
+        <div class="rooms-stat-icon"><span class="material-icons">do_not_disturb_on</span></div>
+        <div>
+          <div class="rooms-stat-value" id="statOccupied">—</div>
+          <div class="rooms-stat-label">Occupied Now</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Legend -->
-  <div class="flex items-center gap-4 mb-4 text-sm">
-    <span class="flex items-center gap-1">
-      <span class="inline-block w-4 h-4 rounded bg-green-100 border border-green-300"></span>
-      <span class="text-gray-600">Free / Available</span>
-    </span>
-    <span class="flex items-center gap-1">
-      <span class="inline-block w-4 h-4 rounded bg-red-100 border border-red-300"></span>
-      <span class="text-gray-600">Occupied</span>
-    </span>
-    <span class="flex items-center gap-1">
-      <span class="inline-block w-4 h-4 rounded bg-yellow-200 border border-yellow-400"></span>
-      <span class="text-gray-600">Current time slot</span>
-    </span>
+  <div class="rooms-legend-card">
+    <div class="rooms-legend-title">
+      <span class="material-icons">info</span> Legend
+    </div>
+    <div class="rooms-legend-list">
+      <div class="rooms-legend-row">
+        <span class="rooms-legend-swatch is-free"></span>
+        <div class="rooms-legend-text">
+          <span class="rooms-legend-name">Free / Available</span>
+          <span class="rooms-legend-desc">No class is scheduled in this room during this time slot.</span>
+        </div>
+      </div>
+      <div class="rooms-legend-row">
+        <span class="rooms-legend-swatch is-occupied"></span>
+        <div class="rooms-legend-text">
+          <span class="rooms-legend-name">Occupied</span>
+          <span class="rooms-legend-desc">A class is scheduled in this room at this time — reflects the room's booking status.</span>
+        </div>
+      </div>
+      <div class="rooms-legend-row">
+        <span class="rooms-legend-swatch is-now"></span>
+        <div class="rooms-legend-text">
+          <span class="rooms-legend-name">Current time slot</span>
+          <span class="rooms-legend-desc">Highlights the 30-minute slot covering the current time (real-time indicator).</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Day Tabs -->
-  <div id="dayTabs" class="flex flex-wrap gap-2 mb-4"></div>
+  <div id="dayTabs" class="pc-tabs mb-4"></div>
 
   <!-- Availability Grid -->
-  <div class="bg-white rounded-lg shadow-md overflow-x-auto">
-    <table class="min-w-full border-collapse text-sm">
-      <thead>
-        <tr id="availHead"></tr>
-      </thead>
-      <tbody id="availGrid">
-        <tr><td class="text-center text-gray-400 py-10">Loading...</td></tr>
-      </tbody>
-    </table>
+  <div class="pc-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="pc-room-grid rooms-avail-grid">
+        <thead>
+          <tr id="availHead"></tr>
+        </thead>
+        <tbody id="availGrid">
+          <tr><td class="text-center text-gray-400 py-10">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>

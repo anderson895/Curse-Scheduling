@@ -1,46 +1,31 @@
 <body class="bg-gray-100">
-  
+
 <!-- Layout Wrapper -->
 <div class="min-h-screen flex flex-col lg:flex-row">
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="bg-red-900 shadow-lg w-64 lg:w-1/5 xl:w-1/6 p-6 space-y-6 lg:static fixed inset-y-0 left-0 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+  <aside id="sidebar" class="pc-sidebar shadow-lg w-64 lg:w-1/5 xl:w-1/6 p-6 space-y-6 lg:static fixed inset-y-0 left-0 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
 
     <!-- Sidebar Header -->
-    <div class="flex flex-wrap justify-center items-center space-x-4 p-4 bg-red-800 rounded-lg shadow-inner hover:shadow-xl transition-shadow duration-300 max-w-full">
-      <img src="../static/logo.jpg" alt="Logo" class="w-20 h-20 rounded-full border-2 border-white shadow-sm transform transition-transform duration-300 hover:scale-105">
-      <h1 class="text-base sm:text-lg md:text-xl font-bold text-white tracking-tight text-center">
+    <div class="flex flex-col items-center text-center p-4 rounded-xl shadow-inner bg-white/5 border border-white/10 backdrop-blur-sm">
+      <img src="../static/logo.jpg" alt="Logo" class="w-20 h-20 rounded-full border-2 border-white/70 shadow-md transform transition-transform duration-300 hover:scale-105 mb-2">
+      <h1 class="text-base sm:text-lg font-bold text-white tracking-wide leading-tight">
         <?=ucfirst($On_Session[0]['user_type'])?>
       </h1>
+      <p class="text-xs text-red-100/80 mt-0.5 truncate w-full">
+        <?=htmlspecialchars($On_Session[0]['user_username'])?>
+      </p>
     </div>
 
     <!-- Navigation -->
     <nav class="space-y-4 text-left text-white overflow-y-auto h-[calc(100vh-120px)]">
-      
-      <!-- <a href="dashboard" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
-        <span class="material-icons">dashboard</span>
-        <span>Dashboard</span>
-      </a> -->
 
-
-      
-
-      
-    
-
-      <a href="fac_sched" class="nav-link flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+      <a href="fac_sched" class="nav-link flex items-center space-x-3 px-3 py-2 rounded-md transition">
         <span class="material-icons">table_view</span>
-
         <span>Schedule</span>
       </a>
 
-      
-
-      
-
-     
-
-      <a href="logout" class="flex items-center space-x-3 hover:bg-red-800 px-3 py-2 rounded-md transition">
+      <a href="logout" class="flex items-center space-x-3 hover:bg-white/10 px-3 py-2 rounded-md transition">
         <span class="material-icons">logout</span>
         <span>Logout</span>
       </a>
@@ -55,30 +40,13 @@
   <main class="flex-1 bg-gray-100 p-8 lg:p-12 overflow-auto h-screen">
     <!-- Mobile menu button -->
     <button id="menuButton" class="lg:hidden text-white bg-red-800/20 hover:bg-red-800/30 p-2 rounded-md transition duration-300 mb-4">
-      <span class="material-icons">menu</span> 
+      <span class="material-icons">menu</span>
     </button>
 
   <div class="min-h-screen">
 
-
-
-   
 <!-- JavaScript -->
 <script>
-  // Dropdown toggle logic
-  $("#toggleAccounts").click(function () {
-    $("#accountsDropdown").slideToggle(300);
-    const icon = $("#accounts_dropdownIcon");
-    icon.text(icon.text() === "expand_more" ? "expand_less" : "expand_more");
-  });
-
-
-
-   
-
-  
-
-  // Mobile menu logic
   const menuButton = document.getElementById('menuButton');
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('overlay');
@@ -93,27 +61,13 @@
     overlay.classList.add('hidden');
   });
 
-  // Active URL highlighting including dropdown links
-const allLinks = document.querySelectorAll('.nav-link, #accountsDropdown a'); // include dropdown links
-const currentPath = window.location.pathname.split("/").pop(); // get current file/page name
+  const allLinks = document.querySelectorAll('.nav-link');
+  const currentFile = window.location.pathname.split("/").pop().replace(/\.php$/, '');
 
-allLinks.forEach(link => {
-  const linkHref = link.getAttribute('href');
-
-  // Check if current page matches link href
-  if (currentPath === linkHref) {
-    // Highlight the active link
-    link.classList.add('text-[#FFD700]', 'bg-white/10');
-
-    // If it’s inside the Accounts dropdown, open it
-    if (link.closest('#accountsDropdown')) {
-      const dropdown = document.getElementById('accountsDropdown');
-      dropdown.style.display = 'block';
-      document.getElementById('accounts_dropdownIcon').textContent = 'expand_less';
+  allLinks.forEach(link => {
+    const href = (link.getAttribute('href') || '').split('?')[0].replace(/\.php$/, '');
+    if (currentFile && href === currentFile) {
+      link.classList.add('pc-active');
     }
-
-    // You can add other dropdowns similarly
-  }
-});
-
+  });
 </script>

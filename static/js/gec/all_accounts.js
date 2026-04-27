@@ -3,15 +3,27 @@ $(document).ready(function () {
     const container = $('.all_accounts_container');
 
     // =============================
-    // SEARCH INPUT
+    // CARD SHELL + SEARCH INPUT
     // =============================
     container.html(`
-        <div class="mb-4">
-            <input id="accountSearch"
-                class="w-full p-2 border rounded"
-                placeholder="Search accounts...">
+        <div class="pc-card">
+            <div class="pc-card-header">
+                <div class="pc-card-title">
+                    <span class="material-icons">groups</span>
+                    <span>Account Directory</span>
+                </div>
+                <div class="pc-search-wrap" style="min-width: 18rem;">
+                    <span class="material-icons">search</span>
+                    <input id="accountSearch" class="pc-input" placeholder="Search by name, username, or email...">
+                </div>
+            </div>
+            <div class="pc-card-body" style="padding: 0;">
+                <div id="accountsTableWrap" style="overflow-x: auto;"></div>
+            </div>
         </div>
     `);
+
+    const tableWrap = $('#accountsTableWrap');
 
     // =============================
     // FETCH ACCOUNTS
@@ -27,97 +39,114 @@ $(document).ready(function () {
         success: function (res) {
 
             if (res.status !== 200) {
-                container.append(`
-                    <p class="text-red-500 text-center py-4">
-                        Failed to load data
-                    </p>
+                tableWrap.html(`
+                    <div class="pc-empty">
+                        <span class="material-icons">error_outline</span>
+                        <h3>Failed to load data</h3>
+                        <p>Please try refreshing the page.</p>
+                    </div>
                 `);
                 return;
             }
 
             const accounts = res.data || [];
 
+            // Map user_type → chip color
+            const typeChip = (t) => {
+                const type = (t || '').toLowerCase();
+                const map = {
+                    dean: 'pc-chip-red',
+                    'program chair': 'pc-chip-amber',
+                    programchair: 'pc-chip-amber',
+                    faculty: 'pc-chip-blue',
+                    gec: 'pc-chip-green',
+                };
+                return map[type] || 'pc-chip-gray';
+            };
+
             // =============================
             // RENDER TABLE
             // =============================
             function renderTable(data) {
 
-                // REMOVE PREVIOUS TABLE / MESSAGE
-                $('#accountsTable').remove();
-
-                // 🔴 NO RECORDS FOUND
                 if (!data || data.length === 0) {
-                    container.append(`
-                        <div id="accountsTable" class="text-center py-8 text-gray-500">
-                            No records found
+                    tableWrap.html(`
+                        <div class="pc-empty">
+                            <span class="material-icons">person_search</span>
+                            <h3>No accounts found</h3>
+                            <p>Try adjusting your search query.</p>
                         </div>
                     `);
                     return;
                 }
 
-                let html = `
-                <table class="min-w-full border border-gray-300 bg-white shadow-md rounded-lg">
-                    <thead class="bg-red-900 text-white">
-                        <tr>
-                            <th class="p-3">ID</th>
-                            <th class="p-3">Username</th>
-                            <th class="p-3">Email</th>
-                            <th class="p-3">First</th>
-                            <th class="p-3">Middle</th>
-                            <th class="p-3">Last</th>
-                            <th class="p-3">Type</th>
-                            <th class="p-3">Status</th>
-                            <th class="p-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                `;
+                let rows = '';
 
                 data.forEach(acc => {
-                    html += `
-                    <tr class="border-t">
-                        <td class="p-3">${acc.user_id}</td>
-                        <td class="p-3">${acc.user_username}</td>
-                        <td class="p-3">${acc.user_email}</td>
-                        <td class="p-3">${acc.user_fname}</td>
-                        <td class="p-3">${acc.user_mname || '-'}</td>
-                        <td class="p-3">${acc.user_lname}</td>
-                        <td class="p-3 capitalize">${acc.user_type}</td>
-                        <td class="p-3">
-                            ${acc.user_status == 1 ? 'Active' : 'Inactive'}
-                        </td>
-                        <td class="p-3 space-x-2">
-                            <button class="btnEdit cursor-pointer bg-blue-600 text-white px-3 py-1 rounded"
-                                data-id="${acc.user_id}"
-                                data-username="${acc.user_username}"
-                                data-email="${acc.user_email}"
-                                data-fname="${acc.user_fname}"
-                                data-mname="${acc.user_mname || ''}"
-                                data-lname="${acc.user_lname}"
-                                data-type="${acc.user_type}">
-                                Edit
-                            </button>
+                    const isActive = acc.user_status == 1;
+                    const typeLabel = (acc.user_type || '').replace(/^./, c => c.toUpperCase());
 
-                            <button class="btnToggle cursor-pointer ${acc.user_status == 1 ? 'bg-red-600' : 'bg-green-600'} text-white px-3 py-1 rounded"
-                                data-id="${acc.user_id}"
-                                data-status="${acc.user_status}">
-                                ${acc.user_status == 1 ? 'Disable' : 'Approve'}
-                            </button>
-
-                        </td>
-                    </tr>
+                    rows += `
+                        <tr>
+                            <td><span class="pc-text-muted">#${acc.user_id}</span></td>
+                            <td>${acc.user_username}</td>
+                            <td>${acc.user_email}</td>
+                            <td>${acc.user_fname}</td>
+                            <td>${acc.user_mname || '<span class="pc-text-muted">—</span>'}</td>
+                            <td>${acc.user_lname}</td>
+                            <td><span class="pc-chip ${typeChip(acc.user_type)}">${typeLabel}</span></td>
+                            <td>
+                                <span class="pc-chip ${isActive ? 'pc-chip-green' : 'pc-chip-gray'}">
+                                    <span class="material-icons" style="font-size: .85rem; margin-right: .25rem;">
+                                        ${isActive ? 'check_circle' : 'pause_circle'}
+                                    </span>
+                                    ${isActive ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display:flex; gap:.4rem; flex-wrap:wrap;">
+                                    <button class="btnEdit pc-btn pc-btn-sm pc-btn-ghost"
+                                        data-id="${acc.user_id}"
+                                        data-username="${acc.user_username}"
+                                        data-email="${acc.user_email}"
+                                        data-fname="${acc.user_fname}"
+                                        data-mname="${acc.user_mname || ''}"
+                                        data-lname="${acc.user_lname}"
+                                        data-type="${acc.user_type}">
+                                        <span class="material-icons">edit</span> Edit
+                                    </button>
+                                    <button class="btnToggle pc-btn pc-btn-sm ${isActive ? 'pc-btn-danger' : 'pc-btn-success'}"
+                                        data-id="${acc.user_id}"
+                                        data-status="${acc.user_status}">
+                                        <span class="material-icons">${isActive ? 'block' : 'check'}</span>
+                                        ${isActive ? 'Disable' : 'Approve'}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     `;
                 });
 
-                html += `
-                    </tbody>
-                </table>
-                `;
-
-                container.append(`<div id="accountsTable">${html}</div>`);
+                tableWrap.html(`
+                    <table class="pc-table" style="border-radius: 0; box-shadow: none;">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>First</th>
+                                <th>Middle</th>
+                                <th>Last</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                `);
             }
 
-            // INITIAL LOAD
             renderTable(accounts);
 
             // =============================

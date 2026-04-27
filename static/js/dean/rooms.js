@@ -2,14 +2,7 @@ $(document).ready(function () {
 
   const dayOrder = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const startHour = 7, endHour = 21;
-
-  function formatTime24(t) {
-    if (!t || t === '00:00') return '';
-    const [h, m] = t.split(':').map(Number);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const h12  = h % 12 || 12;
-    return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
-  }
+  const LUNCH_FROM = 12 * 60, LUNCH_TO = 13 * 60;
 
   function timeToMinutes(t) {
     if (!t) return 0;
@@ -17,11 +10,41 @@ $(document).ready(function () {
     return h * 60 + m;
   }
 
+  function formatSlot(h, m) {
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12  = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  function formatRange(from, to) {
+    if (!from || !to) return '';
+    const [fh, fm] = from.split(':').map(Number);
+    const [th, tm] = to.split(':').map(Number);
+    return `${formatSlot(fh, fm)} – ${formatSlot(th, tm)}`;
+  }
+
+  function programClass(program) {
+    const p = (program || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (p === 'BSCE')  return 'prog-bsce';
+    if (p === 'BSCOE') return 'prog-bscoe';
+    if (p === 'BSEE')  return 'prog-bsee';
+    if (p === 'BSECE') return 'prog-bsece';
+    if (p === 'BSIE')  return 'prog-bsie';
+    if (p === 'BSME')  return 'prog-bsme';
+    return 'prog-other';
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+
   // =====================
   // LOAD ROOMS
   // =====================
   function loadRooms() {
-    $('#roomsContainer').html('<div class="text-center text-gray-400 py-10">Loading rooms...</div>');
+    $('#roomsContainer').html('<div class="text-center text-gray-400 py-10"><span class="material-icons animate-spin align-middle">autorenew</span> Loading rooms...</div>');
 
     $.ajax({
       url: '../controller/end-points/get_controller.php',
@@ -35,7 +58,9 @@ $(document).ready(function () {
         }
 
         const rooms = res.data;
-        const roomNames = Object.keys(rooms);
+        const roomNames = Object.keys(rooms).sort((a, b) =>
+          a.localeCompare(b, undefined, { numeric: true })
+        );
 
         if (roomNames.length === 0) {
           $('#roomsContainer').html(`
@@ -50,43 +75,71 @@ $(document).ready(function () {
 
         $('#roomCount').text(roomNames.length);
 
-        // Build room selector tabs
+        // Tabs
         let tabs = '';
         roomNames.forEach((room, i) => {
-          tabs += `<button class="room-tab cursor-pointer px-4 py-2 rounded-md text-sm font-semibold border transition
-                     ${i === 0 ? 'bg-red-900 text-white border-red-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-red-50'}"
-                   data-room="${room}">
-                     <span class="material-icons text-sm align-middle mr-1">meeting_room</span>${room}
+          tabs += `<button class="room-tab pc-tab ${i === 0 ? 'is-active' : ''}" data-room="${escapeHtml(room)}">
+                     <span class="material-icons">meeting_room</span>${escapeHtml(room)}
                    </button>`;
         });
         $('#roomTabs').html(tabs);
 
-        // Render all room timetables (hidden except first)
+        // Legend (programs that actually appear)
+        const seenPrograms = new Set();
+        roomNames.forEach(r => (rooms[r] || []).forEach(e => {
+          if (e.program) seenPrograms.add(e.program.trim().toUpperCase());
+        }));
+
+        // Tables (first visible)
         let allTables = '';
         roomNames.forEach((room, i) => {
           allTables += buildRoomTimetable(room, rooms[room], i === 0);
         });
-        $('#roomsContainer').html(allTables);
+        $('#roomsContainer').html(buildLegend(seenPrograms) + allTables);
       }
     });
+  }
+
+  // =====================
+  // LEGEND
+  // =====================
+  function buildLegend(seen) {
+    if (!seen.size) return '';
+    const items = [
+      { key: 'BSCE',  cls: 'prog-bsce'  },
+      { key: 'BSCoE', cls: 'prog-bscoe' },
+      { key: 'BSEE',  cls: 'prog-bsee'  },
+      { key: 'BSECE', cls: 'prog-bsece' },
+      { key: 'BSIE',  cls: 'prog-bsie'  },
+      { key: 'BSME',  cls: 'prog-bsme'  }
+    ].filter(p => seen.has(p.key.toUpperCase()));
+
+    if (!items.length) return '';
+    return `<div class="pc-prog-legend mb-3">
+      <span class="text-xs font-bold text-gray-500 uppercase tracking-wide self-center mr-1">Programs:</span>
+      ${items.map(p => `
+        <span class="pc-prog-legend-item ${p.cls}" style="--pc-slot-accent: var(--pc-slot-accent);">
+          <span class="dot"></span>${p.key}
+        </span>`).join('')}
+    </div>`;
   }
 
   // =====================
   // BUILD TIMETABLE
   // =====================
   function buildRoomTimetable(room, entries, visible) {
+    const safeRoom = escapeHtml(room);
 
-    // Build scheduleMap: day => startMin => entry
+    // scheduleMap: day => startMin => entry
     let scheduleMap = {};
     dayOrder.forEach(d => scheduleMap[d] = {});
 
-    entries.forEach(e => {
+    (entries || []).forEach(e => {
       const startMin = timeToMinutes(e.from);
       const endMin   = timeToMinutes(e.to);
       const slots    = Math.round((endMin - startMin) / 30);
       if (slots <= 0 || startMin === 0) return;
-      scheduleMap[e.day] = scheduleMap[e.day] || {};
-      // Keep first if conflict (same day same time)
+      if (!scheduleMap[e.day]) return;
       if (!scheduleMap[e.day][startMin]) {
         scheduleMap[e.day][startMin] = {
           subject: e.subject,
@@ -95,13 +148,12 @@ $(document).ready(function () {
           semester: e.semester,
           from: e.from,
           to: e.to,
-          rowspan: slots,
-          sch_id: e.sch_id
+          rowspan: slots
         };
       }
     });
 
-    // Build rows
+    // Body rows
     let tbody = '';
     for (let hour = startHour; hour < endHour; hour++) {
       for (let min = 0; min < 60; min += 30) {
@@ -111,26 +163,39 @@ $(document).ready(function () {
         const startLbl = formatSlot(hour, min);
         const endLbl   = formatSlot(endH, endM);
 
-        tbody += `<tr class="hover:bg-gray-50">
-          <td class="border px-2 py-1 text-xs font-semibold bg-gray-100 text-center whitespace-nowrap w-28">${startLbl} – ${endLbl}</td>`;
+        const isLunch  = slotMin >= LUNCH_FROM && slotMin < LUNCH_TO;
+        const isHourMark = min === 0;
+
+        const rowCls = [
+          isLunch ? 'is-lunch' : '',
+          isHourMark ? 'hour-mark' : ''
+        ].filter(Boolean).join(' ');
+
+        tbody += `<tr class="${rowCls}">
+          <td class="time-col">${startLbl}<span class="block text-[10px] opacity-60 font-medium">${endLbl}</span></td>`;
 
         dayOrder.forEach(day => {
           const entry = scheduleMap[day][slotMin];
           if (entry) {
-            tbody += `<td class="border p-1 text-xs text-center bg-blue-100 font-semibold align-top" rowspan="${entry.rowspan}">
-              <div class="font-bold text-blue-900">${entry.subject}</div>
-              <div class="text-gray-600 text-[11px]">${entry.faculty}</div>
-              <div class="text-gray-400 text-[10px]">${entry.program}</div>
+            const cls = programClass(entry.program);
+            tbody += `<td class="has-slot" rowspan="${entry.rowspan}">
+              <div class="pc-slot ${cls}" title="${escapeHtml(entry.subject)} — ${escapeHtml(entry.faculty)}">
+                <div class="pc-slot-subject">${escapeHtml(entry.subject)}</div>
+                <div class="pc-slot-faculty">${escapeHtml(entry.faculty)}</div>
+                <div class="pc-slot-time">${formatRange(entry.from, entry.to)}</div>
+                ${entry.program ? `<span class="pc-slot-prog">${escapeHtml(entry.program)}</span>` : ''}
+              </div>
             </td>`;
           } else {
-            // check if covered by rowspan
+            // covered by a rowspan above?
             let skip = false;
             for (let prev = slotMin - 30; prev >= startHour * 60; prev -= 30) {
-              if (scheduleMap[day][prev] && scheduleMap[day][prev].rowspan > (slotMin - prev) / 30) {
+              const prevEntry = scheduleMap[day][prev];
+              if (prevEntry && prevEntry.rowspan > (slotMin - prev) / 30) {
                 skip = true; break;
               }
             }
-            if (!skip) tbody += `<td class="border h-8 sched-cell"></td>`;
+            if (!skip) tbody += `<td class="is-empty"></td>`;
           }
         });
 
@@ -139,13 +204,13 @@ $(document).ready(function () {
     }
 
     return `
-      <div class="room-timetable ${visible ? '' : 'hidden'}" data-room="${room}">
-        <div class="overflow-x-auto">
-          <table class="min-w-full border-collapse text-sm">
+      <div class="room-timetable ${visible ? '' : 'hidden'}" data-room="${safeRoom}">
+        <div class="overflow-x-auto -mx-1 px-1">
+          <table class="pc-room-grid">
             <thead>
-              <tr class="bg-blue-900 text-white">
-                <th class="border p-2 w-28 text-xs">TIME</th>
-                ${dayOrder.map(d => `<th class="border p-2 text-xs">${d}</th>`).join('')}
+              <tr>
+                <th>Time</th>
+                ${dayOrder.map(d => `<th>${d}</th>`).join('')}
               </tr>
             </thead>
             <tbody>${tbody}</tbody>
@@ -154,22 +219,13 @@ $(document).ready(function () {
       </div>`;
   }
 
-  function formatSlot(h, m) {
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const h12  = h % 12 || 12;
-    return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
-  }
-
   // =====================
   // TAB SWITCHING
   // =====================
   $(document).on('click', '.room-tab', function () {
     const room = $(this).data('room');
-    $('.room-tab').removeClass('bg-red-900 text-white border-red-900')
-                  .addClass('bg-white text-gray-700 border-gray-300 hover:bg-red-50');
-    $(this).addClass('bg-red-900 text-white border-red-900')
-           .removeClass('bg-white text-gray-700 border-gray-300 hover:bg-red-50');
-
+    $('.room-tab').removeClass('is-active');
+    $(this).addClass('is-active');
     $('.room-timetable').addClass('hidden');
     $(`.room-timetable[data-room="${room}"]`).removeClass('hidden');
   });
@@ -180,7 +236,7 @@ $(document).ready(function () {
   $('#roomSearch').on('input', function () {
     const q = $(this).val().toLowerCase();
     $('.room-tab').each(function () {
-      const room = $(this).data('room').toLowerCase();
+      const room = String($(this).data('room')).toLowerCase();
       $(this).toggle(room.includes(q));
     });
   });

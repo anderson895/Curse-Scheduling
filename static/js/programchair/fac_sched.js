@@ -188,37 +188,69 @@ $(document).ready(function () {
       success: function (res) {
         if (res.status === 200) {
           if (res.data.length === 0) {
-            $('#scheduleTable').html(`<div class="text-center text-gray-500 p-4">No records found.</div>`);
+            $('#scheduleTable').html(`
+              <div class="pc-empty">
+                <span class="material-icons">event_busy</span>
+                <h3>No schedules yet</h3>
+                <p>Create or auto-generate a schedule to get started.</p>
+              </div>
+            `);
             return;
           }
-          let html = `<table class="min-w-full border border-gray-300 bg-white shadow-md rounded-lg">
-                        <thead class="bg-red-900 text-white">
-                          <tr>
-                            <th class="p-2 text-left">Program</th>
-                            <th class="p-2 text-left">Semester</th>
-                            <th class="p-2 text-left">Instructor</th>
-                            <th class="p-2 text-left">Type</th>
-                            <th class="p-2 text-left">Actions</th>
-                          </tr>
-                        </thead><tbody>`;
+
+          const typeChipMap = {
+            dean: 'pc-chip-red',
+            'program chair': 'pc-chip-amber',
+            programchair: 'pc-chip-amber',
+            faculty: 'pc-chip-blue',
+            gec: 'pc-chip-green'
+          };
+
+          let rows = '';
           res.data.forEach(sch => {
-            html += `<tr class="schedule-row border-b hover:bg-gray-50">
-              <td class="p-2">${sch.sch_schedule.program || ''}</td>
-              <td class="p-2">${sch.sch_schedule.semester || ''}</td>
-              <td class="p-2">${sch.faculty_name || ''}</td>
-              <td class="p-2 capitalize">${sch.user_type || ''}</td>
-              <td class="p-2 flex gap-2">
-                <a href="view_fac_sched.php?sch_id=${sch.sch_id}"
-                  class="bg-gray-500 hover:bg-gray-400 text-white px-3 py-1 rounded">View</a>
-                <button class="editSchedule cursor-pointer bg-yellow-500 hover:bg-yellow-400 text-white px-3 py-1 rounded"
-                  data-id="${sch.sch_id}">Edit</button>
-                <button class="deleteSchedule cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded"
-                  data-id="${sch.sch_id}">Delete</button>
-              </td>
-            </tr>`;
+            const program  = sch.sch_schedule.program || '';
+            const semester = sch.sch_schedule.semester || '';
+            const userType = (sch.user_type || '').toLowerCase();
+            const chipCls  = typeChipMap[userType] || 'pc-chip-gray';
+            const typeLabel = (sch.user_type || '').replace(/\b\w/g, c => c.toUpperCase()) || '—';
+
+            rows += `
+              <tr class="schedule-row">
+                <td>${program ? `<span class="pc-chip pc-chip-red">${program}</span>` : '<span class="pc-text-muted">—</span>'}</td>
+                <td>${semester || '<span class="pc-text-muted">—</span>'}</td>
+                <td>${sch.faculty_name || '<span class="pc-text-muted">—</span>'}</td>
+                <td><span class="pc-chip ${chipCls}">${typeLabel}</span></td>
+                <td>
+                  <div style="display:flex; gap:.4rem; flex-wrap:wrap;">
+                    <a href="view_fac_sched.php?sch_id=${sch.sch_id}" class="pc-btn pc-btn-sm pc-btn-neutral">
+                      <span class="material-icons">visibility</span> View
+                    </a>
+                    <button class="editSchedule pc-btn pc-btn-sm pc-btn-ghost" data-id="${sch.sch_id}">
+                      <span class="material-icons">edit</span> Edit
+                    </button>
+                    <button class="deleteSchedule pc-btn pc-btn-sm pc-btn-danger" data-id="${sch.sch_id}">
+                      <span class="material-icons">delete</span> Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
           });
-          html += `</tbody></table>`;
-          $('#scheduleTable').html(html);
+
+          $('#scheduleTable').html(`
+            <table class="pc-table" style="border-radius: 0; box-shadow: none;">
+              <thead>
+                <tr>
+                  <th>Program</th>
+                  <th>Semester</th>
+                  <th>Instructor</th>
+                  <th>Role</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          `);
         }
       }
     });
@@ -355,6 +387,155 @@ $(document).ready(function () {
         entryCounter = 0;
         alert(res.message);
         loadSchedules();
+      }
+    });
+  });
+
+  // ==============================
+  // ROOM PICKER (chip-style for Available Rooms)
+  // ==============================
+  const roomPicker = (function () {
+    const $hidden  = $('#autoRooms');
+    const $chips   = $('#autoRoomsChips');
+    const $input   = $('#autoRoomsInput');
+    const $suggest = $('#autoRoomsSuggest');
+    const DEFAULT  = $hidden.val() || '';
+
+    function getRooms() {
+      return $chips.find('.pc-room-chip').map((_, el) => $(el).data('room').toString()).get();
+    }
+
+    function sync() {
+      const arr = getRooms();
+      $hidden.val(arr.join(','));
+      $suggest.find('.pc-quick-room').each(function () {
+        const r = $(this).data('room').toString();
+        $(this).toggleClass('is-added', arr.includes(r));
+      });
+    }
+
+    function addRoom(raw) {
+      const room = String(raw || '').trim().toUpperCase();
+      if (!room) return;
+      if (!/^[A-Z0-9-]+$/.test(room)) return;
+      if (getRooms().includes(room)) return;
+      $chips.append(
+        '<span class="pc-room-chip" data-room="' + room + '">' +
+          '<span class="material-icons">meeting_room</span>' + room +
+          '<button type="button" aria-label="Remove ' + room + '">' +
+            '<span class="material-icons">close</span>' +
+          '</button>' +
+        '</span>'
+      );
+      sync();
+    }
+
+    function reset(value) {
+      $chips.empty();
+      $input.val('');
+      const v = value !== undefined ? value : DEFAULT;
+      v.split(',').map(s => s.trim()).filter(Boolean).forEach(addRoom);
+    }
+
+    reset();
+
+    $input.on('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
+        e.preventDefault();
+        const v = $(this).val();
+        if (v) { addRoom(v); $(this).val(''); }
+      } else if (e.key === 'Backspace' && !$(this).val()) {
+        $chips.find('.pc-room-chip').last().remove();
+        sync();
+      }
+    });
+    $input.on('blur', function () {
+      const v = $(this).val();
+      if (v) { addRoom(v); $(this).val(''); }
+    });
+
+    $chips.on('click', '.pc-room-chip button', function () {
+      $(this).closest('.pc-room-chip').remove();
+      sync();
+    });
+
+    $suggest.on('click', '.pc-quick-room', function () {
+      if ($(this).hasClass('is-added')) return;
+      addRoom($(this).data('room'));
+    });
+
+    return { reset, addRoom };
+  })();
+
+  // ==============================
+  // AUTO-GENERATE SCHEDULE
+  // ==============================
+  $('#openAutoGenModal').click(() => {
+    $('#autoGenResult').addClass('hidden').empty();
+    $('#autoGenModal').removeClass('hidden');
+  });
+
+  $('#closeAutoGenModal').click(() => {
+    $('#autoGenModal').addClass('hidden');
+    $('#autoGenForm')[0].reset();
+    $('#autoGenResult').addClass('hidden').empty();
+    roomPicker.reset();
+  });
+
+  $('#autoGenForm').submit(function (e) {
+    e.preventDefault();
+
+    const program    = $('#autoProgram').val();
+    const year_level = $('#autoYearLevel').val();
+    const semester   = $('#autoSemester').val();
+    const rooms      = $('#autoRooms').val();
+
+    if (!program || !year_level || !semester) {
+      return alert('Please choose program, year level, and semester.');
+    }
+
+    if (!confirm('Auto-generate schedules for ' + program + ' Year ' + year_level + ' (' + semester + ')?')) return;
+
+    const $btn = $(this).find('button[type=submit]').prop('disabled', true).text('Generating...');
+
+    $.ajax({
+      url: '../controller/end-points/post_controller.php',
+      method: 'POST',
+      data: {
+        requestType: 'auto_generate_schedule',
+        program, year_level, semester, rooms
+      },
+      dataType: 'json',
+      success: function (res) {
+        $btn.prop('disabled', false).text('Generate');
+
+        if (res.success === false || res.status === 'error') {
+          $('#autoGenResult')
+            .removeClass('hidden')
+            .html(`<div class="text-red-700 font-semibold">${res.message || 'Generation failed.'}</div>`);
+          return;
+        }
+
+        let html = `<div class="text-emerald-700 font-semibold mb-2">${res.message || 'Done.'}</div>`;
+        if (res.saved && res.saved.length) {
+          html += `<div class="text-xs text-gray-600 mb-2">Saved schedule rows: ${res.saved.length}</div>`;
+        }
+        if (res.unassigned && res.unassigned.length) {
+          html += `<div class="text-xs font-semibold text-amber-700 mt-2">Could not auto-assign:</div>
+                   <ul class="list-disc pl-5 text-xs text-gray-700">`;
+          res.unassigned.forEach(u => {
+            html += `<li><strong>${u.subject_code}</strong> — ${u.subject_name} (${u.hours}h): ${u.reason}</li>`;
+          });
+          html += '</ul>';
+        }
+        $('#autoGenResult').removeClass('hidden').html(html);
+
+        loadSchedules();
+      },
+      error: function () {
+        $btn.prop('disabled', false).text('Generate');
+        $('#autoGenResult').removeClass('hidden')
+          .html('<div class="text-red-700 font-semibold">Network/server error during generation.</div>');
       }
     });
   });

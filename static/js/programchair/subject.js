@@ -96,14 +96,16 @@ $(document).ready(function() {
         if(response.status === 200 && response.data.length > 0) {
           response.data.forEach(subject => {
             tbody.append(`
-              <tr class="hover:bg-gray-50">
-                <td class="p-3">${subject.subject_code}</td>
-                <td class="p-3">${subject.subject_name}</td>
-                <td class="p-3">${subject.subject_unit}</td>
-                <td class="p-3">${subject.subject_type}</td>
-                <td class="p-3 text-center">
-                  <button class="editBtn px-3 py-1 bg-gray-700 cursor-pointer text-white rounded-md text-sm" data-id="${subject.subject_id}">Edit</button>
-                  <button class="deleteBtn px-3 py-1 bg-red-700 cursor-pointer text-white rounded-md text-sm" data-id="${subject.subject_id}">Delete</button>
+              <tr>
+                <td>${subject.subject_code}</td>
+                <td>${subject.subject_name}</td>
+                <td>${subject.subject_unit}</td>
+                <td>${subject.subject_type}</td>
+                <td class="text-center">
+                  <div class="inline-flex gap-2">
+                    <button class="editBtn pc-btn pc-btn-ghost pc-btn-sm" data-id="${subject.subject_id}"><span class="material-icons">edit</span> Edit</button>
+                    <button class="deleteBtn pc-btn pc-btn-danger pc-btn-sm" data-id="${subject.subject_id}"><span class="material-icons">delete</span> Delete</button>
+                  </div>
                 </td>
               </tr>
             `);

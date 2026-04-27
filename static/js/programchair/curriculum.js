@@ -44,9 +44,11 @@ $(document).ready(function () {
               <td class="p-2">${sub.subject_code}</td>
               <td class="p-2">${sub.subject_name}</td>
               <td class="p-2">${sub.subject_unit}</td>
-              <td class="p-2 flex gap-2">
-                <button class="editBtn text-white cursor-pointer px-2 py-1 bg-gray-700 rounded" data-id="${sub.id}">Edit</button>
-                <button class="deleteBtn px-2 py-1 cursor-pointer bg-red-700 text-white rounded" data-id="${sub.id}">Delete</button>
+              <td class="p-2">
+                <div class="flex gap-2">
+                  <button class="editBtn pc-btn pc-btn-ghost pc-btn-sm" data-id="${sub.id}"><span class="material-icons">edit</span> Edit</button>
+                  <button class="deleteBtn pc-btn pc-btn-danger pc-btn-sm" data-id="${sub.id}"><span class="material-icons">delete</span> Delete</button>
+                </div>
               </td>
             </tr>`;
         });
@@ -63,17 +65,17 @@ $(document).ready(function () {
     // Clear previous selections and input
     $('#addCurriculumForm')[0].reset();
     $('#subjectSelect').val(null).trigger('change'); // clear Select2
-    $('#addCurriculumModal').show();
+    $('#addCurriculumModal').removeClass('hidden');
   });
 
   $('#closeAddCurriculumModal').click(() => {
-    $('#addCurriculumModal').hide();
+    $('#addCurriculumModal').addClass('hidden');
     $('#addCurriculumForm')[0].reset();
     $('#subjectSelect').val(null).trigger('change'); // clear Select2
   });
 
   $('#closeEditCurriculumModal').click(() => {
-    $('#editCurriculumModal').hide();
+    $('#editCurriculumModal').addClass('hidden');
     $('#editCurriculumForm')[0].reset();
     $('#editSubjectSelect').val(null).trigger('change'); // clear Select2
   });
@@ -96,7 +98,7 @@ $(document).ready(function () {
       data: { year_semester: year_semester, subject_ids: subjects, requestType: 'add_curriculum' },
       success: function () {
         fetchCurriculum();
-        $('#addCurriculumModal').hide();
+        $('#addCurriculumModal').addClass('hidden');
         $('#addCurriculumForm')[0].reset();
         $('#subjectSelect').val(null).trigger('change'); // clear Select2
       }
@@ -118,7 +120,7 @@ $(document).ready(function () {
         form.find('input[name="id"]').val(res.data.id);
         form.find('input[name="year_semester"]').val(res.data.year_semester);
         form.find('#editSubjectSelect').val([res.data.subject_id]).trigger('change'); // set Select2 value
-        $('#editCurriculumModal').show();
+        $('#editCurriculumModal').removeClass('hidden');
       }
     });
   });
@@ -131,7 +133,7 @@ $(document).ready(function () {
       data: $(this).serialize() + '&requestType=update_curriculum',
       success: function () {
         fetchCurriculum();
-        $('#editCurriculumModal').hide();
+        $('#editCurriculumModal').addClass('hidden');
       }
     });
   });

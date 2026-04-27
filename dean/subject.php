@@ -3,155 +3,173 @@ include "../src/components/dean/header.php";
 include "../src/components/dean/nav.php";
 ?>
 
-<div class="p-4 sm:p-6 bg-gray-100 min-h-screen">
+<div class="pc-topbar">
+  <div class="pc-topbar-inner">
+    <div class="pc-topbar-title">
+      <div class="pc-topbar-icon"><span class="material-icons">subject</span></div>
+      <div>
+        <h2>Subjects</h2>
+        <p>Manage all course subjects across programs</p>
+      </div>
+    </div>
+    <div class="pc-topbar-meta">
+      <div class="pc-topbar-welcome hidden sm:block">
+        <p class="small">Welcome,</p>
+        <p class="name"><?=ucfirst($On_Session[0]['user_username'])?></p>
+      </div>
+      <div class="pc-avatar"><?php echo strtoupper(substr($On_Session[0]['user_username'], 0, 1)); ?></div>
+    </div>
+  </div>
+</div>
 
-  <!-- SUBJECT CARD -->
-  <div class="bg-white rounded-xl shadow-lg">
+<div class="p-2 sm:p-4">
+
+  <div class="pc-card">
 
     <!-- Card Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center px-4 sm:px-6 py-4 border-b border-gray-200 gap-4">
-      <h3 class="text-lg font-semibold text-red-900">Curriculum List</h3>
-      <button id="addBtn"
-        class="flex items-center gap-2 bg-red-900 hover:bg-red-800 text-white px-4 py-2 rounded-md shadow text-sm sm:text-base">
-        <span class="material-icons text-sm">add</span>
-        Add Curriculum
+    <div class="pc-card-header">
+      <div class="pc-card-title">
+        <span class="material-icons">subject</span>
+        <span>Curriculum List</span>
+      </div>
+      <button id="addBtn" class="pc-btn pc-btn-primary">
+        <span class="material-icons">add</span> Add Curriculum
       </button>
     </div>
 
     <!-- Filters -->
-    <div class="p-4 sm:p-6 flex flex-wrap gap-3 items-end">
-      <!-- Text search -->
-      <div class="flex-1 min-w-[200px]">
-        <label class="block text-xs text-gray-500 mb-1">Search</label>
-        <input type="text" id="subjectSearch" placeholder="Search code or name..."
-          class="w-full border p-2 rounded focus:ring-2 focus:ring-red-500 focus:outline-none text-sm">
-      </div>
-      <!-- Program filter -->
-      <div>
-        <label class="block text-xs text-gray-500 mb-1">Program</label>
-        <select id="filterProgram" class="border p-2 rounded focus:ring-2 focus:ring-red-500 text-sm cursor-pointer">
-          <option value="">All Programs</option>
-          <option value="BSCE">BSCE</option>
-          <option value="BSCoE">BSCoE</option>
-          <option value="BSEE">BSEE</option>
-          <option value="BSECE">BSECE</option>
-          <option value="BSIE">BSIE</option>
-          <option value="BSME">BSME</option>
-        </select>
-      </div>
-      <!-- Year Level filter -->
-      <div>
-        <label class="block text-xs text-gray-500 mb-1">Year Level</label>
-        <select id="filterYear" class="border p-2 rounded focus:ring-2 focus:ring-red-500 text-sm cursor-pointer">
-          <option value="">All Years</option>
-          <option value="1">1st Year</option>
-          <option value="2">2nd Year</option>
-          <option value="3">3rd Year</option>
-          <option value="4">4th Year</option>
-          <option value="5">5th Year</option>
-        </select>
-      </div>
-      <!-- Semester filter -->
-      <div>
-        <label class="block text-xs text-gray-500 mb-1">Semester</label>
-        <select id="filterSemester" class="border p-2 rounded focus:ring-2 focus:ring-red-500 text-sm cursor-pointer">
-          <option value="">All Semesters</option>
-          <option value="1st">1st Semester</option>
-          <option value="2nd">2nd Semester</option>
-          <option value="Summer">Summer</option>
-        </select>
-      </div>
-      <!-- Reset -->
-      <div>
-        <button id="resetFilters" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded text-sm">
-          Reset
+    <div class="pc-card-body">
+      <div class="subject-filters">
+        <div class="subject-filter-field">
+          <label class="pc-label">Search</label>
+          <div class="pc-search-wrap">
+            <span class="material-icons">search</span>
+            <input type="text" id="subjectSearch" placeholder="Search code or name..." class="pc-input">
+          </div>
+        </div>
+        <div class="subject-filter-field">
+          <label class="pc-label">Program</label>
+          <select id="filterProgram" class="pc-select">
+            <option value="">All Programs</option>
+            <option value="BSCE">BSCE</option>
+            <option value="BSCoE">BSCoE</option>
+            <option value="BSEE">BSEE</option>
+            <option value="BSECE">BSECE</option>
+            <option value="BSIE">BSIE</option>
+            <option value="BSME">BSME</option>
+          </select>
+        </div>
+        <div class="subject-filter-field">
+          <label class="pc-label">Year Level</label>
+          <select id="filterYear" class="pc-select">
+            <option value="">All Years</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+            <option value="5">5th Year</option>
+          </select>
+        </div>
+        <div class="subject-filter-field">
+          <label class="pc-label">Semester</label>
+          <select id="filterSemester" class="pc-select">
+            <option value="">All Semesters</option>
+            <option value="1st">1st Semester</option>
+            <option value="2nd">2nd Semester</option>
+            <option value="Summer">Summer</option>
+          </select>
+        </div>
+        <button id="resetFilters" class="pc-btn pc-btn-neutral subject-filter-reset">
+          <span class="material-icons">refresh</span> Reset
         </button>
       </div>
     </div>
 
-    <!-- Card Body -->
-    <div class="p-4 sm:p-6 overflow-x-auto">
-      <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden text-sm sm:text-base">
-        <thead class="bg-red-900 text-white text-xs sm:text-sm">
+    <!-- Table -->
+    <div class="p-4 overflow-x-auto">
+      <table class="pc-table">
+        <thead>
           <tr>
-            <th class="p-2 sm:p-3 text-left">Program</th>
-            <th class="p-2 sm:p-3 text-left">Curriculum Year</th>
-            <th class="p-2 sm:p-3 text-left">Year Level</th>
-            <th class="p-2 sm:p-3 text-left">Semester</th>
-            <th class="p-2 sm:p-3 text-left">Code</th>
-            <th class="p-2 sm:p-3 text-left">Name</th>
-            <th class="p-2 sm:p-3 text-left">Lec hrs</th>
-            <th class="p-2 sm:p-3 text-left">Lab hrs</th>
-            <th class="p-2 sm:p-3 text-left">Lec Units</th>
-            <th class="p-2 sm:p-3 text-left">Lab Units</th>
-            <th class="p-2 sm:p-3 text-left">Prerequisite</th>
-            <th class="p-2 sm:p-3 text-center">Actions</th>
+            <th>Program</th>
+            <th>Curriculum Year</th>
+            <th>Year Level</th>
+            <th>Semester</th>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Lec hrs</th>
+            <th>Lab hrs</th>
+            <th>Lec Units</th>
+            <th>Lab Units</th>
+            <th>Prerequisite</th>
+            <th class="text-center">Actions</th>
           </tr>
         </thead>
-        <tbody id="subjectTableBody" class="divide-y">
-          <tr>
-            <td colspan="12" class="text-center p-6 text-gray-500">
-              Loading...
-            </td>
-          </tr>
+        <tbody id="subjectTableBody">
+          <tr><td colspan="12" class="text-center p-6 text-gray-500">Loading...</td></tr>
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div id="pagination" class="flex flex-wrap justify-center mt-4 gap-2 px-4 sm:px-6"></div>
+    <div id="pagination" class="flex flex-wrap justify-center mt-4 gap-2 px-4 sm:px-6 pb-4"></div>
 
   </div>
 </div>
 
 <!-- ADD SUBJECT MODAL -->
-<div id="addSubjectModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-[rgba(0,0,0,0.5)] p-4 sm:p-6">
-  <div class="bg-white w-full max-w-lg sm:max-w-md rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh]">
-    <h2 class="text-xl font-bold text-red-900 mb-4">Add Subject</h2>
-    <form id="addSubjectForm" class="space-y-4">
+<div id="addSubjectModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-[rgba(0,0,0,0.5)] p-4">
+  <div class="pc-modal-card w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+    <div class="pc-modal-header">
+      <span class="material-icons">add_circle</span>
+      <h2>Add Subject</h2>
+    </div>
+    <form id="addSubjectForm" class="space-y-4 p-6">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div><label class="block text-gray-700 text-sm sm:text-base">Program</label><input type="text" name="program" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Curriculum Year</label><input type="text" name="curriculum_year" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Year Level</label><input type="number" name="year_level" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Semester</label><input type="text" name="semester" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Subject Code</label><input type="text" name="subject_code" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Subject Name</label><input type="text" name="subject_name" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Lecture Hours</label><input type="number" name="lec_hours" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Lab Hours</label><input type="number" name="lab_hours" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Lecture Units</label><input type="number" name="lec_units" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Lab Units</label><input type="number" name="lab_units" class="w-full border p-2 rounded" required></div>
-        <div class="sm:col-span-2"><label class="block text-gray-700 text-sm sm:text-base">Prerequisite</label><input type="text" name="prerequisite" class="w-full border p-2 rounded"></div>
+        <div><label class="pc-label">Program</label><input type="text" name="program" class="pc-input" required></div>
+        <div><label class="pc-label">Curriculum Year</label><input type="text" name="curriculum_year" class="pc-input" required></div>
+        <div><label class="pc-label">Year Level</label><input type="number" name="year_level" class="pc-input" required></div>
+        <div><label class="pc-label">Semester</label><input type="text" name="semester" class="pc-input" required></div>
+        <div><label class="pc-label">Subject Code</label><input type="text" name="subject_code" class="pc-input" required></div>
+        <div><label class="pc-label">Subject Name</label><input type="text" name="subject_name" class="pc-input" required></div>
+        <div><label class="pc-label">Lecture Hours</label><input type="number" name="lec_hours" class="pc-input" required></div>
+        <div><label class="pc-label">Lab Hours</label><input type="number" name="lab_hours" class="pc-input" required></div>
+        <div><label class="pc-label">Lecture Units</label><input type="number" name="lec_units" class="pc-input" required></div>
+        <div><label class="pc-label">Lab Units</label><input type="number" name="lab_units" class="pc-input" required></div>
+        <div class="sm:col-span-2"><label class="pc-label">Prerequisite</label><input type="text" name="prerequisite" class="pc-input"></div>
       </div>
-      <div class="flex justify-end gap-2 pt-4 flex-wrap">
-        <button type="button" id="closeAddSubjectModal" class="cursor-pointer px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">Cancel</button>
-        <button type="submit" class="cursor-pointer px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800">Save</button>
+      <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+        <button type="button" id="closeAddSubjectModal" class="pc-btn pc-btn-neutral">Cancel</button>
+        <button type="submit" class="pc-btn pc-btn-primary"><span class="material-icons">save</span> Save</button>
       </div>
     </form>
   </div>
 </div>
 
 <!-- EDIT SUBJECT MODAL -->
-<div id="editSubjectModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-[rgba(0,0,0,0.5)] p-4 sm:p-6">
-  <div class="bg-white w-full max-w-lg sm:max-w-md rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh]">
-    <h2 class="text-xl font-bold text-red-900 mb-4">Edit Subject</h2>
-    <form id="editSubjectForm" class="space-y-4">
+<div id="editSubjectModal" class="fixed inset-0 hidden z-50 flex items-center justify-center bg-[rgba(0,0,0,0.5)] p-4">
+  <div class="pc-modal-card w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+    <div class="pc-modal-header">
+      <span class="material-icons">edit</span>
+      <h2>Edit Subject</h2>
+    </div>
+    <form id="editSubjectForm" class="space-y-4 p-6">
       <input type="hidden" name="subject_id" id="edit_subject_id">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div><label class="block text-gray-700 text-sm sm:text-base">Program</label><input type="text" name="program" id="edit_program" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Curriculum Year</label><input type="text" name="curriculum_year" id="edit_curriculum_year" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Year Level</label><input type="number" name="year_level" id="edit_year_level" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Semester</label><input type="text" name="semester" id="edit_semester" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Subject Code</label><input type="text" name="subject_code" id="edit_subject_code" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Subject Name</label><input type="text" name="subject_name" id="edit_subject_name" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Lecture Hours</label><input type="number" name="lec_hours" id="edit_lec_hours" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Lab Hours</label><input type="number" name="lab_hours" id="edit_lab_hours" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Lecture Units</label><input type="number" name="lec_units" id="edit_lec_units" class="w-full border p-2 rounded" required></div>
-        <div><label class="block text-gray-700 text-sm sm:text-base">Lab Units</label><input type="number" name="lab_units" id="edit_lab_units" class="w-full border p-2 rounded" required></div>
-        <div class="sm:col-span-2"><label class="block text-gray-700 text-sm sm:text-base">Prerequisite</label><input type="text" name="prerequisite" id="edit_prerequisite" class="w-full border p-2 rounded"></div>
+        <div><label class="pc-label">Program</label><input type="text" name="program" id="edit_program" class="pc-input" required></div>
+        <div><label class="pc-label">Curriculum Year</label><input type="text" name="curriculum_year" id="edit_curriculum_year" class="pc-input" required></div>
+        <div><label class="pc-label">Year Level</label><input type="number" name="year_level" id="edit_year_level" class="pc-input" required></div>
+        <div><label class="pc-label">Semester</label><input type="text" name="semester" id="edit_semester" class="pc-input" required></div>
+        <div><label class="pc-label">Subject Code</label><input type="text" name="subject_code" id="edit_subject_code" class="pc-input" required></div>
+        <div><label class="pc-label">Subject Name</label><input type="text" name="subject_name" id="edit_subject_name" class="pc-input" required></div>
+        <div><label class="pc-label">Lecture Hours</label><input type="number" name="lec_hours" id="edit_lec_hours" class="pc-input" required></div>
+        <div><label class="pc-label">Lab Hours</label><input type="number" name="lab_hours" id="edit_lab_hours" class="pc-input" required></div>
+        <div><label class="pc-label">Lecture Units</label><input type="number" name="lec_units" id="edit_lec_units" class="pc-input" required></div>
+        <div><label class="pc-label">Lab Units</label><input type="number" name="lab_units" id="edit_lab_units" class="pc-input" required></div>
+        <div class="sm:col-span-2"><label class="pc-label">Prerequisite</label><input type="text" name="prerequisite" id="edit_prerequisite" class="pc-input"></div>
       </div>
-      <div class="flex justify-end gap-2 pt-4 flex-wrap">
-        <button type="button" id="closeEditSubjectModal" class="cursor-pointer px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">Cancel</button>
-        <button type="submit" class="cursor-pointer px-4 py-2 bg-red-900 text-white rounded-md hover:bg-red-800">Update</button>
+      <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
+        <button type="button" id="closeEditSubjectModal" class="pc-btn pc-btn-neutral">Cancel</button>
+        <button type="submit" class="pc-btn pc-btn-primary"><span class="material-icons">update</span> Update</button>
       </div>
     </form>
   </div>
@@ -161,5 +179,4 @@ include "../src/components/dean/nav.php";
 include "../src/components/dean/footer.php";
 ?>
 
-<!-- JS -->
 <script src="../static/js/dean/subject.js"></script>

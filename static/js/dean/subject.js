@@ -71,21 +71,23 @@ $(document).ready(function () {
 
     paginatedSubjects.forEach(subject => {
       tbody.append(`
-        <tr class="hover:bg-gray-50">
-          <td class="p-3">${subject.program}</td>
-          <td class="p-3">${subject.curriculum_year}</td>
-          <td class="p-3">${subject.year_level}</td>
-          <td class="p-3">${subject.semester}</td>
-          <td class="p-3">${subject.subject_code}</td>
-          <td class="p-3">${subject.subject_name}</td>
-          <td class="p-3">${subject.lec_hours}</td>
-          <td class="p-3">${subject.lab_hours}</td>
-          <td class="p-3">${subject.lec_units}</td>
-          <td class="p-3">${subject.lab_units}</td>
-          <td class="p-3">${subject.prerequisite ?? 'N/A'}</td>
-          <td class="p-3 text-center space-x-2">
-            <button class="editBtn bg-gray-700 cursor-pointer text-white px-3 py-1 rounded" data-id="${subject.curriculum_id}">Edit</button>
-            <button class="deleteBtn bg-red-700 cursor-pointer text-white px-3 py-1 rounded" data-id="${subject.curriculum_id}">Delete</button>
+        <tr>
+          <td>${subject.program}</td>
+          <td>${subject.curriculum_year}</td>
+          <td>${subject.year_level}</td>
+          <td>${subject.semester}</td>
+          <td>${subject.subject_code}</td>
+          <td>${subject.subject_name}</td>
+          <td>${subject.lec_hours}</td>
+          <td>${subject.lab_hours}</td>
+          <td>${subject.lec_units}</td>
+          <td>${subject.lab_units}</td>
+          <td>${subject.prerequisite ?? 'N/A'}</td>
+          <td class="text-center">
+            <div class="inline-flex gap-2">
+              <button class="editBtn pc-btn pc-btn-ghost pc-btn-sm" data-id="${subject.curriculum_id}"><span class="material-icons">edit</span> Edit</button>
+              <button class="deleteBtn pc-btn pc-btn-danger pc-btn-sm" data-id="${subject.curriculum_id}"><span class="material-icons">delete</span> Delete</button>
+            </div>
           </td>
         </tr>
       `);

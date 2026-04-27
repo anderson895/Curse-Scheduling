@@ -2,6 +2,7 @@ $(document).ready(function () {
   const startHour = 7;
   const endHour = 21;
   const dayNames = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const LUNCH_FROM = 12 * 60, LUNCH_TO = 13 * 60;
 
   function formatTime(hour, min) {
     const h = hour % 12 || 12;
@@ -17,14 +18,38 @@ $(document).ready(function () {
     return h * 60 + m;
   }
 
-  function minutesToHHMM(mins) {
-    const h = Math.floor(mins / 60).toString().padStart(2,'0');
-    const m = (mins % 60).toString().padStart(2,'0');
-    return `${h}:${m}`;
+  function programClass(program) {
+    const p = (program || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (p === 'BSCE')  return 'prog-bsce';
+    if (p === 'BSCOE') return 'prog-bscoe';
+    if (p === 'BSEE')  return 'prog-bsee';
+    if (p === 'BSECE') return 'prog-bsece';
+    if (p === 'BSIE')  return 'prog-bsie';
+    if (p === 'BSME')  return 'prog-bsme';
+    return 'prog-other';
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+
+  function escapeAttr(s) {
+    return String(s ?? '').replace(/"/g, '&quot;');
+  }
+
+  function formatRange24(from, to) {
+    if (!from || !to) return '';
+    const [fh, fm] = from.split(':').map(Number);
+    const [th, tm] = to.split(':').map(Number);
+    return `${formatTime(fh, fm)} – ${formatTime(th, tm)}`;
   }
 
   const urlParams = new URLSearchParams(window.location.search);
   const schId = urlParams.get("sch_id");
+
+  let currentProgram = '';
 
   // =====================
   // LOAD & RENDER SCHEDULE
@@ -37,12 +62,13 @@ $(document).ready(function () {
       dataType: "json",
       success: function (res) {
         if (res.status === 200 && res.data.length > 0) {
-          $(".sch_schedule_title").text(res.data[0].sch_schedule.program || "");
+          currentProgram = res.data[0].sch_schedule.program || '';
+          $(".sch_schedule_title").text(currentProgram);
           $(".sch_schedule_sy").text(res.data[0].sch_schedule.semester || "");
           $(".sch_schedule_author").text(res.data[0].faculty_name || "").removeClass("hidden");
           renderSchedule(res.data);
         } else {
-          // No schedule yet — clear all placeholder text
+          currentProgram = '';
           $(".sch_schedule_title").text("");
           $(".sch_schedule_sy").text("");
           $(".sch_schedule_author").text("").addClass("hidden");
@@ -51,14 +77,14 @@ $(document).ready(function () {
           );
         }
       },
-      error: function () { alert("Failed to load schedule"); }
+      error: function () { pcToast("Failed to load schedule", "error"); }
     });
   }
 
   function renderSchedule(data) {
     $("#scheduleBody").empty();
 
-    // Build scheduleMap: day => startMin => entry info (with index for editing)
+    // Build scheduleMap: day => startMin => entry info
     let scheduleMap = {};
     dayNames.forEach(day => scheduleMap[day] = {});
 
@@ -70,10 +96,10 @@ $(document).ready(function () {
           const startMin = timeToMinutes(entry.time.from);
           const endMin   = timeToMinutes(entry.time.to);
           const slots    = (endMin - startMin) / 30;
+          if (slots <= 0) return;
           scheduleMap[day][startMin] = {
             subject_code: entry.subject,
             subject_name: entry.subject_details ? entry.subject_details.subject_name : entry.subject,
-            subject_unit: entry.subject_details ? entry.subject_details.subject_unit : '',
             faculty,
             room: entry.room || '',
             rowspan: slots,
@@ -86,6 +112,7 @@ $(document).ready(function () {
       });
     });
 
+    let bodyHtml = '';
     for (let hour = startHour; hour < endHour; hour++) {
       for (let min = 0; min < 60; min += 30) {
         const startTime = formatTime(hour, min);
@@ -93,32 +120,38 @@ $(document).ready(function () {
         if (endM === 60) { endM = 0; endH++; }
         const endTime = formatTime(endH, endM);
         const slotMin = hour * 60 + min;
+        const isLunch = slotMin >= LUNCH_FROM && slotMin < LUNCH_TO;
+        const rowCls = [
+          isLunch ? 'is-lunch' : '',
+          min === 0 ? 'hour-mark' : ''
+        ].filter(Boolean).join(' ');
 
-        let row = `<tr class="hover:bg-gray-100">
-          <td class="border px-2 py-1 font-semibold bg-gray-200 text-center whitespace-nowrap">
-            ${startTime} – ${endTime}
-          </td>`;
+        let row = `<tr class="${rowCls}">
+          <td class="time-col">${startTime}<span class="block text-[10px] opacity-60 font-medium">${endTime}</span></td>`;
 
         dayNames.forEach(day => {
           if (scheduleMap[day][slotMin]) {
             const entry = scheduleMap[day][slotMin];
-            row += `<td class="border h-10 sched-cell text-center bg-blue-200 text-xs font-semibold align-top p-1"
-                       rowspan="${entry.rowspan}">
-                      <div class="font-bold">${entry.subject_code}</div>
-                      <div class="text-gray-600">${entry.subject_name}</div>
-                      <div class="text-[10px] text-gray-500">${entry.faculty}</div>
-                      ${entry.room ? `<div class="text-[10px] font-semibold text-blue-700">Room: ${entry.room}</div>` : ''}
-                      <button class="editEntryTime mt-1 bg-yellow-500 hover:bg-yellow-400 text-white text-[10px] px-2 py-0.5 rounded cursor-pointer"
-                        data-sch-id="${schId}"
-                        data-day="${entry.day}"
-                        data-entry-index="${entry.entry_index}"
-                        data-from="${entry.time_from_24}"
-                        data-to="${entry.time_to_24}"
-                        data-room="${entry.room}"
-                        data-subject="${entry.subject_code}">
-                        ✏ Edit
-                      </button>
-                    </td>`;
+            const cls = programClass(currentProgram);
+            row += `<td class="has-slot" rowspan="${entry.rowspan}">
+              <div class="pc-slot ${cls}" title="${escapeAttr(entry.subject_code)} — ${escapeAttr(entry.subject_name)}">
+                <div class="pc-slot-subject">${escapeHtml(entry.subject_code)}</div>
+                ${entry.subject_name && entry.subject_name !== entry.subject_code
+                  ? `<div class="pc-slot-faculty" style="color:#374151; font-weight:600;">${escapeHtml(entry.subject_name)}</div>` : ''}
+                <div class="pc-slot-faculty">${escapeHtml(entry.faculty)}</div>
+                <div class="pc-slot-time">${formatRange24(entry.time_from_24, entry.time_to_24)}${entry.room ? ` &middot; Room ${escapeHtml(entry.room)}` : ''}</div>
+                <button class="editEntryTime pc-slot-edit"
+                  data-sch-id="${schId}"
+                  data-day="${escapeAttr(entry.day)}"
+                  data-entry-index="${entry.entry_index}"
+                  data-from="${escapeAttr(entry.time_from_24)}"
+                  data-to="${escapeAttr(entry.time_to_24)}"
+                  data-room="${escapeAttr(entry.room)}"
+                  data-subject="${escapeAttr(entry.subject_code)}">
+                  <span class="material-icons">edit</span> Edit
+                </button>
+              </div>
+            </td>`;
           } else {
             let skip = false;
             for (let prev = slotMin - 30; prev >= 7*60; prev -= 30) {
@@ -126,36 +159,30 @@ $(document).ready(function () {
                 skip = true; break;
               }
             }
-            if (!skip) row += `<td class="border h-10 sched-cell"></td>`;
+            if (!skip) row += `<td class="is-empty"></td>`;
           }
         });
 
         row += `</tr>`;
-        $("#scheduleBody").append(row);
+        bodyHtml += row;
       }
     }
+    $("#scheduleBody").html(bodyHtml);
   }
 
   // =====================
   // EDIT TIME MODAL
   // =====================
-  $(document).on('click', '.editEntryTime', function() {
+  $(document).on('click', '.editEntryTime', function(e) {
+    e.stopPropagation();
     const btn = $(this);
-    const sch_id      = btn.data('sch-id');
-    const day         = btn.data('day');
-    const entry_index = btn.data('entry-index');
-    const from        = btn.data('from');
-    const to          = btn.data('to');
-    const subject     = btn.data('subject');
-
-    const room = btn.data('room') || '';
-    $('#editTimeSchId').val(sch_id);
-    $('#editTimeDay').val(day);
-    $('#editTimeEntryIndex').val(entry_index);
-    $('#editTimeFrom').val(from);
-    $('#editTimeTo').val(to);
-    $('#editTimeRoom').val(room);
-    $('#editTimeSubjectLabel').text(`${subject} — ${day}`);
+    $('#editTimeSchId').val(btn.data('sch-id'));
+    $('#editTimeDay').val(btn.data('day'));
+    $('#editTimeEntryIndex').val(btn.data('entry-index'));
+    $('#editTimeFrom').val(btn.data('from'));
+    $('#editTimeTo').val(btn.data('to'));
+    $('#editTimeRoom').val(btn.data('room') || '');
+    $('#editTimeSubjectLabel').text(`${btn.data('subject')} — ${btn.data('day')}`);
     $('#editTimeConflict').addClass('hidden').text('');
     $('#editTimeModal').removeClass('hidden');
   });
@@ -164,7 +191,6 @@ $(document).ready(function () {
     $('#editTimeModal').addClass('hidden');
   });
 
-  // Real-time conflict check
   function checkConflict() {
     const sch_id      = $('#editTimeSchId').val();
     const day         = $('#editTimeDay').val();
@@ -198,7 +224,6 @@ $(document).ready(function () {
 
   $('#editTimeFrom, #editTimeTo, #editTimeRoom').on('change keyup', checkConflict);
 
-  // Save edited time
   $('#editTimeForm').on('submit', function(e) {
     e.preventDefault();
     const payload = {
@@ -219,10 +244,10 @@ $(document).ready(function () {
       success: function(res) {
         if (res.status === 'success') {
           $('#editTimeModal').addClass('hidden');
-          alert(res.message);
+          pcToast(res.message || 'Schedule updated', 'success');
           loadSchedule();
         } else {
-          alert('Error: ' + res.message);
+          pcToast('Error: ' + (res.message || 'Failed to save'), 'error');
         }
       }
     });

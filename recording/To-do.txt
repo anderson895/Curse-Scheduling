@@ -1,0 +1,24 @@
+So, yung automatic scheduling, 
+so dapat ang mangyayari,
+kapag si faculty or sabihin natin yung program chair,
+nilagay niya yung pangalan ng faculty,
+tsaka yung kanyang available time at saka yung mangaa-courses 
+of specialization niya. Dapat automatic na gagawang yung system niyo ng plotting or schedule na hindi magko-conflict sa faculty.
+
+
+
+So, halimbawa, ganito. Let's say, for example, may schedule for first year. So we have different courses for first year. And then also may mga different faculty. At lahat ng faculty, may kanya-kanyang availability nang time. So ngayon, si Program Chair, ang gagawin niya, ilalagay lang niya-- let's say, for example, yung system ninyo, "Okay, sa first year muna tayo. Sino yung Faculty 1?" Si Faculty 1 ay halimbawa ay si Professor A. Kasi Professor A, ang available lang niya ay g-- from three to-- uh, from seven to five. After nun, ano yung mga specialization niya? Next, si Faculty 2. Si Faculty 2, ang available time lang niya is Sabado from five to eight. So, ang mga specialization niya es ito. And then si Faculty C, ang kanya namang, um, availability is sabihin natin na MWF pero seven to twelve lang nang umaga. And then ito yung mga courses niya. Ngayon, kapag pinlot na siya sa system niyo, dapat hindi magko-conflict 'yung schedule at hindi din magko-conflict 'yung sa faculty.
+
+
+So, now, kawana nga, nakapag-plot na tayo ng course-- ay, ng, ng, ng mga courses sa first year. So sususuluhin niya yung second year. Kasi may instance kasi na yung professor doon sa first year nagtuturo din sa second year, third year, fourth year. So let's say for example sa second year naman tayo manggalalagay, ganun ulit. Si Faculty A, ganito oras lang ang available. Tapos ito yung mga courses na kahawak. Si Faculty B, ganito rin yung available. Ganito rin yung courses na mga kahawak niya. So ngayon, sa'n niyang ibabangga yun? Ngayon kapag nag-plot na siya for the second year, dapat pagpabasehan din niya yung, uh, schedule niya sa first year. Kasi baka mamaya naman mag-plot yung iyong system ng ganitong oras 'yun pala tatamaan naman yung klase niya sa first year. So dapat hindi tatamaan din yung course na nakaschedule sa kanya sa first year. So dapat, um, maayos.
+Kumbaga dapat, um, kapag yung faculty naglagay ng time o sabihin natin si program chair naglagay ng assigned faculty in each courses. O sabihin natin na naglagay si faculty-- ay, si program chair ng faculty sa each year or sa every yea-- sa every, uh, year level dapat, kung meron mang siyang turoo sa second year, third year, at fourth year, hindi sila magkakaroon din ng conflict sa isa't isa. Hindi tatamaan ang turoo niya sa second year yung schedule niyang turoo sa first year o sa third year o sa fourth year. Dapat, uh, maging maayos yung plotting nung isang faculty. So iyon After non dapat kaya maggenerate na system ninyo ng anu dapat? One is yung faculty loading, number two, course scheduling para sa mga student, at number three, room assignment.
+So dapat lahat yun walang magko-conflict
+
+
+Then, para madali rin kayong makapag-plot, let's say for example, ahm, idideclare niyo na yung mga different courses. So again, sabi kong nasyo kanina, palalagyan ko ng AI yan. So kapag may AI na 'yan, magpagawa kayo ng prompt para kay AI ninyo kung paano niya babasaan o paano niya i-execute yung program. Sabihin niyo kay AI lahat ng details. Ano yung mga details? Again, sabihin niyo kay AI na dapat, uhm, ang pagbabasihan ng schedule ninyo is yung faculty availability. Yun yung mga araw na kailangan siya-- yun yung mga araw na available lang siya pumasok at kung kel-- at kung ano yung mga courses na kaya niyang i-handle o ituro. At the same time, uhm, kailangan niyo rin sabihin kay AI na, uhm, kailangan marunong siyang mag-balance ng loading. O sabihin natin na dapat alam niya kung paano, uhm, ipa-plot yung-- kulam bawat sinu'dang may priority na professor kapag paresang natuturo ng ano, nagtuturo ng course.
+At tsaka ang isa pa ay dapat yung inyong system or yung AI ninyo— uhm, ano nga ba yun? Meron akong naisip na isa eh, wait lang. 
+
+Un. Dapat yung system ninyo rin, so kasama rin sa inyong mga condition na ilang dapat nagmemeet ang isang course sa isang linggo. Let's say for example, yung klase ninyo ng, ng seminars and field trips, so ilang nan turun, ilang hours ang turo non? Ang turo kasi ng seminars and field trips, three yon, three hours yon. So ngayon kase ang ginagawa, hinahati yon sa dalawang meeting. So papaa'no 1.5, 1.5 ang hatian. So ganun ang magiging prompt non.
+
+
+Ki-clear ninyo sa inyong system o sa AI ninyo. O sasabiy ninyo sa AI ninyo na, "Oh, si gan'tong klase", let's say for example, programming logic and design, "Eto ay s-- eto ay six hours. So eto ay meron dalawang session every week na tag-ti-three hours." So ganun.
