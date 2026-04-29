@@ -5,6 +5,35 @@ Login bilang **dean** (`dean / dean`) o **program chair** unless stated.
 
 ---
 
+## Implementation Audit (vs `revision1.txt`)
+
+| # | Requirement | Status |
+|---|---|---|
+| 1 | Faculty: name, available time, tinuturo na courses | ✅ Existing `faculty_meta` (availability + specializations) + modal sa `dean/faculty.php` |
+| 2 | Pipili ng faculty at curriculum year | ✅ Curriculum-year dropdown added sa auto-gen modal. Faculty picker already exists sa manual create-schedule. |
+| 3 | Iba't ibang curriculum (multi-curriculum) | ✅ `curriculum_year` filter sa auto-gen + endpoint `get_curriculum_years` |
+| 4 | "Pano po nakaapag add ng ibang room number?" | ✅ Manage Rooms CRUD sa `dean/rooms.php` |
+| 5 | Gen Ed plotted manually by GEC | ⚠️ **Partial** — GEC has `/gec/fac_sched.php` na may real subject picker (loads all subjects), pero **hindi naka-filter** sa `gen_ed` tier lang. Working pero hindi guided. |
+| 6 | Gen Eng plotted by "Doc Jun", auto-avoiding Gen Ed slots | ✅ Tier=`gen_eng` selectable; `cohort_busy` ensures no overlap. Pero **hindi separate role** — dean/programchair lang ang nagpa-plot. |
+| 7 | Major courses auto-plotted, avoiding earlier tiers | ✅ Tier=`major` + `cohort_busy` |
+| 8 | Pairing TTH (e.g. Programming Logic and Design lab) | ✅ `pairing` column + two-pass assign (TTH first) |
+| 9 | Fallback if pairing slot unavailable | ✅ Two-pass: pair-days first, then full week |
+| 10 | Day-pair options (TTH, MWF, WS) | ✅ Enum supports lahat |
+
+### Mga gaps na hindi pa 100%
+
+**A. GEC subject picker hindi naka-filter to `gen_ed` tier.**
+Pwede silang mag-input ng Gen Ed kasi nasa list lahat ng subjects, pero hindi guided.
+*Quick fix:* filter dropdown to `course_tier='gen_ed'`. ~5-line change sa `static/js/gec/fac_sched.js`.
+
+**B. Walang dedicated "engineering chair / Doc Jun" role.**
+Dean / program chair ang gumagamit ng tier=`gen_eng` button. Pwedeng ayos na yan, pero kung gusto mong i-segregate, kailangan magdagdag ng bagong `user_type` (e.g. `engineering`) at hiwalay na nav directory.
+
+**C. Auto-gen faculty selection.**
+Faculty is auto-picked via specializations. Walang explicit "lock to this faculty" override. Hindi binanggit sa `revision1.txt` na requirement, pero flag for future.
+
+---
+
 ## 0. Prerequisites
 
 1. Make sure XAMPP MySQL is running.
