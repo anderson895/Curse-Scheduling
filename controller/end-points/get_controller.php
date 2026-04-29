@@ -91,13 +91,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             echo json_encode(['status' => 200, 'data' => $db->get_faculty_meta($user_id)]);
 
         } else if ($_GET['requestType'] == 'get_subjects_by_program_year') {
-            $program    = $_GET['program']    ?? '';
-            $year_level = $_GET['year_level'] ?? '';
-            $semester   = $_GET['semester']   ?? '';
-            echo json_encode(['status' => 200, 'data' => $db->get_subjects_by_program_year($program, $year_level, $semester)]);
+            $program         = $_GET['program']         ?? '';
+            $year_level      = $_GET['year_level']      ?? '';
+            $semester        = $_GET['semester']        ?? '';
+            $tier            = $_GET['tier']            ?? '';
+            $curriculum_year = $_GET['curriculum_year'] ?? '';
+            echo json_encode(['status' => 200, 'data' => $db->get_subjects_by_program_year($program, $year_level, $semester, $tier, $curriculum_year)]);
 
         } else if ($_GET['requestType'] == 'get_all_faculty_with_meta') {
             echo json_encode(['status' => 200, 'data' => $db->get_all_faculty_with_meta()]);
+
+        } else if ($_GET['requestType'] == 'get_rooms') {
+            $only_active = !empty($_GET['active']);
+            echo json_encode(['status' => 200, 'data' => $db->get_rooms($only_active)]);
+
+        } else if ($_GET['requestType'] == 'get_curriculum_years') {
+            $program = $_GET['program'] ?? '';
+            echo json_encode(['status' => 200, 'data' => $db->get_curriculum_years($program)]);
 
         }else {
             http_response_code(404);

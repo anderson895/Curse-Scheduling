@@ -1113,6 +1113,22 @@
   }
   .pc-auth-body { padding: 1.75rem; }
 
+  /* Tier picker (course tier radio pills) */
+  .pc-tier-pill {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .55rem .7rem; border: 1px solid #e5e7eb; border-radius: .55rem;
+    background: #fff; cursor: pointer; font-size: .78rem; line-height: 1.15;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+  }
+  .pc-tier-pill:hover { border-color: #fecaca; background: #fff5f5; }
+  .pc-tier-pill input[type="radio"] { accent-color: #b91c1c; }
+  .pc-tier-pill input[type="radio"]:checked + span strong { color: #7f1d1d; }
+  .pc-tier-pill:has(input[type="radio"]:checked) {
+    border-color: #b91c1c;
+    background: #fef2f2;
+    box-shadow: 0 0 0 3px rgba(185,28,28,.10);
+  }
+
   /* Utility */
   .pc-text-muted { color: #6b7280; }
   .pc-text-red   { color: var(--pc-red-900); }

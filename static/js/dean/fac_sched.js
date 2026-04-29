@@ -393,13 +393,14 @@ $(document).ready(function () {
 
   // ==============================
   // ROOM PICKER (chip-style for Available Rooms)
+  // Quick-add buttons + initial chip list are loaded from /rooms endpoint.
   // ==============================
   const roomPicker = (function () {
     const $hidden  = $('#autoRooms');
     const $chips   = $('#autoRoomsChips');
     const $input   = $('#autoRoomsInput');
     const $suggest = $('#autoRoomsSuggest');
-    const DEFAULT  = $hidden.val() || '';
+    let DEFAULT    = $hidden.val() || '';
 
     function getRooms() {
       return $chips.find('.pc-room-chip').map((_, el) => $(el).data('room').toString()).get();
@@ -437,8 +438,34 @@ $(document).ready(function () {
       v.split(',').map(s => s.trim()).filter(Boolean).forEach(addRoom);
     }
 
-    // Hydrate from default value
-    reset();
+    // Pull active rooms from DB and rebuild quick-add list + initial chips
+    function loadFromDb() {
+      $.ajax({
+        url: '../controller/end-points/get_controller.php',
+        method: 'GET',
+        data: { requestType: 'get_rooms', active: 1 },
+        dataType: 'json',
+        success: function (res) {
+          const rooms = (res && res.data) ? res.data.map(r => r.room_name) : [];
+          const $emp = $('#autoRoomsSuggestEmpty');
+          if ($emp.length) $emp.remove();
+          $suggest.find('.pc-quick-room').remove();
+          if (rooms.length === 0) {
+            $suggest.append('<span class="text-xs text-gray-400">No rooms yet — add some in Rooms.</span>');
+            DEFAULT = '';
+            reset('');
+            return;
+          }
+          rooms.forEach(r => {
+            $suggest.append('<button type="button" class="pc-quick-room" data-room="' + r + '">' + r + '</button>');
+          });
+          DEFAULT = rooms.join(',');
+          reset(DEFAULT);
+        }
+      });
+    }
+
+    loadFromDb();
 
     // Type-to-add (Enter, comma, space)
     $input.on('keydown', function (e) {
@@ -468,8 +495,34 @@ $(document).ready(function () {
       addRoom($(this).data('room'));
     });
 
-    return { reset, addRoom };
+    return { reset, addRoom, loadFromDb };
   })();
+
+  // ==============================
+  // CURRICULUM YEAR LOADER (per program)
+  // ==============================
+  function loadCurriculumYears(program) {
+    if (!program) {
+      $('#autoCurriculumYear').html('<option value="">Any (all curricula)</option>');
+      return;
+    }
+    $.ajax({
+      url: '../controller/end-points/get_controller.php',
+      method: 'GET',
+      data: { requestType: 'get_curriculum_years', program: program },
+      dataType: 'json',
+      success: function (res) {
+        let html = '<option value="">Any (all curricula)</option>';
+        (res.data || []).forEach(y => {
+          html += '<option value="' + y + '">' + y + '</option>';
+        });
+        $('#autoCurriculumYear').html(html);
+      }
+    });
+  }
+  $(document).on('change', '#autoProgram', function () {
+    loadCurriculumYears($(this).val());
+  });
 
   // ==============================
   // AUTO-GENERATE SCHEDULE
@@ -483,22 +536,29 @@ $(document).ready(function () {
     $('#autoGenModal').addClass('hidden');
     $('#autoGenForm')[0].reset();
     $('#autoGenResult').addClass('hidden').empty();
+    $('input[name=tier][value=major]').prop('checked', true);
     roomPicker.reset();
   });
 
   $('#autoGenForm').submit(function (e) {
     e.preventDefault();
 
-    const program    = $('#autoProgram').val();
-    const year_level = $('#autoYearLevel').val();
-    const semester   = $('#autoSemester').val();
-    const rooms      = $('#autoRooms').val();
+    const program         = $('#autoProgram').val();
+    const year_level      = $('#autoYearLevel').val();
+    const semester        = $('#autoSemester').val();
+    const rooms           = $('#autoRooms').val();
+    const tier            = $('input[name=tier]:checked').val() || 'major';
+    const curriculum_year = $('#autoCurriculumYear').val() || '';
 
     if (!program || !year_level || !semester) {
       return alert('Please choose program, year level, and semester.');
     }
+    if (!rooms) {
+      return alert('Please add at least one room (or add some in Rooms).');
+    }
 
-    if (!confirm('Auto-generate schedules for ' + program + ' Year ' + year_level + ' (' + semester + ')?')) return;
+    const tierLabel = { gen_ed:'Gen Ed', gen_eng:'General Engineering', major:'Major / Professional' }[tier] || tier;
+    if (!confirm('Auto-generate ' + tierLabel + ' for ' + program + ' Year ' + year_level + ' (' + semester + ')?')) return;
 
     const $btn = $(this).find('button[type=submit]').prop('disabled', true).text('Generating...');
 
@@ -507,7 +567,7 @@ $(document).ready(function () {
       method: 'POST',
       data: {
         requestType: 'auto_generate_schedule',
-        program, year_level, semester, rooms
+        program, year_level, semester, rooms, tier, curriculum_year
       },
       dataType: 'json',
       success: function (res) {

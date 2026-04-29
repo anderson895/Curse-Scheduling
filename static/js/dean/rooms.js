@@ -242,7 +242,128 @@ $(document).ready(function () {
   });
 
   // =====================
+  // MANAGE ROOMS (CRUD)
+  // =====================
+  function loadManageRooms() {
+    $.ajax({
+      url: '../controller/end-points/get_controller.php',
+      method: 'GET',
+      data: { requestType: 'get_rooms' },
+      dataType: 'json',
+      success: function (res) {
+        const body = $('#manageRoomsBody');
+        body.empty();
+        const rooms = (res && res.data) || [];
+        if (rooms.length === 0) {
+          body.append('<tr><td colspan="5" class="text-center text-gray-400 py-6">No rooms yet. Click "Add Room" to create one.</td></tr>');
+          return;
+        }
+        rooms.forEach(r => {
+          const isActive = parseInt(r.is_active, 10) === 1;
+          body.append(`
+            <tr>
+              <td><span class="pc-chip pc-chip-red">${escapeHtml(r.room_name)}</span></td>
+              <td>${escapeHtml(r.room_type || '—')}</td>
+              <td>${r.capacity}</td>
+              <td>${isActive
+                  ? '<span class="pc-chip pc-chip-green">Active</span>'
+                  : '<span class="pc-chip pc-chip-gray">Disabled</span>'}</td>
+              <td class="text-right">
+                <button class="pc-btn pc-btn-sm pc-btn-ghost editRoomBtn"
+                        data-id="${r.room_id}" data-name="${escapeHtml(r.room_name)}"
+                        data-type="${escapeHtml(r.room_type)}" data-cap="${r.capacity}">
+                  <span class="material-icons">edit</span> Edit
+                </button>
+                <button class="pc-btn pc-btn-sm pc-btn-neutral toggleRoomBtn" data-id="${r.room_id}">
+                  <span class="material-icons">${isActive ? 'toggle_on' : 'toggle_off'}</span>
+                  ${isActive ? 'Disable' : 'Enable'}
+                </button>
+                <button class="pc-btn pc-btn-sm pc-btn-danger deleteRoomBtn" data-id="${r.room_id}">
+                  <span class="material-icons">delete</span> Delete
+                </button>
+              </td>
+            </tr>`);
+        });
+      }
+    });
+  }
+
+  $('#openAddRoomModal').on('click', () => {
+    $('#roomFormTitle').text('Add Room');
+    $('#room_id').val('');
+    $('#room_name').val('');
+    $('#room_type').val('lecture');
+    $('#capacity').val(0);
+    $('#roomFormModal').removeClass('hidden');
+  });
+
+  $('#closeRoomFormModal').on('click', () => $('#roomFormModal').addClass('hidden'));
+
+  $(document).on('click', '.editRoomBtn', function () {
+    $('#roomFormTitle').text('Edit Room');
+    $('#room_id').val($(this).data('id'));
+    $('#room_name').val($(this).data('name'));
+    $('#room_type').val($(this).data('type'));
+    $('#capacity').val($(this).data('cap'));
+    $('#roomFormModal').removeClass('hidden');
+  });
+
+  $('#roomForm').on('submit', function (e) {
+    e.preventDefault();
+    const id = $('#room_id').val();
+    const payload = {
+      requestType: id ? 'update_room' : 'add_room',
+      room_id:   id,
+      room_name: $('#room_name').val().trim(),
+      room_type: $('#room_type').val(),
+      capacity:  $('#capacity').val()
+    };
+    $.ajax({
+      url: '../controller/end-points/post_controller.php',
+      method: 'POST',
+      data: payload,
+      dataType: 'json',
+      success: function (res) {
+        alert(res.message);
+        if (res.status === 'success') {
+          $('#roomFormModal').addClass('hidden');
+          loadManageRooms();
+          loadRooms();
+        }
+      }
+    });
+  });
+
+  $(document).on('click', '.toggleRoomBtn', function () {
+    const id = $(this).data('id');
+    $.ajax({
+      url: '../controller/end-points/post_controller.php',
+      method: 'POST',
+      data: { requestType: 'toggle_room_status', room_id: id },
+      dataType: 'json',
+      success: function () { loadManageRooms(); }
+    });
+  });
+
+  $(document).on('click', '.deleteRoomBtn', function () {
+    const id = $(this).data('id');
+    if (!confirm('Delete this room? This will not remove existing schedule entries.')) return;
+    $.ajax({
+      url: '../controller/end-points/post_controller.php',
+      method: 'POST',
+      data: { requestType: 'delete_room', room_id: id },
+      dataType: 'json',
+      success: function (res) {
+        alert(res.message);
+        loadManageRooms();
+        loadRooms();
+      }
+    });
+  });
+
+  // =====================
   // INIT
   // =====================
   loadRooms();
+  loadManageRooms();
 });

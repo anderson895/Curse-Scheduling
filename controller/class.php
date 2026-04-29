@@ -1065,19 +1065,137 @@ public function get_all_faculty_with_meta() {
 // =============================================================
 // SUBJECTS for a given program / year / semester
 // =============================================================
-public function get_subjects_by_program_year($program, $year_level, $semester) {
+public function get_subjects_by_program_year($program, $year_level, $semester, $tier = '', $curriculum_year = '') {
     // Frontend uses codes like BSCOE; curriculum uses BSCoE — match loosely (case-insensitive prefix).
     $sql = "SELECT * FROM curriculum
             WHERE LOWER(program) = LOWER(?)
               AND year_level = ?
               AND semester   = ?
               AND (lec_hours + lab_hours) > 0";
+    $params = [$program, $year_level, $semester];
+    $types  = "sss";
+
+    if ($tier !== '' && in_array($tier, ['gen_ed','gen_eng','major'], true)) {
+        $sql .= " AND course_tier = ?";
+        $params[] = $tier;
+        $types   .= "s";
+    }
+    if ($curriculum_year !== '') {
+        $sql .= " AND curriculum_year = ?";
+        $params[] = $curriculum_year;
+        $types   .= "s";
+    }
+
     $stmt = $this->conn->prepare($sql);
-    $stmt->bind_param("sss", $program, $year_level, $semester);
+    $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     return $rows;
+}
+
+// Distinct curriculum years available for a given program (for the UI selector)
+public function get_curriculum_years($program = '') {
+    if ($program !== '') {
+        $stmt = $this->conn->prepare(
+            "SELECT DISTINCT curriculum_year FROM curriculum
+             WHERE LOWER(program) = LOWER(?) AND curriculum_year <> ''
+             ORDER BY curriculum_year DESC"
+        );
+        $stmt->bind_param("s", $program);
+    } else {
+        $stmt = $this->conn->prepare(
+            "SELECT DISTINCT curriculum_year FROM curriculum
+             WHERE curriculum_year <> ''
+             ORDER BY curriculum_year DESC"
+        );
+    }
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return array_map(function($r){ return $r['curriculum_year']; }, $rows);
+}
+
+// =============================================================
+// ROOMS — managed list of room numbers
+// =============================================================
+public function get_rooms($only_active = false) {
+    $sql = "SELECT * FROM rooms"
+         . ($only_active ? " WHERE is_active = 1" : "")
+         . " ORDER BY room_name";
+    $res = $this->conn->query($sql);
+    return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+}
+
+public function add_room($room_name, $room_type = 'lecture', $capacity = 0) {
+    $room_name = trim($room_name);
+    if ($room_name === '') return ['success'=>false,'message'=>'Room name is required.'];
+    try {
+        $stmt = $this->conn->prepare(
+            "INSERT INTO rooms (room_name, room_type, capacity) VALUES (?, ?, ?)"
+        );
+        $cap = intval($capacity);
+        $stmt->bind_param("ssi", $room_name, $room_type, $cap);
+        $stmt->execute();
+        $stmt->close();
+        return ['success'=>true,'message'=>'Room added.'];
+    } catch (mysqli_sql_exception $e) {
+        return ['success'=>false,'message'=>(stripos($e->getMessage(),'duplicate')!==false ? 'Room already exists.' : 'Failed to add room.')];
+    }
+}
+
+public function update_room($room_id, $room_name, $room_type, $capacity) {
+    try {
+        $stmt = $this->conn->prepare(
+            "UPDATE rooms SET room_name = ?, room_type = ?, capacity = ? WHERE room_id = ?"
+        );
+        $cap = intval($capacity);
+        $rid = intval($room_id);
+        $stmt->bind_param("ssii", $room_name, $room_type, $cap, $rid);
+        $stmt->execute();
+        $stmt->close();
+        return ['success'=>true,'message'=>'Room updated.'];
+    } catch (mysqli_sql_exception $e) {
+        return ['success'=>false,'message'=>(stripos($e->getMessage(),'duplicate')!==false ? 'Room name already exists.' : 'Failed to update room.')];
+    }
+}
+
+public function toggle_room_status($room_id) {
+    $stmt = $this->conn->prepare("UPDATE rooms SET is_active = IF(is_active=1,0,1) WHERE room_id = ?");
+    $rid = intval($room_id);
+    $stmt->bind_param("i", $rid);
+    if ($stmt->execute()) { $stmt->close(); return ['success'=>true,'message'=>'Room status updated.']; }
+    $stmt->close();
+    return ['success'=>false,'message'=>'Failed to update room status.'];
+}
+
+public function delete_room($room_id) {
+    $stmt = $this->conn->prepare("DELETE FROM rooms WHERE room_id = ?");
+    $rid = intval($room_id);
+    $stmt->bind_param("i", $rid);
+    if ($stmt->execute()) { $stmt->close(); return ['success'=>true,'message'=>'Room deleted.']; }
+    $stmt->close();
+    return ['success'=>false,'message'=>'Failed to delete room.'];
+}
+
+// =============================================================
+// COURSE TIER + PAIRING (revision1.txt)
+// =============================================================
+public function set_curriculum_meta($curriculum_id, $course_tier, $pairing) {
+    if (!in_array($course_tier, ['gen_ed','gen_eng','major'], true)) {
+        return ['success'=>false,'message'=>'Invalid course tier.'];
+    }
+    if (!in_array($pairing, ['NONE','MWF','TTH','WS'], true)) {
+        return ['success'=>false,'message'=>'Invalid pairing.'];
+    }
+    $stmt = $this->conn->prepare(
+        "UPDATE curriculum SET course_tier = ?, pairing = ? WHERE curriculum_id = ?"
+    );
+    $cid = intval($curriculum_id);
+    $stmt->bind_param("ssi", $course_tier, $pairing, $cid);
+    if ($stmt->execute()) { $stmt->close(); return ['success'=>true,'message'=>'Curriculum metadata updated.']; }
+    $stmt->close();
+    return ['success'=>false,'message'=>'Failed to update curriculum.'];
 }
 
 // =============================================================
@@ -1085,19 +1203,26 @@ public function get_subjects_by_program_year($program, $year_level, $semester) {
 //   Inputs: program, year_level, semester, list of available rooms
 //   Output: ['saved' => [...], 'unassigned' => [...], 'message' => ...]
 // =============================================================
-public function auto_generate_schedule($program, $year_level, $semester, $rooms = []) {
+public function auto_generate_schedule($program, $year_level, $semester, $rooms = [], $tier = 'major', $curriculum_year = '') {
     $year_level = (string) $year_level;
 
-    $subjects = $this->get_subjects_by_program_year($program, $year_level, $semester);
+    $subjects = $this->get_subjects_by_program_year($program, $year_level, $semester, $tier, $curriculum_year);
     if (empty($subjects)) {
-        return ['success' => false, 'message' => 'No subjects found for ' . $program . ' year ' . $year_level . ' / ' . $semester . '.'];
+        $detail = $tier ? (' (' . str_replace('_',' ', $tier) . ' tier)') : '';
+        if ($curriculum_year !== '') $detail .= ' [curriculum ' . $curriculum_year . ']';
+        return ['success' => false, 'message' => 'No subjects found for ' . $program . ' year ' . $year_level . ' / ' . $semester . $detail . '.'];
     }
     $faculty_list = $this->get_all_faculty_with_meta();
     if (empty($faculty_list)) {
         return ['success' => false, 'message' => 'No active faculty found.'];
     }
     if (empty($rooms)) {
-        $rooms = ['301','302','303','304','305'];
+        // Fall back to active rooms from the DB (managed via /dean/rooms.php)
+        $db_rooms = $this->get_rooms(true);
+        $rooms = array_map(function($r){ return $r['room_name']; }, $db_rooms);
+        if (empty($rooms)) {
+            $rooms = ['301','302','303','304','305'];
+        }
     }
 
     // ---------- Build busy maps from existing schedules ----------
@@ -1148,6 +1273,7 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
         $hours = floatval($subject['lec_hours']) + floatval($subject['lab_hours']);
         if ($hours <= 0) continue;
         $sessions = $this->split_into_sessions($hours);
+        $pairing  = isset($subject['pairing']) ? $subject['pairing'] : 'NONE';
 
         // candidate faculty whose specialization matches
         $code = $subject['subject_code'];
@@ -1175,7 +1301,7 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
                 $availability, $sessions,
                 $faculty_busy[$uid] ?? [],
                 $cohort_busy[$current_cohort_key] ?? [],
-                $room_busy, $rooms
+                $room_busy, $rooms, $pairing
             );
             if ($attempt !== null) {
                 $assigned_for_subject = $attempt;
@@ -1293,8 +1419,41 @@ private function find_schedule_id_for_cohort($user_id, $program, $year_level, $s
     return $row ? intval($row['sch_id']) : null;
 }
 
+// Pairing definitions per revision1.txt.
+// MWF = Monday/Wednesday/Friday  TTH = Tuesday/Thursday  WS = Wednesday/Saturday
+private function pairing_days($pairing) {
+    switch ($pairing) {
+        case 'TTH': return ['Tuesday', 'Thursday'];
+        case 'MWF': return ['Monday', 'Wednesday', 'Friday'];
+        case 'WS':  return ['Wednesday', 'Saturday'];
+    }
+    return [];
+}
+
 // Greedy session assignment within a faculty's availability window.
-private function try_assign_sessions($availability, $sessions, $fac_busy, $cohort_busy, &$room_busy, $rooms) {
+// $pairing = 'NONE' | 'MWF' | 'TTH' | 'WS' — preferred meeting-day group.
+private function try_assign_sessions($availability, $sessions, $fac_busy, $cohort_busy, &$room_busy, $rooms, $pairing = 'NONE') {
+    // Build a day priority list: pairing days first, then the rest.
+    $pair_days = $this->pairing_days($pairing);
+    $all_days  = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    $day_priority = array_values(array_unique(array_merge($pair_days, $all_days)));
+
+    // Two-pass strategy: try assigning every session inside the pairing days
+    // first; if that fails (slot full), fall back to the full week.
+    if (!empty($pair_days)) {
+        $strict = $this->try_assign_with_day_filter(
+            $availability, $sessions, $fac_busy, $cohort_busy, $room_busy, $rooms,
+            $pair_days, $day_priority
+        );
+        if ($strict !== null) return $strict;
+    }
+    return $this->try_assign_with_day_filter(
+        $availability, $sessions, $fac_busy, $cohort_busy, $room_busy, $rooms,
+        $all_days, $day_priority
+    );
+}
+
+private function try_assign_with_day_filter($availability, $sessions, $fac_busy, $cohort_busy, &$room_busy, $rooms, $allowed_days, $day_priority) {
     $lunch = ['from' => '12:00', 'to' => '13:00'];
 
     $days_used = [];
@@ -1303,11 +1462,13 @@ private function try_assign_sessions($availability, $sessions, $fac_busy, $cohor
     foreach ($sessions as $session_hours) {
         $found = null;
 
-        // Try every day in availability that wasn't used yet for this subject
-        foreach ($availability as $day => $windows) {
+        // Iterate days in priority order, but only those allowed in this pass.
+        foreach ($day_priority as $day) {
+            if (!in_array($day, $allowed_days, true)) continue;
             if (in_array($day, $days_used, true)) continue;
-            if (!is_array($windows)) continue;
+            if (!isset($availability[$day]) || !is_array($availability[$day])) continue;
 
+            $windows = $availability[$day];
             foreach ($windows as $win) {
                 $win_from = $this->t($win['from'] ?? '');
                 $win_to   = $this->t($win['to']   ?? '');
@@ -1324,11 +1485,8 @@ private function try_assign_sessions($availability, $sessions, $fac_busy, $cohor
                     $sf = $start->format('H:i');
                     $et = $end->format('H:i');
 
-                    // skip lunch
                     if ($this->overlaps($sf, $et, $lunch['from'], $lunch['to'])) continue;
-                    // faculty conflict (any cohort, any year level — they can't be in 2 places)
                     if ($this->any_overlap($sf, $et, $fac_busy[$day] ?? [])) continue;
-                    // student cohort conflict
                     if ($this->any_overlap($sf, $et, $cohort_busy[$day] ?? [])) continue;
 
                     // pick first room that is free
@@ -1354,7 +1512,7 @@ private function try_assign_sessions($availability, $sessions, $fac_busy, $cohor
             if ($found) break;
         }
 
-        if (!$found) return null; // can't place this session
+        if (!$found) return null;
         $days_used[] = $found['day'];
         $assignments[] = $found;
     }

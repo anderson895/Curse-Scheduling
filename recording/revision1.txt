@@ -1,0 +1,14 @@
+-Faculty name and ung available time and tinuturo na courses
+-kulang lang po nung pipili ng faculty at curriculum year
+-Since iba iba po curriculum namin
+-ooms
+-Pano po nakaapag add ng ibang room number don?
+
+
+
+
+Meron kase mauuna ng mga courses kagaya ng Gen Ed courses, kagaya ng FCL. Yung mangaaah, society, mga global society something yung mga Rizal. So yung mga yun kasi pag kami kasi gumagawa ng system-- ay gumagawa kaming ng schedule. Ang ginagawa kasi namin aming pinaplat muna namin si Excel. And then kapag naplat na namin siya t'lang kami papapasok, magpapasok ng schedule na fit sa amin. Let's say, for example, kasi after din kasi ng Gen Ed susunod dang magpa-plot diyan is yung General Engineering sina Doc Jun. Do'n papasok yung mga Chemistry, Physics yong mga different, uhm, basic Maths. So yun sila. Yung sa amin kasi talaga pinaplot talaga namin si mga major courses at professional courses namin. So yun yung mangaaah, area talaga na kailangang i-plot ng automatic. Pero siguro pagdating doon sa Gen Ed courses identify nila lang kung ano ano yun. Kagaya nga ng mga Rizal, aahm, dapat yun yung part na yun na pwede na kami ang mag-input.
+
+And then after that, pagdating namang sa General Engineering, yung mga Chemistry at Physics. So, doon papasok na si Doc. Jun yung magpa-plot. And then after that, kami naman. Pero dapat kapag si Doc. Jun ay nag-plot, pagdag-plot si Doc. Jun ng kanyang schedule, automatic din ng ipa-plot niya doon sa walang tatamaan na schedule na naka-plot doon sa General Engineer-- ah, nakapa-plot doon sa Gen Ed courses. Ito pa pala Kristen, Kristen nakalimuta kong sabihin sa iyo. Meron nga pala kaming plotting-- ay meron kaming pairing ng sa-- mayro'ng kaming pairing ng ano? Pairing ng pasok. Let's say for example, ang pairing dapat ng course ay TTH. So ibig sabihin, halimbawa yung Programming Logic at Design. Since laboratory yun kailangan makapace to face. So ang face to face kasi, ang schedule ng pairing ay TTH. So dapat naka-plot siya doon lang sa TTH. Hindi siya pwedeng i-plot sa ibang-- hangga't maaari na pwede siyang i-plot doon sa TTH, ipa-plot niya doon.
+
+Pero kun maikita naman na hindi na nga siya pe-- possible, pwede namang i-plot na sa iba. Ayan pa pala, siguro sa prompt ninyo magkakaroon tayo ng prioritization na as long as kayang i-plot doon sa pairing noong talagang pasok, let's say for example nga, ang pairing ay Ta-Tuesday, Thursday, Wednesday, Saturday. So dapat pap-plot siya doon. So yun yon

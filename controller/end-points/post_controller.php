@@ -241,13 +241,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
 
         } else if ($_POST['requestType'] === 'auto_generate_schedule') {
-            $program    = $_POST['program']    ?? '';
-            $year_level = $_POST['year_level'] ?? '';
-            $semester   = $_POST['semester']   ?? '';
-            $rooms_raw  = $_POST['rooms']      ?? '';
+            $program         = $_POST['program']         ?? '';
+            $year_level      = $_POST['year_level']      ?? '';
+            $semester        = $_POST['semester']        ?? '';
+            $rooms_raw       = $_POST['rooms']           ?? '';
+            $tier            = $_POST['tier']            ?? 'major';
+            $curriculum_year = $_POST['curriculum_year'] ?? '';
             $rooms = array_values(array_filter(array_map('trim', explode(',', $rooms_raw)), function($v) { return $v !== ''; }));
-            $result = $db->auto_generate_schedule($program, $year_level, $semester, $rooms);
+            $result = $db->auto_generate_schedule($program, $year_level, $semester, $rooms, $tier, $curriculum_year);
             echo json_encode($result);
+
+        // ---------- ROOMS ----------
+        } else if ($_POST['requestType'] === 'add_room') {
+            $name = $_POST['room_name'] ?? '';
+            $type = $_POST['room_type'] ?? 'lecture';
+            $cap  = $_POST['capacity']  ?? 0;
+            $result = $db->add_room($name, $type, $cap);
+            echo json_encode(['status'=>$result['success']?'success':'error','message'=>$result['message']]);
+
+        } else if ($_POST['requestType'] === 'update_room') {
+            $rid  = $_POST['room_id']   ?? 0;
+            $name = $_POST['room_name'] ?? '';
+            $type = $_POST['room_type'] ?? 'lecture';
+            $cap  = $_POST['capacity']  ?? 0;
+            $result = $db->update_room($rid, $name, $type, $cap);
+            echo json_encode(['status'=>$result['success']?'success':'error','message'=>$result['message']]);
+
+        } else if ($_POST['requestType'] === 'toggle_room_status') {
+            $result = $db->toggle_room_status($_POST['room_id'] ?? 0);
+            echo json_encode(['status'=>$result['success']?'success':'error','message'=>$result['message']]);
+
+        } else if ($_POST['requestType'] === 'delete_room') {
+            $result = $db->delete_room($_POST['room_id'] ?? 0);
+            echo json_encode(['status'=>$result['success']?'success':'error','message'=>$result['message']]);
+
+        // ---------- CURRICULUM META (tier + pairing) ----------
+        } else if ($_POST['requestType'] === 'set_curriculum_meta') {
+            $cid     = $_POST['curriculum_id'] ?? 0;
+            $tier    = $_POST['course_tier']   ?? 'major';
+            $pairing = $_POST['pairing']       ?? 'NONE';
+            $result = $db->set_curriculum_meta($cid, $tier, $pairing);
+            echo json_encode(['status'=>$result['success']?'success':'error','message'=>$result['message']]);
 
         } else {
             http_response_code(404);
