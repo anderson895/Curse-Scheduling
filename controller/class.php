@@ -1046,27 +1046,32 @@ public function save_faculty_meta($user_id, $availability_json, $specializations
     return ['success' => false, 'message' => 'Failed to save faculty profile.'];
 }
 
-// Faculty self-service: update only the availability column.
-// Specializations are reserved for Dean/Program Chair to set.
-public function save_my_availability($user_id, $availability_json) {
+// Faculty self-service: update own availability and specializations.
+// Caller must enforce that $user_id comes from the authenticated session.
+public function save_my_profile($user_id, $availability_json, $specializations_json) {
     $user_id = intval($user_id);
     if ($user_id <= 0) return ['success' => false, 'message' => 'Invalid user.'];
 
-    if (!is_string($availability_json)) $availability_json = json_encode($availability_json ?: new stdClass());
+    if (!is_string($availability_json))    $availability_json = json_encode($availability_json ?: new stdClass());
+    if (!is_string($specializations_json)) $specializations_json = json_encode($specializations_json ?: []);
+
     if (json_decode($availability_json, true) === null && trim($availability_json) !== '{}' && trim($availability_json) !== '[]') {
         return ['success' => false, 'message' => 'Invalid availability format.'];
+    }
+    if (json_decode($specializations_json, true) === null && trim($specializations_json) !== '[]') {
+        return ['success' => false, 'message' => 'Invalid specializations format.'];
     }
 
     $stmt = $this->conn->prepare(
         "INSERT INTO faculty_meta (user_id, availability, specializations)
-         VALUES (?, ?, '[]')
-         ON DUPLICATE KEY UPDATE availability = VALUES(availability)"
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE availability = VALUES(availability), specializations = VALUES(specializations)"
     );
     if (!$stmt) return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
-    $stmt->bind_param("is", $user_id, $availability_json);
-    if ($stmt->execute()) { $stmt->close(); return ['success' => true, 'message' => 'Availability saved.']; }
+    $stmt->bind_param("iss", $user_id, $availability_json, $specializations_json);
+    if ($stmt->execute()) { $stmt->close(); return ['success' => true, 'message' => 'Profile saved.']; }
     $stmt->close();
-    return ['success' => false, 'message' => 'Failed to save availability.'];
+    return ['success' => false, 'message' => 'Failed to save profile.'];
 }
 
 public function get_all_faculty_with_meta() {

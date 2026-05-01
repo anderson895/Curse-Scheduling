@@ -26,9 +26,9 @@
         <span>Schedule</span>
       </a>
 
-      <a href="availability" class="nav-link flex items-center space-x-3 px-3 py-2 rounded-md transition">
-        <span class="material-icons">event_available</span>
-        <span>My Availability</span>
+      <a href="profile" class="nav-link flex items-center space-x-3 px-3 py-2 rounded-md transition">
+        <span class="material-icons">badge</span>
+        <span>My Profile</span>
       </a>
 
       <a href="rooms" class="nav-link flex items-center space-x-3 px-3 py-2 rounded-md transition">

@@ -240,14 +240,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 : ['status' => 'error',   'message' => $result['message']]
             );
 
-        } else if ($_POST['requestType'] === 'save_my_availability') {
+        } else if ($_POST['requestType'] === 'save_my_profile') {
             $session_user_id = intval($_SESSION['user_id'] ?? 0);
             if ($session_user_id <= 0) {
                 echo json_encode(['status' => 'error', 'message' => 'Not authenticated.']);
                 exit;
             }
-            $availability_json = $_POST['availability'] ?? '{}';
-            $result = $db->save_my_availability($session_user_id, $availability_json);
+            $availability_json    = $_POST['availability']    ?? '{}';
+            $specializations_json = $_POST['specializations'] ?? '[]';
+            $result = $db->save_my_profile($session_user_id, $availability_json, $specializations_json);
             echo json_encode($result['success']
                 ? ['status' => 'success', 'message' => $result['message']]
                 : ['status' => 'error',   'message' => $result['message']]

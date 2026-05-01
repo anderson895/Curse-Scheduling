@@ -48,14 +48,17 @@ include "../src/components/dean/nav.php";
 
       <div>
         <h3 class="pc-section-title text-sm mb-2"><span class="material-icons text-base">workspace_premium</span> Specializations</h3>
-        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center mb-3">
-          <div class="relative w-full sm:w-96">
-            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
-            <input type="text" id="metaSubjectSearch" placeholder="Search subject code or name..."
-              class="pc-input pl-9 text-sm" autocomplete="off">
-          </div>
+        <div class="mb-3" style="position: relative; width: 100%; max-width: 28rem;">
+          <span class="material-icons"
+            style="position:absolute; left:.75rem; top:50%; transform:translateY(-50%);
+                   color:#9ca3af; font-size:1.15rem; pointer-events:none; line-height:1;">search</span>
+          <input type="text" id="metaSubjectSearch"
+            placeholder="Search subject code or name..." autocomplete="off"
+            style="width:100%; padding:.6rem .75rem .6rem 2.4rem;
+                   border:1px solid #e5e7eb; border-radius:.55rem;
+                   background:#fff; font-size:.9rem; color:#1f2937;">
           <div id="metaSubjectDropdown"
-            class="hidden bg-white border border-gray-300 rounded shadow-xl max-h-52 overflow-y-auto text-sm absolute z-[9999]"
+            class="hidden bg-white border border-gray-300 rounded shadow-xl max-h-52 overflow-y-auto text-sm"
             style="min-width:320px;"></div>
         </div>
         <div id="metaSpecChips" class="flex flex-wrap gap-2 min-h-[2rem]"></div>
