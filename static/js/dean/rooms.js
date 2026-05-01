@@ -69,11 +69,8 @@ $(document).ready(function () {
               <p class="text-lg font-semibold">No rooms assigned yet.</p>
               <p class="text-sm mt-1">Add room numbers when creating or editing a schedule.</p>
             </div>`);
-          $('#roomCount').text('0');
           return;
         }
-
-        $('#roomCount').text(roomNames.length);
 
         // Tabs
         let tabs = '';
@@ -254,6 +251,8 @@ $(document).ready(function () {
         const body = $('#manageRoomsBody');
         body.empty();
         const rooms = (res && res.data) || [];
+        const activeCount = rooms.filter(r => parseInt(r.is_active, 10) === 1).length;
+        $('#roomCount').text(activeCount);
         if (rooms.length === 0) {
           body.append('<tr><td colspan="5" class="text-center text-gray-400 py-6">No rooms yet. Click "Add Room" to create one.</td></tr>');
           return;

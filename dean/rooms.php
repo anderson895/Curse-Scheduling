@@ -32,7 +32,7 @@ include "../src/components/dean/nav.php";
       </div>
       <div>
         <div class="text-2xl font-extrabold text-red-900" id="roomCount">—</div>
-        <div class="text-xs text-gray-500 uppercase tracking-wide">Total Rooms in Use</div>
+        <div class="text-xs text-gray-500 uppercase tracking-wide">Total Active Rooms</div>
       </div>
       <div class="ml-auto pc-search-wrap w-full sm:w-72">
         <span class="material-icons">search</span>
