@@ -1046,6 +1046,29 @@ public function save_faculty_meta($user_id, $availability_json, $specializations
     return ['success' => false, 'message' => 'Failed to save faculty profile.'];
 }
 
+// Faculty self-service: update only the availability column.
+// Specializations are reserved for Dean/Program Chair to set.
+public function save_my_availability($user_id, $availability_json) {
+    $user_id = intval($user_id);
+    if ($user_id <= 0) return ['success' => false, 'message' => 'Invalid user.'];
+
+    if (!is_string($availability_json)) $availability_json = json_encode($availability_json ?: new stdClass());
+    if (json_decode($availability_json, true) === null && trim($availability_json) !== '{}' && trim($availability_json) !== '[]') {
+        return ['success' => false, 'message' => 'Invalid availability format.'];
+    }
+
+    $stmt = $this->conn->prepare(
+        "INSERT INTO faculty_meta (user_id, availability, specializations)
+         VALUES (?, ?, '[]')
+         ON DUPLICATE KEY UPDATE availability = VALUES(availability)"
+    );
+    if (!$stmt) return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
+    $stmt->bind_param("is", $user_id, $availability_json);
+    if ($stmt->execute()) { $stmt->close(); return ['success' => true, 'message' => 'Availability saved.']; }
+    $stmt->close();
+    return ['success' => false, 'message' => 'Failed to save availability.'];
+}
+
 public function get_all_faculty_with_meta() {
     $sql = "SELECT u.user_id, u.user_fname, u.user_lname, u.user_type,
                    fm.availability, fm.specializations

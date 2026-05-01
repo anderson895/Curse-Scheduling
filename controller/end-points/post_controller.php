@@ -240,6 +240,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 : ['status' => 'error',   'message' => $result['message']]
             );
 
+        } else if ($_POST['requestType'] === 'save_my_availability') {
+            $session_user_id = intval($_SESSION['user_id'] ?? 0);
+            if ($session_user_id <= 0) {
+                echo json_encode(['status' => 'error', 'message' => 'Not authenticated.']);
+                exit;
+            }
+            $availability_json = $_POST['availability'] ?? '{}';
+            $result = $db->save_my_availability($session_user_id, $availability_json);
+            echo json_encode($result['success']
+                ? ['status' => 'success', 'message' => $result['message']]
+                : ['status' => 'error',   'message' => $result['message']]
+            );
+
         } else if ($_POST['requestType'] === 'auto_generate_schedule') {
             $program         = $_POST['program']         ?? '';
             $year_level      = $_POST['year_level']      ?? '';
