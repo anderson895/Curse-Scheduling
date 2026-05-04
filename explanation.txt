@@ -1,0 +1,118 @@
+PAANO GUMAGANA ANG SCHEDULING ALGORITHM NAMIN
+==============================================
+
+Kung tatanungin mo ako kung anong algorithm ang gamit namin sa auto-scheduling,
+ang sagot ko: Greedy Algorithm. Pero hindi lang basta greedy — may konting
+twist kasi may two-pass strategy din kami para mas maging organized ang
+schedule ng mga subjects sa mga preferred days.
+
+Hayaan mo akong i-explain step-by-step kung paano ito gumagana.
+
+----------------------------------------------------------------------
+1. ANO BANG GINAGAWA NG SYSTEM?
+----------------------------------------------------------------------
+
+Pag may pinindot na "auto-generate schedule," ang trabaho ng system ay
+hanapan ng tamang day, time, at room ang bawat subject ng isang faculty.
+Pero hindi pwedeng basta-basta lang ilagay — kailangang sundin ang ilang
+rules:
+
+  - Hindi pwedeng mag-overlap sa lunch break (12:00 PM - 1:00 PM)
+  - Hindi pwedeng mag-conflict sa ibang klase ng faculty
+  - Hindi pwedeng mag-conflict sa ibang klase ng cohort (same program,
+    same year level, same semester)
+  - Kailangan may available room sa oras na 'yon
+  - Kailangan nasa loob ng availability window ng faculty
+
+----------------------------------------------------------------------
+2. BAKIT "GREEDY"?
+----------------------------------------------------------------------
+
+Greedy kasi ang strategy ay simple: "kunin agad ang unang slot na okay,
+wag nang isipin ang ibang options." Ibig sabihin, basta nakita niyang
+may free na 30-minute slot na walang conflict at may bakanteng room,
+doon na agad ilalagay ang session.
+
+Hindi siya nag-eexplore ng lahat ng possible combinations (hindi siya
+kagaya ng genetic algorithm o backtracking). Kaya mabilis siya, pero
+hindi laging "optimal" — okay na siya kung valid ang assignment.
+
+Sa code, makikita mo ito sa controller/class.php, sa method na
+try_assign_sessions() at try_assign_with_day_filter().
+
+----------------------------------------------------------------------
+3. ANG TWO-PASS STRATEGY
+----------------------------------------------------------------------
+
+Eto na ang medyo interesting na part. Imbes na purong greedy, ginawa
+naming two-pass para mas maganda ang resulta:
+
+  PASS 1 (STRICT):
+    Susubukan munang ilagay ang lahat ng sessions sa preferred pairing
+    days lang. Halimbawa, kung ang pairing ay "MWF" (Monday, Wednesday,
+    Friday), doon lang muna magsi-search. Ganito rin sa "TTH" (Tuesday,
+    Thursday) at "WS" (Wednesday, Saturday).
+
+  PASS 2 (FALLBACK):
+    Kung hindi kayang isiksik lahat ng sessions sa pairing days dahil
+    puno na, doon na lang gagamit ng buong linggo (Monday hanggang
+    Saturday) para hindi ma-stuck.
+
+----------------------------------------------------------------------
+4. PAANO HINAHATI ANG SUBJECT SA SESSIONS?
+----------------------------------------------------------------------
+
+May simpleng rule kami:
+
+  - Kung ang weekly hours ng subject ay 1.5 oras o pababa, isang session
+    lang.
+  - Kung higit sa 1.5 oras, hahatiin sa dalawang equal sessions
+    (rounded sa nearest 0.5).
+
+Example: 3-unit subject = 3 hours/week, hahatiin sa 1.5 + 1.5 hours.
+Tapos ang dalawang sessions na 'yon ay ilalagay sa magkaibang araw.
+
+Makikita mo ito sa method na split_into_sessions().
+
+----------------------------------------------------------------------
+5. PAANO PUMIPILI NG ROOM?
+----------------------------------------------------------------------
+
+Greedy din dito. Sa list of rooms, kinukuha lang ang UNANG room na
+walang booking sa oras na 'yon. Hindi nag-iisip kung saang room mas
+"angkop" — basta vacant, kuha agad.
+
+----------------------------------------------------------------------
+6. PAANO NAG-SWEEP NG TIMES?
+----------------------------------------------------------------------
+
+Within sa availability window ng faculty (halimbawa, 8:00 AM to 5:00 PM),
+mag-iincrement siya ng 30 minutes at a time. Sa bawat 30-minute step,
+chine-check niya:
+
+    - Ma-o-overlap ba sa lunch?
+    - May conflict ba sa faculty schedule?
+    - May conflict ba sa cohort schedule?
+    - May available room ba?
+
+Kapag lahat ay "okay," doon na agad ilalagay ang session at lilipat na
+sa next session.
+
+----------------------------------------------------------------------
+7. SUMMARY
+----------------------------------------------------------------------
+
+So sa simpleng salita:
+
+  Algorithm Type    : Greedy (First-Fit)
+  Enhancement       : Two-Pass Strategy (Strict pairing days, then full week)
+  Time Granularity  : 30-minute steps
+  Room Selection    : First-available (greedy)
+  Session Splitting : 2 sessions kapag higit 1.5 hours, otherwise 1
+
+Kaya pala mabilis siya — hindi siya nag-iisip ng masyadong mahaba.
+Pag may makitang valid slot, kuha na agad. Simple lang pero gumagana.
+
+Kung gusto mong mag-deep dive, tingnan mo ang controller/class.php
+mula linya 1466 hanggang 1608 — doon naka-set ang lahat ng scheduling
+logic.

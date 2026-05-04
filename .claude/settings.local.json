@@ -27,7 +27,8 @@
       "Bash(curl -s -X POST http://localhost/CourseScheduling_updated/cs_modified/controller/end-points/post_controller.php -d 'requestType=add_room&room_name=ME-LAB-1&room_type=laboratory&capacity=25')",
       "Bash(curl -s -X POST http://localhost/CourseScheduling_updated/cs_modified/controller/end-points/post_controller.php -d 'requestType=delete_room&room_id=99999')",
       "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root cursescheduling -e \"DELETE FROM rooms WHERE room_name='ME-LAB-1';\")",
-      "Bash(curl -s -X POST http://localhost/CourseScheduling_updated/cs_modified/controller/end-points/post_controller.php -d 'requestType=auto_generate_schedule&program=BSCoE&year_level=1&semester=1st&rooms=301,302,303&tier=major&curriculum_year=2018-2019')"
+      "Bash(curl -s -X POST http://localhost/CourseScheduling_updated/cs_modified/controller/end-points/post_controller.php -d 'requestType=auto_generate_schedule&program=BSCoE&year_level=1&semester=1st&rooms=301,302,303&tier=major&curriculum_year=2018-2019')",
+      "Bash(php *)"
     ]
   }
 }

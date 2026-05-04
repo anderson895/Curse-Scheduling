@@ -1288,42 +1288,61 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
     $current_cohort_key = strtolower($program) . '|' . $year_level . '|' . $semester;
 
     // ---------- Schedule subjects ----------
-    // longest first → harder to fit later
+    // Two-pass strategy:
+    //   PASS 1 (faculty-first): each faculty grabs every cohort subject that
+    //     matches their declared specialization, so a specialist gets all
+    //     their subjects assigned before any load-balancing kicks in.
+    //   PASS 2 (subject-first fallback): leftover subjects (no specialist,
+    //     or specialist had no free slot) go to whoever fits, least-loaded.
     usort($subjects, function($a, $b) {
         return ($b['lec_hours'] + $b['lab_hours']) <=> ($a['lec_hours'] + $a['lab_hours']);
     });
 
-    $faculty_load = [];   // user_id => total hours assigned in this run
+    $faculty_load = [];        // user_id => total hours assigned in this run
     $by_faculty_schedule = []; // user_id => ['Monday'=>[entries...], ...]
     $unassigned = [];
+    $assigned_codes = [];
 
-    foreach ($subjects as $subject) {
-        $hours = floatval($subject['lec_hours']) + floatval($subject['lab_hours']);
-        if ($hours <= 0) continue;
-        $sessions = $this->split_into_sessions($hours);
-        $pairing  = isset($subject['pairing']) ? $subject['pairing'] : 'NONE';
-
-        // candidate faculty whose specialization matches
-        $code = $subject['subject_code'];
-        $matched = array_values(array_filter($faculty_list, function($f) use ($code) {
-            return in_array($code, $f['specializations'], true);
-        }));
-        if (empty($matched)) {
-            // fallback: any faculty
-            $matched = $faculty_list;
+    $commit = function($uid, $code, $hours, $attempt)
+        use (&$faculty_load, &$faculty_busy, &$cohort_busy, &$room_busy,
+             &$by_faculty_schedule, $current_cohort_key) {
+        $faculty_load[$uid] = ($faculty_load[$uid] ?? 0) + $hours;
+        foreach ($attempt as $a) {
+            $faculty_busy[$uid][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
+            $cohort_busy[$current_cohort_key][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
+            $room_busy[$a['room']][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
+            $by_faculty_schedule[$uid][$a['day']][] = [
+                'subject' => $code,
+                'hours'   => floatval($a['session_hours']),
+                'time'    => ['from' => $a['from'], 'to' => $a['to']],
+                'room'    => $a['room']
+            ];
         }
-        // sort by least loaded so far
-        usort($matched, function($a, $b) use ($faculty_load) {
-            return ($faculty_load[$a['user_id']] ?? 0) <=> ($faculty_load[$b['user_id']] ?? 0);
-        });
+    };
 
-        $assigned_for_subject = null;
-        $chosen_faculty = null;
+    // PASS 1: faculty-first — least-loaded specialists go first, each one
+    // sweeps every subject in this cohort that matches their specialization.
+    $faculty_pool = array_values(array_filter($faculty_list, function($f) {
+        return !empty($f['availability']) && !empty($f['specializations']);
+    }));
+    usort($faculty_pool, function($a, $b) use ($faculty_load) {
+        return ($faculty_load[$a['user_id']] ?? 0) <=> ($faculty_load[$b['user_id']] ?? 0);
+    });
 
-        foreach ($matched as $faculty) {
-            $uid = intval($faculty['user_id']);
-            $availability = $faculty['availability'];
-            if (empty($availability)) continue; // need declared availability
+    foreach ($faculty_pool as $faculty) {
+        $uid = intval($faculty['user_id']);
+        $availability = $faculty['availability'];
+        $specs = $faculty['specializations'];
+
+        foreach ($subjects as $subject) {
+            $code = $subject['subject_code'];
+            if (in_array($code, $assigned_codes, true)) continue;
+            if (!in_array($code, $specs, true)) continue;
+
+            $hours = floatval($subject['lec_hours']) + floatval($subject['lab_hours']);
+            if ($hours <= 0) continue;
+            $sessions = $this->split_into_sessions($hours);
+            $pairing  = isset($subject['pairing']) ? $subject['pairing'] : 'NONE';
 
             $attempt = $this->try_assign_sessions(
                 $availability, $sessions,
@@ -1332,35 +1351,58 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
                 $room_busy, $rooms, $pairing
             );
             if ($attempt !== null) {
-                $assigned_for_subject = $attempt;
-                $chosen_faculty = $faculty;
+                $commit($uid, $code, $hours, $attempt);
+                $assigned_codes[] = $code;
+            }
+        }
+    }
+
+    // PASS 2: subject-first fallback for whatever PASS 1 missed.
+    foreach ($subjects as $subject) {
+        $code = $subject['subject_code'];
+        if (in_array($code, $assigned_codes, true)) continue;
+
+        $hours = floatval($subject['lec_hours']) + floatval($subject['lab_hours']);
+        if ($hours <= 0) continue;
+        $sessions = $this->split_into_sessions($hours);
+        $pairing  = isset($subject['pairing']) ? $subject['pairing'] : 'NONE';
+
+        $matched = array_values(array_filter($faculty_list, function($f) use ($code) {
+            return in_array($code, $f['specializations'], true);
+        }));
+        if (empty($matched)) {
+            $matched = $faculty_list;
+        }
+        usort($matched, function($a, $b) use ($faculty_load) {
+            return ($faculty_load[$a['user_id']] ?? 0) <=> ($faculty_load[$b['user_id']] ?? 0);
+        });
+
+        $assigned = false;
+        foreach ($matched as $faculty) {
+            $uid = intval($faculty['user_id']);
+            $availability = $faculty['availability'];
+            if (empty($availability)) continue;
+
+            $attempt = $this->try_assign_sessions(
+                $availability, $sessions,
+                $faculty_busy[$uid] ?? [],
+                $cohort_busy[$current_cohort_key] ?? [],
+                $room_busy, $rooms, $pairing
+            );
+            if ($attempt !== null) {
+                $commit($uid, $code, $hours, $attempt);
+                $assigned_codes[] = $code;
+                $assigned = true;
                 break;
             }
         }
 
-        if ($assigned_for_subject === null) {
+        if (!$assigned) {
             $unassigned[] = [
                 'subject_code' => $code,
                 'subject_name' => $subject['subject_name'],
                 'hours' => $hours,
                 'reason' => 'No matching faculty has a free slot in their availability for this cohort.'
-            ];
-            continue;
-        }
-
-        // Commit assignments to busy maps and to faculty schedule bucket
-        $uid = intval($chosen_faculty['user_id']);
-        $faculty_load[$uid] = ($faculty_load[$uid] ?? 0) + $hours;
-        foreach ($assigned_for_subject as $a) {
-            $faculty_busy[$uid][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
-            $cohort_busy[$current_cohort_key][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
-            $room_busy[$a['room']][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
-
-            $by_faculty_schedule[$uid][$a['day']][] = [
-                'subject' => $code,
-                'hours'   => floatval($a['session_hours']),
-                'time'    => ['from' => $a['from'], 'to' => $a['to']],
-                'room'    => $a['room']
             ];
         }
     }
