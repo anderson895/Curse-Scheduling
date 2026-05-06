@@ -501,17 +501,13 @@ $(document).ready(function () {
   })();
 
   // ==============================
-  // CURRICULUM YEAR LOADER (per program)
+  // CURRICULUM YEAR LOADER (per program; falls back to all years)
   // ==============================
   function loadCurriculumYears(program) {
-    if (!program) {
-      $('#autoCurriculumYear').html('<option value="">Any (all curricula)</option>');
-      return;
-    }
     $.ajax({
       url: '../controller/end-points/get_controller.php',
       method: 'GET',
-      data: { requestType: 'get_curriculum_years', program: program },
+      data: { requestType: 'get_curriculum_years', program: program || '' },
       dataType: 'json',
       success: function (res) {
         let html = '<option value="">Any (all curricula)</option>';
@@ -532,6 +528,7 @@ $(document).ready(function () {
   $('#openAutoGenModal').click(() => {
     $('#autoGenResult').addClass('hidden').empty();
     $('#autoGenModal').removeClass('hidden');
+    loadCurriculumYears($('#autoProgram').val());
   });
 
   $('#closeAutoGenModal').click(() => {
