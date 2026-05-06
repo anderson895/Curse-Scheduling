@@ -1109,9 +1109,14 @@ public function get_subjects_by_program_year($program, $year_level, $semester, $
         $types   .= "s";
     }
     if ($curriculum_year !== '') {
-        $sql .= " AND curriculum_year = ?";
-        $params[] = $curriculum_year;
-        $types   .= "s";
+        // Match all visual variants ("2013-2014" / "2013–2014" / "2013 - 2014" / etc.)
+        $variants = $this->curriculum_year_variants($curriculum_year);
+        $placeholders = implode(',', array_fill(0, count($variants), '?'));
+        $sql   .= " AND curriculum_year IN ($placeholders)";
+        foreach ($variants as $v) {
+            $params[] = $v;
+            $types   .= "s";
+        }
     }
 
     $stmt = $this->conn->prepare($sql);
@@ -1122,26 +1127,70 @@ public function get_subjects_by_program_year($program, $year_level, $semester, $
     return $rows;
 }
 
+// Canonicalize a curriculum_year string: strip spaces, fold en/em/minus dashes to hyphen.
+private function normalize_curriculum_year($y) {
+    $y = str_replace(
+        ["\xE2\x80\x93", "\xE2\x80\x94", "\xE2\x88\x92", ' '],
+        ['-', '-', '-', ''],
+        (string)$y
+    );
+    return trim($y);
+}
+
+// All visual variants of a curriculum_year value that might be stored in the DB.
+private function curriculum_year_variants($y) {
+    $base = $this->normalize_curriculum_year($y); // e.g. "2013-2014"
+    if ($base === '' || strpos($base, '-') === false) {
+        return [$base];
+    }
+    $en  = "\xE2\x80\x93"; // –
+    $em  = "\xE2\x80\x94"; // —
+    $variants = [
+        $base,
+        str_replace('-', $en, $base),
+        str_replace('-', $em, $base),
+        str_replace('-', ' - ', $base),
+        str_replace('-', " $en ", $base),
+        str_replace('-', " $em ", $base),
+    ];
+    return array_values(array_unique($variants));
+}
+
 // Distinct curriculum years available for a given program (for the UI selector)
 public function get_curriculum_years($program = '') {
     if ($program !== '') {
         $stmt = $this->conn->prepare(
             "SELECT DISTINCT curriculum_year FROM curriculum
-             WHERE LOWER(program) = LOWER(?) AND curriculum_year <> ''
-             ORDER BY curriculum_year DESC"
+             WHERE LOWER(program) = LOWER(?) AND curriculum_year <> ''"
         );
         $stmt->bind_param("s", $program);
     } else {
         $stmt = $this->conn->prepare(
             "SELECT DISTINCT curriculum_year FROM curriculum
-             WHERE curriculum_year <> ''
-             ORDER BY curriculum_year DESC"
+             WHERE curriculum_year <> ''"
         );
     }
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
-    return array_map(function($r){ return $r['curriculum_year']; }, $rows);
+
+    // Normalize so visual duplicates collapse:
+    //   "2013-2014", "2013–2014" (en-dash), "2013 - 2014" -> "2013-2014"
+    $seen = [];
+    foreach ($rows as $r) {
+        $y = $r['curriculum_year'];
+        // Replace en-dash, em-dash, minus-sign with regular hyphen, then strip spaces
+        $y = str_replace(
+            ["\xE2\x80\x93", "\xE2\x80\x94", "\xE2\x88\x92", ' '],
+            ['-', '-', '-', ''],
+            $y
+        );
+        $y = trim($y);
+        if ($y !== '') $seen[$y] = true;
+    }
+    $years = array_keys($seen);
+    rsort($years); // newest first (string sort works for "YYYY-YYYY")
+    return $years;
 }
 
 // =============================================================
