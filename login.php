@@ -17,7 +17,7 @@ include "src/components/header.php";
     <!-- Header -->
     <div class="pc-auth-header">
       <img src="static/logo.jpg" alt="Logo">
-      <h1>Course scheduling</h1>
+      <h1>Testing</h1>
       <p>Sign in to continue</p>
     </div>
 
