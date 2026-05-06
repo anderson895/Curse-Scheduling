@@ -40,12 +40,32 @@ include "../src/components/programchair/nav.php";
         <button class="report-tab pc-btn pc-btn-secondary" data-report="users">
           <span class="material-icons">people</span> Users
         </button>
+        <button class="report-tab pc-btn pc-btn-secondary" data-report="schedule_plot">
+          <span class="material-icons">grid_view</span> Schedule Plot
+        </button>
+        <button class="report-tab pc-btn pc-btn-secondary" data-report="faculty_plot">
+          <span class="material-icons">co_present</span> Faculty Plot
+        </button>
+        <button class="report-tab pc-btn pc-btn-secondary" data-report="room_plot">
+          <span class="material-icons">meeting_room</span> Room Plot
+        </button>
       </div>
 
-      <!-- Print Button -->
-      <button id="printReport" class="pc-btn pc-btn-primary">
-        <span class="material-icons">print</span> Print
-      </button>
+      <!-- Year Level Filter + Print Button -->
+      <div class="flex items-center gap-2 ml-auto">
+        <label for="yearFilter" class="text-xs font-semibold uppercase tracking-wide text-gray-600 hidden sm:block">Year:</label>
+        <select id="yearFilter" class="pc-select" style="min-width:9rem;">
+          <option value="">All Years</option>
+          <option value="1">1st Year</option>
+          <option value="2">2nd Year</option>
+          <option value="3">3rd Year</option>
+          <option value="4">4th Year</option>
+          <option value="5">5th Year</option>
+        </select>
+        <button id="printReport" class="pc-btn pc-btn-primary">
+          <span class="material-icons">print</span> Print
+        </button>
+      </div>
     </div>
   </div>
 

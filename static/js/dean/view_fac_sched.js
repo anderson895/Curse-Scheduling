@@ -106,7 +106,8 @@ $(document).ready(function () {
             entry_index: idx,
             time_from_24: entry.time.from,
             time_to_24:   entry.time.to,
-            day: day
+            day: day,
+            cohorts: Array.isArray(entry.cohorts) ? entry.cohorts : []
           };
         });
       });
@@ -133,13 +134,18 @@ $(document).ready(function () {
           if (scheduleMap[day][slotMin]) {
             const entry = scheduleMap[day][slotMin];
             const cls = programClass(currentProgram);
+            const isMerged = entry.cohorts && entry.cohorts.length > 1;
+            const mergedTag = isMerged
+              ? `<div class="pc-slot-merged" style="font-size:10px;font-weight:700;color:#065f46;background:#d1fae5;border-radius:4px;padding:1px 4px;display:inline-block;margin-top:2px;">Merged: ${entry.cohorts.map(escapeHtml).join(' / ')}</div>`
+              : '';
             row += `<td class="has-slot" rowspan="${entry.rowspan}">
-              <div class="pc-slot ${cls}" title="${escapeAttr(entry.subject_code)} — ${escapeAttr(entry.subject_name)}">
+              <div class="pc-slot ${cls}" title="${escapeAttr(entry.subject_code)} — ${escapeAttr(entry.subject_name)}${isMerged ? ' (Merged: ' + entry.cohorts.join('/') + ')' : ''}">
                 <div class="pc-slot-subject">${escapeHtml(entry.subject_code)}</div>
                 ${entry.subject_name && entry.subject_name !== entry.subject_code
                   ? `<div class="pc-slot-faculty" style="color:#374151; font-weight:600;">${escapeHtml(entry.subject_name)}</div>` : ''}
                 <div class="pc-slot-faculty">${escapeHtml(entry.faculty)}</div>
                 <div class="pc-slot-time">${formatRange24(entry.time_from_24, entry.time_to_24)}${entry.room ? ` &middot; Room ${escapeHtml(entry.room)}` : ''}</div>
+                ${mergedTag}
                 <button class="editEntryTime pc-slot-edit"
                   data-sch-id="${schId}"
                   data-day="${escapeAttr(entry.day)}"

@@ -261,8 +261,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rooms_raw       = $_POST['rooms']           ?? '';
             $tier            = $_POST['tier']            ?? 'major';
             $curriculum_year = $_POST['curriculum_year'] ?? '';
+            $merge_across    = !empty($_POST['merge_across_programs']) && $_POST['merge_across_programs'] !== '0';
             $rooms = array_values(array_filter(array_map('trim', explode(',', $rooms_raw)), function($v) { return $v !== ''; }));
-            $result = $db->auto_generate_schedule($program, $year_level, $semester, $rooms, $tier, $curriculum_year);
+            $result = $db->auto_generate_schedule($program, $year_level, $semester, $rooms, $tier, $curriculum_year, $merge_across);
             echo json_encode($result);
 
         // ---------- ROOMS ----------

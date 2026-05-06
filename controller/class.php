@@ -1231,7 +1231,7 @@ public function set_curriculum_meta($curriculum_id, $course_tier, $pairing) {
 //   Inputs: program, year_level, semester, list of available rooms
 //   Output: ['saved' => [...], 'unassigned' => [...], 'message' => ...]
 // =============================================================
-public function auto_generate_schedule($program, $year_level, $semester, $rooms = [], $tier = 'major', $curriculum_year = '') {
+public function auto_generate_schedule($program, $year_level, $semester, $rooms = [], $tier = 'major', $curriculum_year = '', $merge_across_programs = false) {
     $year_level = (string) $year_level;
 
     $subjects = $this->get_subjects_by_program_year($program, $year_level, $semester, $tier, $curriculum_year);
@@ -1252,6 +1252,65 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
             $rooms = ['301','302','303','304','305'];
         }
     }
+
+    // Cohort key helper (lowercased program for case-insensitive matching).
+    $make_cohort_key = function($prog, $yr, $sem) {
+        return strtolower($prog) . '|' . $yr . '|' . $sem;
+    };
+    $current_cohort_key = $make_cohort_key($program, $year_level, $semester);
+
+    // ---------- Cross-program merge map ----------
+    // For each subject code, find sibling programs that offer the SAME subject_code
+    // at the same year_level / semester (and curriculum_year, if specified).
+    // sibling_cohorts_by_code[code] = ['cohort_keys'=>[...], 'cohort_labels'=>['BSEE','BSECE',...]]
+    $sibling_cohorts_by_code = [];
+    $cohort_meta = [];
+    $cohort_meta[$current_cohort_key] = ['program' => $program, 'year_level' => $year_level, 'semester' => $semester];
+
+    if ($merge_across_programs) {
+        $codes = array_values(array_unique(array_map(function($s){ return $s['subject_code']; }, $subjects)));
+        foreach ($codes as $code) {
+            $sql = "SELECT DISTINCT program FROM curriculum
+                    WHERE subject_code = ? AND year_level = ? AND semester = ?
+                      AND LOWER(program) <> LOWER(?)";
+            $params = [$code, $year_level, $semester, $program];
+            $types  = "ssss";
+            if ($curriculum_year !== '') {
+                $sql .= " AND curriculum_year = ?";
+                $params[] = $curriculum_year;
+                $types   .= "s";
+            }
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) continue;
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            if (empty($rows)) continue; // no sibling — no merge for this code
+
+            $cohort_keys   = [$current_cohort_key];
+            $cohort_labels = [$program];
+            foreach ($rows as $r) {
+                $other = $r['program'];
+                $key = $make_cohort_key($other, $year_level, $semester);
+                $cohort_keys[]   = $key;
+                $cohort_labels[] = $other;
+                $cohort_meta[$key] = ['program' => $other, 'year_level' => $year_level, 'semester' => $semester];
+            }
+            $sibling_cohorts_by_code[$code] = [
+                'cohort_keys'   => $cohort_keys,
+                'cohort_labels' => $cohort_labels,
+            ];
+        }
+    }
+
+    // Returns cohort_keys for a subject (just current cohort if not merged).
+    $cohort_keys_for = function($code) use (&$sibling_cohorts_by_code, $current_cohort_key) {
+        return $sibling_cohorts_by_code[$code]['cohort_keys'] ?? [$current_cohort_key];
+    };
+    $cohort_labels_for = function($code) use (&$sibling_cohorts_by_code, $program) {
+        return $sibling_cohorts_by_code[$code]['cohort_labels'] ?? [$program];
+    };
 
     // ---------- Build busy maps from existing schedules ----------
     // faculty_busy[user_id][day] = [{from,to}]; cohort_busy[program|yr|sem][day]; room_busy[room][day]
@@ -1285,7 +1344,24 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
         }
     }
 
-    $current_cohort_key = strtolower($program) . '|' . $year_level . '|' . $semester;
+    // Returns the union of cohort_busy across every cohort the given subject is shared with.
+    // For a non-merged subject this is just the current cohort's busy map.
+    $cohort_busy_for_code = function($code) use (&$cohort_busy, $cohort_keys_for) {
+        $keys = $cohort_keys_for($code);
+        if (count($keys) === 1) {
+            return $cohort_busy[$keys[0]] ?? [];
+        }
+        $merged = [];
+        foreach ($keys as $k) {
+            if (!isset($cohort_busy[$k])) continue;
+            foreach ($cohort_busy[$k] as $day => $ranges) {
+                foreach ($ranges as $r) {
+                    $merged[$day][] = $r;
+                }
+            }
+        }
+        return $merged;
+    };
 
     // ---------- Schedule subjects ----------
     // Two-pass strategy:
@@ -1298,25 +1374,49 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
         return ($b['lec_hours'] + $b['lab_hours']) <=> ($a['lec_hours'] + $a['lab_hours']);
     });
 
-    $faculty_load = [];        // user_id => total hours assigned in this run
-    $by_faculty_schedule = []; // user_id => ['Monday'=>[entries...], ...]
+    $faculty_load = [];                  // user_id => total hours assigned in this run
+    $by_cohort_faculty_schedule = [];    // [cohort_key][user_id]['Monday' => [entries...]]
+    $merged_summary = [];                // [['subject_code'=>..,'cohorts'=>['BSEE','BSECE',...]]]
     $unassigned = [];
     $assigned_codes = [];
 
     $commit = function($uid, $code, $hours, $attempt)
         use (&$faculty_load, &$faculty_busy, &$cohort_busy, &$room_busy,
-             &$by_faculty_schedule, $current_cohort_key) {
+             &$by_cohort_faculty_schedule, &$merged_summary,
+             $cohort_keys_for, $cohort_labels_for) {
         $faculty_load[$uid] = ($faculty_load[$uid] ?? 0) + $hours;
+        $cohort_keys   = $cohort_keys_for($code);
+        $cohort_labels = $cohort_labels_for($code);
+        $is_merged     = count($cohort_keys) > 1;
+
+        if ($is_merged) {
+            $merged_summary[] = [
+                'subject_code' => $code,
+                'cohorts'      => array_values($cohort_labels),
+            ];
+        }
+
         foreach ($attempt as $a) {
             $faculty_busy[$uid][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
-            $cohort_busy[$current_cohort_key][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
+            foreach ($cohort_keys as $ck) {
+                $cohort_busy[$ck][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
+            }
             $room_busy[$a['room']][$a['day']][] = ['from' => $a['from'], 'to' => $a['to']];
-            $by_faculty_schedule[$uid][$a['day']][] = [
+
+            $entry = [
                 'subject' => $code,
                 'hours'   => floatval($a['session_hours']),
                 'time'    => ['from' => $a['from'], 'to' => $a['to']],
                 'room'    => $a['room']
             ];
+            if ($is_merged) {
+                $entry['cohorts'] = array_values($cohort_labels);
+            }
+            // Persist a copy under EVERY cohort that shares this class so each
+            // program's view (and future auto-gen runs) sees the busy slot.
+            foreach ($cohort_keys as $ck) {
+                $by_cohort_faculty_schedule[$ck][$uid][$a['day']][] = $entry;
+            }
         }
     };
 
@@ -1347,7 +1447,7 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
             $attempt = $this->try_assign_sessions(
                 $availability, $sessions,
                 $faculty_busy[$uid] ?? [],
-                $cohort_busy[$current_cohort_key] ?? [],
+                $cohort_busy_for_code($code),
                 $room_busy, $rooms, $pairing
             );
             if ($attempt !== null) {
@@ -1386,7 +1486,7 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
             $attempt = $this->try_assign_sessions(
                 $availability, $sessions,
                 $faculty_busy[$uid] ?? [],
-                $cohort_busy[$current_cohort_key] ?? [],
+                $cohort_busy_for_code($code),
                 $room_busy, $rooms, $pairing
             );
             if ($attempt !== null) {
@@ -1408,58 +1508,72 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
     }
 
     // ---------- Persist generated schedules ----------
+    // We persist per (cohort, faculty). When a class is shared across programs
+    // (cross-program merge), each cohort gets its own row containing the same
+    // entry — so each program's view shows the slot and future auto-runs see it.
     $saved = [];
-    foreach ($by_faculty_schedule as $uid => $sched_by_day) {
-        $payload = [
-            'program'    => $program,
-            'year_level' => $year_level,
-            'semester'   => $semester,
-            'schedule'   => $sched_by_day
-        ];
-        $payload_json = json_encode($payload);
+    foreach ($by_cohort_faculty_schedule as $cohort_key => $uid_schedules) {
+        $meta = $cohort_meta[$cohort_key] ?? null;
+        if (!$meta) continue;
+        $ck_program    = $meta['program'];
+        $ck_year_level = $meta['year_level'];
+        $ck_semester   = $meta['semester'];
 
-        // If this user already has a row for the same semester + same cohort, merge into it.
-        $existing_id = $this->find_schedule_id_for_cohort($uid, $program, $year_level, $semester);
-        if ($existing_id) {
-            // Merge with existing schedule
-            $get = $this->conn->prepare("SELECT sch_schedule FROM schedule WHERE sch_id = ?");
-            $get->bind_param("i", $existing_id);
-            $get->execute();
-            $row = $get->get_result()->fetch_assoc();
-            $get->close();
-            $existing_data = json_decode($row['sch_schedule'] ?? '{}', true) ?: [];
-            $existing_sched = $existing_data['schedule'] ?? [];
-            foreach ($sched_by_day as $day => $entries) {
-                foreach ($entries as $e) {
-                    $existing_sched[$day][] = $e;
+        foreach ($uid_schedules as $uid => $sched_by_day) {
+            $payload = [
+                'program'    => $ck_program,
+                'year_level' => $ck_year_level,
+                'semester'   => $ck_semester,
+                'schedule'   => $sched_by_day
+            ];
+            $payload_json = json_encode($payload);
+
+            // If this user already has a row for the same semester + same cohort, merge into it.
+            $existing_id = $this->find_schedule_id_for_cohort($uid, $ck_program, $ck_year_level, $ck_semester);
+            if ($existing_id) {
+                $get = $this->conn->prepare("SELECT sch_schedule FROM schedule WHERE sch_id = ?");
+                $get->bind_param("i", $existing_id);
+                $get->execute();
+                $row = $get->get_result()->fetch_assoc();
+                $get->close();
+                $existing_data = json_decode($row['sch_schedule'] ?? '{}', true) ?: [];
+                $existing_sched = $existing_data['schedule'] ?? [];
+                foreach ($sched_by_day as $day => $entries) {
+                    foreach ($entries as $e) {
+                        $existing_sched[$day][] = $e;
+                    }
                 }
+                $existing_data['program']    = $ck_program;
+                $existing_data['year_level'] = $ck_year_level;
+                $existing_data['semester']   = $ck_semester;
+                $existing_data['schedule']   = $existing_sched;
+                $merged = json_encode($existing_data);
+                $upd = $this->conn->prepare("UPDATE schedule SET sch_schedule = ? WHERE sch_id = ?");
+                $upd->bind_param("si", $merged, $existing_id);
+                $upd->execute();
+                $upd->close();
+                $saved[] = ['sch_id' => $existing_id, 'user_id' => $uid, 'program' => $ck_program, 'merged' => true];
+            } else {
+                $ins = $this->conn->prepare("INSERT INTO schedule (sch_user_id, sch_schedule) VALUES (?, ?)");
+                $ins->bind_param("is", $uid, $payload_json);
+                $ins->execute();
+                $new_id = $ins->insert_id;
+                $ins->close();
+                $saved[] = ['sch_id' => $new_id, 'user_id' => $uid, 'program' => $ck_program, 'merged' => false];
             }
-            $existing_data['program']    = $program;
-            $existing_data['year_level'] = $year_level;
-            $existing_data['semester']   = $semester;
-            $existing_data['schedule']   = $existing_sched;
-            $merged = json_encode($existing_data);
-            $upd = $this->conn->prepare("UPDATE schedule SET sch_schedule = ? WHERE sch_id = ?");
-            $upd->bind_param("si", $merged, $existing_id);
-            $upd->execute();
-            $upd->close();
-            $saved[] = ['sch_id' => $existing_id, 'user_id' => $uid, 'merged' => true];
-        } else {
-            $ins = $this->conn->prepare("INSERT INTO schedule (sch_user_id, sch_schedule) VALUES (?, ?)");
-            $ins->bind_param("is", $uid, $payload_json);
-            $ins->execute();
-            $new_id = $ins->insert_id;
-            $ins->close();
-            $saved[] = ['sch_id' => $new_id, 'user_id' => $uid, 'merged' => false];
         }
     }
 
+    $message = 'Auto-generated ' . count($saved) . ' faculty schedule(s).';
+    if (!empty($unassigned)) $message .= ' ' . count($unassigned) . ' subject(s) could not be auto-assigned.';
+    if (!empty($merged_summary)) $message .= ' ' . count($merged_summary) . ' subject(s) merged across programs.';
+
     return [
         'success'    => true,
-        'message'    => 'Auto-generated ' . count($saved) . ' faculty schedule(s).'
-                      . (empty($unassigned) ? '' : ' ' . count($unassigned) . ' subject(s) could not be auto-assigned.'),
+        'message'    => $message,
         'saved'      => $saved,
-        'unassigned' => $unassigned
+        'unassigned' => $unassigned,
+        'merged'     => $merged_summary
     ];
 }
 

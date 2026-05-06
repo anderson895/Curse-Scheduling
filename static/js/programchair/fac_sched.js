@@ -287,6 +287,7 @@ $(document).ready(function () {
         $('#scheduleModal').removeClass('hidden');
         $('select[name="sch_user_id"]').val(sch.sch_user_id);
         $('#program').val(sch.sch_schedule.program);
+        $('#year_level').val(sch.sch_schedule.year_level || '');
         $('#semester').val(sch.sch_schedule.semester);
 
         scheduleEntries = {};
@@ -363,9 +364,10 @@ $(document).ready(function () {
       sch_id:       editId,
       sch_user_id:  $('select[name="sch_user_id"]').val(),
       sch_schedule: JSON.stringify({
-        program:  $('#program').val(),
-        semester: $('#semester').val(),
-        schedule: scheduleForDB
+        program:    $('#program').val(),
+        year_level: $('#year_level').val(),
+        semester:   $('#semester').val(),
+        schedule:   scheduleForDB
       })
     };
 
@@ -489,12 +491,14 @@ $(document).ready(function () {
     const year_level = $('#autoYearLevel').val();
     const semester   = $('#autoSemester').val();
     const rooms      = $('#autoRooms').val();
+    const merge_across_programs = $('#autoMergePrograms').is(':checked') ? 1 : 0;
 
     if (!program || !year_level || !semester) {
       return alert('Please choose program, year level, and semester.');
     }
 
-    if (!confirm('Auto-generate schedules for ' + program + ' Year ' + year_level + ' (' + semester + ')?')) return;
+    const mergeNote = merge_across_programs ? ' (with cross-program merging)' : '';
+    if (!confirm('Auto-generate schedules for ' + program + ' Year ' + year_level + ' (' + semester + ')' + mergeNote + '?')) return;
 
     const $btn = $(this).find('button[type=submit]').prop('disabled', true).text('Generating...');
 
@@ -503,7 +507,7 @@ $(document).ready(function () {
       method: 'POST',
       data: {
         requestType: 'auto_generate_schedule',
-        program, year_level, semester, rooms
+        program, year_level, semester, rooms, merge_across_programs
       },
       dataType: 'json',
       success: function (res) {
@@ -525,6 +529,14 @@ $(document).ready(function () {
                    <ul class="list-disc pl-5 text-xs text-gray-700">`;
           res.unassigned.forEach(u => {
             html += `<li><strong>${u.subject_code}</strong> — ${u.subject_name} (${u.hours}h): ${u.reason}</li>`;
+          });
+          html += '</ul>';
+        }
+        if (res.merged && res.merged.length) {
+          html += `<div class="text-xs font-semibold text-emerald-700 mt-2">Merged across programs:</div>
+                   <ul class="list-disc pl-5 text-xs text-gray-700">`;
+          res.merged.forEach(m => {
+            html += `<li><strong>${m.subject_code}</strong> shared by: ${m.cohorts.join(', ')}</li>`;
           });
           html += '</ul>';
         }

@@ -96,7 +96,8 @@ function renderSchedule(data) {
           subject_type: entry.subject_details ? entry.subject_details.subject_type : '',
           faculty,
           room: entry.room || '',
-          rowspan: slots
+          rowspan: slots,
+          cohorts: Array.isArray(entry.cohorts) ? entry.cohorts : []
         };
       });
     });
@@ -123,12 +124,17 @@ function renderSchedule(data) {
         if (scheduleMap[day][slotMin]) {
           // First cell of a class
           const entry = scheduleMap[day][slotMin];
+          const isMerged = entry.cohorts && entry.cohorts.length > 1;
+          const mergedTag = isMerged
+            ? `<div class="text-[9px] font-bold text-emerald-800 bg-emerald-100 rounded px-1 mt-0.5">Merged: ${entry.cohorts.join(' / ')}</div>`
+            : '';
           row += `<td class="border h-10 sched-cell text-center bg-blue-300 text-xs font-semibold"
                      rowspan="${entry.rowspan}">
                     <div>${entry.subject_code}</div>
                     <div>${entry.subject_name}</div>
                     <div class="text-[10px]">${entry.faculty}</div>
                     ${entry.room ? `<div class="text-[10px] font-semibold text-blue-700">Room: ${entry.room}</div>` : ''}
+                    ${mergedTag}
                   </td>`;
         } else {
           // Check if inside a merged rowspan

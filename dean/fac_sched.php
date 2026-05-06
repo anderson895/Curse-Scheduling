@@ -73,7 +73,7 @@ include "../src/components/dean/nav.php";
 
       <form id="scheduleForm" class="space-y-4 p-6">
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <select id="sch_user_id" name="sch_user_id" class="pc-select" required>
             <option value="">Select Instructor</option>
           </select>
@@ -86,6 +86,15 @@ include "../src/components/dean/nav.php";
             <option value="BSECE">BS Electronics Engineering (BSECE)</option>
             <option value="BSIE">BS Industrial Engineering (BSIE)</option>
             <option value="BSME">BS Mechanical Engineering (BSME)</option>
+          </select>
+
+          <select id="year_level" name="year_level" class="pc-select" required>
+            <option value="" disabled selected>Select Year Level</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+            <option value="5">5th Year</option>
           </select>
 
           <select id="semester" name="semester" class="pc-select" required>
@@ -239,6 +248,16 @@ include "../src/components/dean/nav.php";
                 </label>
               </div>
               <p class="text-[11px] text-gray-500 mt-1">Plotting order per revision: Gen Ed → General Engineering → Major. Run them in that order; later runs avoid earlier slots automatically.</p>
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="pc-merge-toggle flex items-start gap-2 p-3 rounded-lg border border-emerald-200 bg-emerald-50 cursor-pointer">
+                <input type="checkbox" id="autoMergePrograms" name="merge_across_programs" value="1" class="mt-1">
+                <span class="text-sm">
+                  <strong class="text-emerald-800">Merge identical courses across programs</strong><br>
+                  <span class="text-[11px] text-gray-600">If the same subject code exists in other programs at the same year &amp; semester, plot it once and share the slot (e.g. <em>GEN 0103L Lab — EE/ECE</em>). All shared cohorts are checked for conflicts.</span>
+                </span>
+              </label>
             </div>
 
             <div class="sm:col-span-2">
