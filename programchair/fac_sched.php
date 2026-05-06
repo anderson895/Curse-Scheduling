@@ -189,8 +189,9 @@ include "../src/components/programchair/nav.php";
 
     <div class="p-6">
       <p class="text-sm text-gray-500 mb-4">
-        The system will plot a conflict-free schedule using each faculty's availability,
-        specializations, and existing schedules across year levels.
+        Auto-plot major / professional courses while respecting Gen Ed and General-Engineering
+        schedules already entered manually. Choose a curriculum year (since each program may have
+        multiple curricula) and which tier of courses to plot.
       </p>
 
       <form id="autoGenForm" class="space-y-4">
@@ -205,6 +206,13 @@ include "../src/components/programchair/nav.php";
               <option value="BSECE">BS Electronics Engineering (BSECE)</option>
               <option value="BSIE">BS Industrial Engineering (BSIE)</option>
               <option value="BSME">BS Mechanical Engineering (BSME)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold uppercase tracking-wide text-gray-600">Curriculum Year</label>
+            <select id="autoCurriculumYear" name="curriculum_year" class="pc-select mt-1">
+              <option value="">Any (all curricula)</option>
             </select>
           </div>
 
@@ -231,11 +239,30 @@ include "../src/components/programchair/nav.php";
           </div>
 
           <div class="sm:col-span-2">
+            <label class="text-xs font-semibold uppercase tracking-wide text-gray-600">Course Tier</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1">
+              <label class="pc-tier-pill">
+                <input type="radio" name="tier" value="gen_ed">
+                <span><strong>Gen Ed</strong><br><span class="text-[10px] text-gray-500">FCL, Rizal, Soc, etc.</span></span>
+              </label>
+              <label class="pc-tier-pill">
+                <input type="radio" name="tier" value="gen_eng">
+                <span><strong>General Engineering</strong><br><span class="text-[10px] text-gray-500">Chem, Phys, Math</span></span>
+              </label>
+              <label class="pc-tier-pill">
+                <input type="radio" name="tier" value="major" checked>
+                <span><strong>Major / Professional</strong><br><span class="text-[10px] text-gray-500">CpE, ME, CE...</span></span>
+              </label>
+            </div>
+            <p class="text-[11px] text-gray-500 mt-1">Plotting order per revision: Gen Ed → General Engineering → Major. Run them in that order; later runs avoid earlier slots automatically.</p>
+          </div>
+
+          <div class="sm:col-span-2">
             <label class="pc-merge-toggle flex items-start gap-2 p-3 rounded-lg border border-emerald-200 bg-emerald-50 cursor-pointer">
               <input type="checkbox" id="autoMergePrograms" name="merge_across_programs" value="1" class="mt-1">
               <span class="text-sm">
                 <strong class="text-emerald-800">Merge identical courses across programs</strong><br>
-                <span class="text-[11px] text-gray-600">If the same subject code exists in other programs at the same year &amp; semester, plot it once and share the slot. All shared cohorts are checked for conflicts.</span>
+                <span class="text-[11px] text-gray-600">If the same subject code exists in other programs at the same year &amp; semester, plot it once and share the slot (e.g. <em>GEN 0103L Lab — EE/ECE</em>). All shared cohorts are checked for conflicts.</span>
               </span>
             </label>
           </div>
@@ -247,20 +274,14 @@ include "../src/components/programchair/nav.php";
               <input type="text" id="autoRoomsInput" class="pc-room-input"
                 placeholder="Type room and press Enter…" autocomplete="off">
             </div>
-            <input type="hidden" id="autoRooms" name="rooms" value="301,302,303,304,305">
+            <input type="hidden" id="autoRooms" name="rooms" value="">
             <div id="autoRoomsSuggest" class="pc-room-suggest">
               <span class="pc-room-suggest-label">Quick add:</span>
-              <button type="button" class="pc-quick-room" data-room="301">301</button>
-              <button type="button" class="pc-quick-room" data-room="302">302</button>
-              <button type="button" class="pc-quick-room" data-room="303">303</button>
-              <button type="button" class="pc-quick-room" data-room="304">304</button>
-              <button type="button" class="pc-quick-room" data-room="305">305</button>
-              <button type="button" class="pc-quick-room" data-room="306">306</button>
-              <button type="button" class="pc-quick-room" data-room="307">307</button>
-              <button type="button" class="pc-quick-room" data-room="308">308</button>
-              <button type="button" class="pc-quick-room" data-room="309">309</button>
-              <button type="button" class="pc-quick-room" data-room="310">310</button>
+              <span class="text-xs text-gray-400" id="autoRoomsSuggestEmpty">Loading rooms…</span>
             </div>
+            <p class="text-[11px] text-gray-500 mt-1">
+              Manage room numbers from <a href="rooms.php" class="text-red-700 underline">Rooms</a>.
+            </p>
           </div>
         </div>
 

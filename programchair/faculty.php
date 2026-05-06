@@ -45,9 +45,18 @@ include "../src/components/programchair/nav.php";
       <input type="hidden" name="user_id" id="meta_user_id">
 
       <div>
-        <h3 class="pc-section-title text-sm mb-1"><span class="material-icons text-base">event_available</span> Weekly Availability</h3>
-        <p class="text-xs text-gray-500 mb-3">Set the days and hours this faculty is available to teach. Leave a day blank if unavailable.</p>
+        <h3 class="pc-section-title text-sm mb-1"><span class="material-icons text-base">event_available</span> Weekly Availability <span class="text-[.65rem] font-bold text-red-700 uppercase tracking-wide ml-1">(Admin-set)</span></h3>
+        <p class="text-xs text-gray-500 mb-1">Set the days and hours this faculty is available to teach. Leave a day blank if unavailable.</p>
+        <p class="text-[.7rem] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-3">
+          <span class="material-icons text-[.85rem] align-text-bottom">priority_high</span>
+          <strong>Mandatory for Gen Ed:</strong> Auto-Generate uses this admin-set availability for Gen Ed subjects, overriding the faculty's own.
+        </p>
         <div id="availabilityGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+        <div id="facultySelfAvailNotice" class="hidden mt-3 text-[.7rem] text-gray-600 bg-gray-50 border border-gray-200 rounded px-2 py-1">
+          <span class="material-icons text-[.85rem] align-text-bottom">info</span>
+          Faculty's own availability: <span id="facultySelfAvailSummary" class="font-semibold"></span>
+        </div>
       </div>
 
       <div>

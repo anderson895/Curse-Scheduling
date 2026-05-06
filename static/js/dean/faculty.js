@@ -371,9 +371,24 @@ $(document).ready(function () {
             data: { requestType: 'get_faculty_meta', user_id: userId },
             dataType: 'json',
             success: function (res) {
-                const meta = (res && res.data) || { availability: {}, specializations: [] };
-                buildAvailabilityGrid(meta.availability || {});
+                const meta = (res && res.data) || { availability: {}, availability_admin: {}, specializations: [] };
+                // Admin (Dean/PC) availability — this is what the form edits.
+                buildAvailabilityGrid(meta.availability_admin || {});
                 renderChips(Array.isArray(meta.specializations) ? meta.specializations : []);
+
+                // Show the faculty's own availability as read-only context.
+                const self = meta.availability || {};
+                const days = Object.keys(self);
+                if (days.length) {
+                    const summary = days.map(d => {
+                        const win = (self[d] && self[d][0]) || {};
+                        return win.from && win.to ? `${d} ${win.from}–${win.to}` : '';
+                    }).filter(Boolean).join(' · ');
+                    $('#facultySelfAvailSummary').text(summary || '(none)');
+                    $('#facultySelfAvailNotice').removeClass('hidden');
+                } else {
+                    $('#facultySelfAvailNotice').addClass('hidden');
+                }
             },
             error: function () {
                 pcToast('Failed to load existing profile.', 'error');

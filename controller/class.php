@@ -1007,21 +1007,49 @@ public function edit_entry_time($sch_id, $day, $entry_index, $new_from, $new_to,
 // =============================================================
 // FACULTY META (availability + specializations)
 // =============================================================
+// Idempotent migration: ensure faculty_meta has availability_admin column.
+// Dean / Program-Chair-set availability lives there; the faculty's self-set
+// availability stays in `availability`. For Gen Ed subjects, the auto-gen
+// uses availability_admin (mandatory, overrides faculty-self).
+private function ensure_faculty_meta_columns() {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    $r = @$this->conn->query(
+        "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'faculty_meta'
+           AND COLUMN_NAME = 'availability_admin' LIMIT 1"
+    );
+    if ($r && $r->num_rows === 0) {
+        @$this->conn->query(
+            "ALTER TABLE faculty_meta ADD COLUMN availability_admin LONGTEXT NULL AFTER availability"
+        );
+    }
+}
+
 public function get_faculty_meta($user_id) {
+    $this->ensure_faculty_meta_columns();
     $user_id = intval($user_id);
-    $stmt = $this->conn->prepare("SELECT availability, specializations FROM faculty_meta WHERE user_id = ?");
-    if (!$stmt) return ['availability' => [], 'specializations' => []];
+    $stmt = $this->conn->prepare(
+        "SELECT availability, availability_admin, specializations
+         FROM faculty_meta WHERE user_id = ?"
+    );
+    if (!$stmt) return ['availability' => [], 'availability_admin' => [], 'specializations' => []];
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $res = $stmt->get_result()->fetch_assoc();
     $stmt->close();
     return [
-        'availability'   => $res ? (json_decode($res['availability'] ?? '[]', true) ?: []) : [],
-        'specializations'=> $res ? (json_decode($res['specializations'] ?? '[]', true) ?: []) : []
+        'availability'        => $res ? (json_decode($res['availability'] ?? '[]', true) ?: []) : [],
+        'availability_admin'  => $res ? (json_decode($res['availability_admin'] ?? '[]', true) ?: []) : [],
+        'specializations'     => $res ? (json_decode($res['specializations'] ?? '[]', true) ?: []) : []
     ];
 }
 
+// Called by Dean / Program Chair — writes to availability_admin (Gen Ed source of truth).
 public function save_faculty_meta($user_id, $availability_json, $specializations_json) {
+    $this->ensure_faculty_meta_columns();
     $user_id = intval($user_id);
 
     // Validate JSON
@@ -1035,9 +1063,10 @@ public function save_faculty_meta($user_id, $availability_json, $specializations
     }
 
     $stmt = $this->conn->prepare(
-        "INSERT INTO faculty_meta (user_id, availability, specializations)
+        "INSERT INTO faculty_meta (user_id, availability_admin, specializations)
          VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE availability = VALUES(availability), specializations = VALUES(specializations)"
+         ON DUPLICATE KEY UPDATE availability_admin = VALUES(availability_admin),
+                                 specializations    = VALUES(specializations)"
     );
     if (!$stmt) return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
     $stmt->bind_param("iss", $user_id, $availability_json, $specializations_json);
@@ -1049,6 +1078,7 @@ public function save_faculty_meta($user_id, $availability_json, $specializations
 // Faculty self-service: update own availability and specializations.
 // Caller must enforce that $user_id comes from the authenticated session.
 public function save_my_profile($user_id, $availability_json, $specializations_json) {
+    $this->ensure_faculty_meta_columns();
     $user_id = intval($user_id);
     if ($user_id <= 0) return ['success' => false, 'message' => 'Invalid user.'];
 
@@ -1065,7 +1095,8 @@ public function save_my_profile($user_id, $availability_json, $specializations_j
     $stmt = $this->conn->prepare(
         "INSERT INTO faculty_meta (user_id, availability, specializations)
          VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE availability = VALUES(availability), specializations = VALUES(specializations)"
+         ON DUPLICATE KEY UPDATE availability    = VALUES(availability),
+                                 specializations = VALUES(specializations)"
     );
     if (!$stmt) return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
     $stmt->bind_param("iss", $user_id, $availability_json, $specializations_json);
@@ -1075,16 +1106,18 @@ public function save_my_profile($user_id, $availability_json, $specializations_j
 }
 
 public function get_all_faculty_with_meta() {
+    $this->ensure_faculty_meta_columns();
     $sql = "SELECT u.user_id, u.user_fname, u.user_lname, u.user_type,
-                   fm.availability, fm.specializations
+                   fm.availability, fm.availability_admin, fm.specializations
             FROM users u
             LEFT JOIN faculty_meta fm ON fm.user_id = u.user_id
             WHERE u.user_type IN ('faculty','gec') AND u.user_status = 1";
     $res = $this->conn->query($sql);
     $rows = [];
     while ($r = $res->fetch_assoc()) {
-        $r['availability']    = json_decode($r['availability'] ?? '[]', true) ?: [];
-        $r['specializations'] = json_decode($r['specializations'] ?? '[]', true) ?: [];
+        $r['availability']       = json_decode($r['availability'] ?? '[]', true) ?: [];
+        $r['availability_admin'] = json_decode($r['availability_admin'] ?? '[]', true) ?: [];
+        $r['specializations']    = json_decode($r['specializations'] ?? '[]', true) ?: [];
         $rows[] = $r;
     }
     return $rows;
@@ -1469,10 +1502,24 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
         }
     };
 
+    // For a given subject + faculty, decide which availability is mandatory:
+    // Gen Ed -> admin-set availability (with fallback to faculty-self if blank).
+    // Others -> faculty-self availability (with fallback to admin if blank).
+    $resolve_availability = function ($faculty, $subject) {
+        $tier  = $subject['course_tier'] ?? '';
+        $admin = $faculty['availability_admin'] ?? [];
+        $self  = $faculty['availability'] ?? [];
+        if ($tier === 'gen_ed') {
+            return !empty($admin) ? $admin : $self;
+        }
+        return !empty($self) ? $self : $admin;
+    };
+
     // PASS 1: faculty-first — least-loaded specialists go first, each one
     // sweeps every subject in this cohort that matches their specialization.
     $faculty_pool = array_values(array_filter($faculty_list, function($f) {
-        return !empty($f['availability']) && !empty($f['specializations']);
+        $hasAvail = !empty($f['availability']) || !empty($f['availability_admin']);
+        return $hasAvail && !empty($f['specializations']);
     }));
     usort($faculty_pool, function($a, $b) use ($faculty_load) {
         return ($faculty_load[$a['user_id']] ?? 0) <=> ($faculty_load[$b['user_id']] ?? 0);
@@ -1480,13 +1527,15 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
 
     foreach ($faculty_pool as $faculty) {
         $uid = intval($faculty['user_id']);
-        $availability = $faculty['availability'];
         $specs = $faculty['specializations'];
 
         foreach ($subjects as $subject) {
             $code = $subject['subject_code'];
             if (in_array($code, $assigned_codes, true)) continue;
             if (!in_array($code, $specs, true)) continue;
+
+            $availability = $resolve_availability($faculty, $subject);
+            if (empty($availability)) continue;
 
             $hours = floatval($subject['lec_hours']) + floatval($subject['lab_hours']);
             if ($hours <= 0) continue;
@@ -1529,7 +1578,7 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
         $assigned = false;
         foreach ($matched as $faculty) {
             $uid = intval($faculty['user_id']);
-            $availability = $faculty['availability'];
+            $availability = $resolve_availability($faculty, $subject);
             if (empty($availability)) continue;
 
             $attempt = $this->try_assign_sessions(
@@ -1547,11 +1596,15 @@ public function auto_generate_schedule($program, $year_level, $semester, $rooms 
         }
 
         if (!$assigned) {
+            $tier   = $subject['course_tier'] ?? '';
+            $reason = ($tier === 'gen_ed')
+                ? 'No matching faculty has a free slot in the Dean/PC-set availability (Gen Ed source).'
+                : 'No matching faculty has a free slot in their availability for this cohort.';
             $unassigned[] = [
                 'subject_code' => $code,
                 'subject_name' => $subject['subject_name'],
                 'hours' => $hours,
-                'reason' => 'No matching faculty has a free slot in their availability for this cohort.'
+                'reason' => $reason
             ];
         }
     }
